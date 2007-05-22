@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import sys
 
 def comb(m, n):
     """m, n -> number of combinations of m items, n at a time.
@@ -95,6 +96,28 @@ def iterate(M, N):
             m = m-1
         assert i == 0
         yield tuple(result)
+
+## for x in iterate(7,2):
+##     print x
+## sys.exit()
+
+def dists_by_maxsize(nareas, maxsize):
+    v = [0]*nareas
+    for i in range(nareas):
+        x = v[:]; x[i] = 1
+        yield tuple(x)
+    n = 2
+    while n <= maxsize:
+        for indices in iterate(nareas, n):
+            x = v[:]
+            for i in indices:
+                x[i] = 1
+            yield tuple(x)
+        n += 1
+
+## for x in dists_by_maxsize(7, 2):
+##     print x
+## sys.exit()
 
 def idx2bitvect(indices, M):
     v = [0]*M

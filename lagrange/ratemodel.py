@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 """
-formerly model09.py, changed to model.py since it's now under version
-control
-
 conventions:
 
 dist = shorthand for distribution = binary vector indicating
        presence/absence in a vector of areas
 
 """
-import sys, math, random, sets
+import sys, sets, string
 import scipy
-import phylo, newick
-import rates_scipy as rates
+import rates
 import nchoosem
-
-rand = random.Random()
 
 class RateModel:
     """
@@ -24,7 +18,7 @@ class RateModel:
     """
     def __init__(self,
                  nareas,         # number of areas
-                 anames=None,    # ordered list of labels for areas
+                 labels=None,    # ordered sequence of area labels
                  periods=[1.0],  # list of durations, ordered from
                                  # present to past, corresponding to
                                  # "strata" of dispersal and
@@ -38,11 +32,19 @@ class RateModel:
         """
         self.nareas = nareas
         self.arange = range(nareas)
-        if not anames:
-            self.anames = [ "a%d" % i for i in self.arange ]
+        if not labels:
+            if nareas < 26:
+                self.labels = string.uppercase[:nareas]
+            else:
+                self.labels = [ "A%d" % i for i in self.arange ]
         else:
-            assert len(anames) == nareas, \
-                   "Mismatch between number of areas and number of area names"
+            assert len(labels) == nareas, \
+                   "Mismatch between number of areas and number of area labels"
+        self.labels = labels
+        if type(self.labels) == str:
+            self.labelsep = ""
+        else:
+            self.labelsep = "."
         self.periods = periods
         self.nperiods = len(periods)
         self.prange = range(self.nperiods)
@@ -50,20 +52,7 @@ class RateModel:
         # number of areas; does not include the empty dist (vector of
         # all zeros) (cf. RateModelGE)
         self.setup_dists(dists)
-        # make self.dist look like
-        # ['100', '010', '001', '110', '101', '011', '111']
-        # for three areas
-        self.diststrings = [ "".join(map(str, d)) for d in self.dists ]
-        self.ndists = len(self.dists)
-        # make self.dist a dictionary 
-        # looking like 
-        # {(1, 1, 0): 3, (0, 1, 1): 5, (1, 0, 0): 0, (0, 0, 1): 2, (1, 0, 1): 4, (0, 1, 0): 1, (1, 1, 1): 6}
-        # for three areas
-        self.dist2i = dict([
-            (dist, i) for i, dist in enumerate(self.dists)
-            ])
-        #self.dist_priors = [1.0/float(self.ndists)] * self.ndists
-        self.distrange = range(self.ndists)
+
         # instantiate a matrix for each period
         # of nareas x nareas
         self.Dmask = scipy.ones((self.nperiods, nareas, nareas))
@@ -72,6 +61,12 @@ class RateModel:
         self.setup_D(default_d)
         self.setup_E(default_e)
         self.setup_Q()
+
+    def label2dist(self, label):
+        return self.dists[self.diststrings.index(label)]
+
+    def dist2label(self, dist):
+        return self.diststrings[self.dist2i[dist]]
 
     def setup_dists(self, dists=None):
         # results in somthing like 
@@ -82,6 +77,17 @@ class RateModel:
                            nchoosem.iterate_all_bv(self.nareas) ]
         else:
             self.dists = dists[:]
+        self.diststrings = []
+        for d in self.dists:
+            self.diststrings.append(self.labelsep.join(
+                [ self.labels[i] for i in self.arange if d[i] ]
+                ))
+                
+        self.ndists = len(self.dists)
+        self.dist2i = dict([
+            (dist, i) for i, dist in enumerate(self.dists)
+            ])
+        self.distrange = range(self.ndists)
 
     def setup_D(self, d):
         nareas = self.nareas
@@ -233,11 +239,20 @@ class RateModel:
                     
     def iter_ancsplits(self, dist):
         splits = [ s for s in self.iter_dist_splits(dist) ]
-        nsplits = len(splits)
-        weight = (1.0/nsplits)
-        for split in splits:
-            as = Ancsplit(dist, split, weight=weight)
-            yield as
+        if splits:
+            nsplits = len(splits)
+            weight = (1.0/nsplits)
+            for split in splits:
+                as = Ancsplit(self, dist, split, weight=weight)
+                yield as
+
+    def remove_dist(self, dist):
+        t = type(dist)
+        if t is str:
+            self.dists.remove(self.label2dist(dist))
+        elif t is tuple:
+            self.dists.remove(dist)
+        self.setup_dists(self.dists)
 
 class RateModelGE(RateModel):
     """
@@ -254,133 +269,21 @@ class RateModelGE(RateModel):
             if emptydist not in dists:
                 self.dists.insert(0, emptydist)
 
+        self.diststrings = []
+        for d in self.dists:
+            self.diststrings.append(self.labelsep.join(
+                [ self.labels[i] for i in self.arange if d[i] ]
+                ))
+                
+        self.ndists = len(self.dists)
+        self.dist2i = dict([
+            (dist, i) for i, dist in enumerate(self.dists)
+            ])
+        self.distrange = range(self.ndists)
+
 ## print RateModelGE(3).enumerate_dists()
 ## sys.exit()
 
-class Tree:
-    def __init__(self, newickstr, periods=None, root_age=None):
-        self.root = newick.parse(newickstr)
-        phylo.polarize(self.root)
-        self.periods = periods
-
-        # initialize nodes (label interiors, etc)
-        # and collect leaves and postorder sequence
-        self.postorder_nodes = []
-        self.leaves = []
-        for i, node in enumerate(self.root.descendants(phylo.POSTORDER)):
-            node.tree = self
-            node.number = i
-            node.segments = []
-            if (not node.istip) and (not node.label):
-                node.label = str(node.number)
-            node.age = None
-            if node.istip:
-                node.age = 0.0
-                self.leaves.append(node)
-            self.postorder_nodes.append(node)
-
-        self.root_age = root_age
-        if root_age:
-            self.calibrate(root_age)
-            self.root_age = root_age
-
-        self.label2node = dict([(n.label, n) for n in self.postorder_nodes ])
-
-        for node in self.postorder_nodes:
-            if node.parent and (node.parent.age is None):
-                node.parent.age = node.age + node.length
-
-        # initialize branch segments
-        for node in self.postorder_nodes:
-            if node.parent:
-                periods = self.periods
-                anc = node.parent.age
-                des = node.age
-                t = des
-                for i, p in enumerate(periods):
-                    s = sum(periods[:i+1])
-                    if t < s:
-                        duration = min((s - t, anc - t))
-                        if duration > 0:
-                            seg = BranchSegment(duration, i)
-                            node.segments.append(seg)
-                        t += p
-                    if t > anc:
-                        break
-                #print node.label, anc, des, node.length, [ s.duration for s in node.segments ]
-
-    def set_default_model(self, model):
-        "assigns the same model to all segments of all branches"
-        for node in self.postorder_nodes:
-            for seg in node.segments:
-                seg.model = model
-            if not node.parent:
-                node.model = model
-
-    def set_tip_conditionals(self, data):
-        for leaf in self.leaves:
-            segments = leaf.segments
-            model = segments[0].model
-            cond = scipy.zeros((model.ndists,))
-            dist = data[leaf.label]
-            cond[model.dist2i[dist]] = 1.0
-            segments[0].dist_conditionals = cond
-
-    def calibrate(self, depth):
-        "scale an ultrametric tree to given root-to-tip depth"
-        len2tip = 0.0
-        node = self.leaves[0]
-        while 1:
-            len2tip += (node.length or 0.0)
-            node = node.parent
-            if not node: break
-
-        scale = depth/len2tip
-
-        for node in self.postorder_nodes:
-            if node.parent:
-                node.length *= scale
-            else:
-                node.length = 0.0
-
-    def eval_likelihood(self):
-        """
-        evaluate fractional likelihoods at root node
-        """
-        ancdist_conditional_lh(self.root)
-        return scipy.sum(self.root.dist_conditionals)
-
-    def print_dist_conds(self):
-        "report the fractional likelihoods"
-        print "Likelihoods at root"
-        model = self.root.model
-        for i, s in enumerate(model.diststrings):
-            x = self.root.dist_conditionals[i]
-            if x:
-                try:
-                    print s, math.log(x)
-                except:
-                    print s, "Undefined"
-            else:
-                print s, "NaN"
-
-    def clear_startdist(self, node=None):
-        "recursively remove startdists from all branches"
-        if node is None:
-            node = self.root
-        if not node.istip:
-            c1, c2 = node.children()
-            self.clear_startdist(c1)
-            self.clear_startdist(c2)
-            c1.segments[-1].startdist = []
-            c2.segments[-1].startdist = []
-
-class BranchSegment:
-    def __init__(self, duration, period, model=None, startdist=None):
-        self.duration = duration
-        self.period = period
-        self.model = model
-        self.startdist = startdist
 
 
 class Ancsplit:
@@ -388,19 +291,20 @@ class Ancsplit:
     convenience class for encapsulating an ancestor range splitting
     into descendant ranges
     """
-    def __init__(self, ancdist, descdists, weight=None, likelihood=None):
+    def __init__(self, model, ancdist, descdists, weight=None, likelihood=None):
+        self.model = model
         self.ancdist = ancdist
         self.descdists = descdists
         self.weight = weight
         self.likelihood = likelihood
 
     def __repr__(self):
-        d1, d2 = [ "".join(map(str, x)) for x in self.descdists ]
+        d1, d2 = map(self.model.dist2label, self.descdists)
         lh = self.likelihood
-        if lh: lh = "%g" % lh
+        if lh: lh = "%.3g" % lh
         w = self.weight
-        if w: w = "%g" % w
-        return "Ancsplit(%s, %s, w=%s, lh=%s)" % (d1, d2, w, lh)
+        if w: w = "%.3g" % w
+        return "[%s|%s]" % (d1, d2)
 
 #
 # utility functions
@@ -429,13 +333,13 @@ def iter_dist_splits(dist):
 def dist_splits(dist):
     return sets.Set([ s for s in iter_dist_splits(dist) ])
 
-def iter_ancsplits(dist):
-    splits = [ s for s in iter_dist_splits(dist) ]
-    nsplits = len(splits)
-    weight = (1.0/nsplits)
-    for split in splits:
-        as = Ancsplit(dist, split, weight=weight)
-        yield as
+## def iter_ancsplits(dist):
+##     splits = [ s for s in iter_dist_splits(dist) ]
+##     nsplits = len(splits)
+##     weight = (1.0/nsplits)
+##     for split in splits:
+##         as = Ancsplit(dist, split, weight=weight)
+##         yield as
 
 ## d = (1,1,0,0)
 ## for x in iter_ancsplits(d):
@@ -549,7 +453,7 @@ def ancdist_conditional_lh1(node):
 
                 lh += (lh_part * wt)
 
-                ancsplits.append(Ancsplit(dist, split,
+                ancsplits.append(Ancsplit(model, dist, split,
                                           weight=wt, likelihood=lh_part))
             distconds[distidx] = lh
         node.ancsplits = ancsplits

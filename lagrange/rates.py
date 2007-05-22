@@ -8,8 +8,7 @@ dot = scipy.dot
 product = scipy.product
 log = scipy.log
 zeros = scipy.zeros
-import numpy
-linalg = numpy.linalg
+linalg = scipy.linalg
 
 from LinearAlgebra import eigenvectors, eigenvalues, inverse
 #import phylo, newick

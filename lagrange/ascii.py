@@ -16,7 +16,8 @@ class AsciiBuffer:
     def __str__(self):
         return "\n".join([ b.tostring() for b in self._b ])
 
-def sum_to_root(node, internodes=True, length=False):
+def internodes_to_root(node):
+    "count the number of internodes between node and root"
     i = 0
     n = node
     while 1:
@@ -59,27 +60,35 @@ def scale_cpos(node, scalef, root_offset):
     for ch in node.children():
         scale_cpos(ch, scalef, root_offset)
 
-def tree2ascii(tree, unitlen=3, minwidth=50, maxwidth=None, scaled=False,
-               show_internal_labels=True):
+def tree2ascii(tree, unitlen=3, minwidth=None, maxwidth=None, scaled=False,
+               show_internal_labels=True, data=None):
     phylo.polarize(tree)
     depth_length_preorder_traversal(tree)
 
     leaves = tree.leaves(); nleaves = len(leaves)
+    node2label = dict([ (n, n.label) for n in tree.descendants() ])
+    if data:
+        for k, v in node2label.items():
+            if v in data:
+                if k.istip:
+                    node2label[k] = "[%s] %s" % (data[v], v)
+                else:
+                    node2label[k] = "%s [%s]" % (data[v], v)
 
     maxdepth = max([ lf.depth for lf in leaves ])
 
-    max_labelwidth = max([ len(lf.label) for lf in leaves ]) + 1
+    max_labelwidth = max([ len(node2label[lf]) for lf in leaves ]) + 1
 
     root_offset = 0
     if tree.label and show_internal_labels:
-        root_offset = len(tree.label)
+        root_offset = len(node2label[tree])
         
     width = maxdepth*unitlen + max_labelwidth + 2 + root_offset
     #print width
 
     height = 2*nleaves - 1
 
-    if width < minwidth:
+    if minwidth and (width < minwidth):
         unitlen = (minwidth - max_labelwidth - 2 - root_offset)/maxdepth
         width = maxdepth*unitlen + max_labelwidth + 2 + root_offset
 
@@ -97,7 +106,8 @@ def tree2ascii(tree, unitlen=3, minwidth=50, maxwidth=None, scaled=False,
             node.c = min([ ch.c for ch in children ]) - unitlen
 
     if not scaled:
-        smooth_cpos(tree)
+        for i in range(maxdepth):
+            smooth_cpos(tree)
     else:
         maxlen = max([ lf.length_to_root for lf in leaves ])
         scalef = (leaves[0].c + 1 - root_offset)/maxlen
@@ -115,10 +125,11 @@ def tree2ascii(tree, unitlen=3, minwidth=50, maxwidth=None, scaled=False,
             buf.putstr(node.r, node.parent.c, vbar)
 
         if node.istip:
-            buf.putstr(node.r, node.c+1, " "+node.label)
+            buf.putstr(node.r, node.c+1, " "+node2label[node])
         else:
             if node.label and show_internal_labels:
-                buf.putstr(node.r, node.c-len(node.label), node.label)
+                label = node2label[node]
+                buf.putstr(node.r, node.c-len(label), label)
 
         buf.putstr(node.r, node.c, "+")
         
@@ -132,6 +143,7 @@ if __name__ == "__main__":
     
     t = newick.parse("(foo,((bar,(dog,cat)),(shoe,(fly,(cow, bowwow)))));")
     t = newick.parse("(((foo:4.6):5.6, (bar:6.5, baz:2.3):3.0):3.0);")
+    data = {"foo":1, "bar":0, "baz":1}
     #print t, t.next.back, t.next.next.back, t.next.next.next.back,
 ##     print t, t.next, t.next.next, t.next.next.next
 ##     print t.fnodes()
@@ -143,4 +155,4 @@ if __name__ == "__main__":
             n.label = "n%s" % i
             i += 1
 
-    print tree2ascii(t, scaled=1, show_internal_labels=1)
+    print tree2ascii(t, scaled=1, show_internal_labels=0, data=data)
