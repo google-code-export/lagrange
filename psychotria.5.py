@@ -1,10 +1,15 @@
 import sys
-import newick
+import tree_reader_n
 from pprint import pprint
-from model import *
 import model_optimize
+import rate_matrix
+from rate_model import *
+from ancsplit import *
+import branch_segment
+import ancsplit
 import scipy
 from scipy import optimize
+from marginal_range_reconstructor import *
 LARGE = 10e5
 PMAX = 10.0
 
@@ -60,7 +65,7 @@ dists = None
 # geological connections
 periods = [0.5,1.9,3.9,5.6]
 
-model = RateModel(4, periods=periods, dists=dists)
+model = RateModelGE(4, periods=periods, dists=dists)
 
 # geological connections
 ## default all but the 1 to be zero until they form
@@ -134,7 +139,7 @@ model.Dmask[0,3,2] = 1.0
 #print model.Q_repr(0); sys.exit()
 #print model.P_repr(0, 1.0); sys.exit()
 #print "\n".join(map(str, model.iter_dist_splits((1,1,1,0)))); sys.exit()
-tree = Tree(newickstr, periods, root_age=5.2)
+tree = MarginalRangeReconstructor(model, newickstr, periods, root_age=5.2)
 tree.set_default_model(model)
 tree.set_tip_conditionals(data)
 
@@ -186,6 +191,7 @@ v = optimize.fmin_powell(
     full_output=True,disp=0
     )
 print v[:2]
+sys.exit()
 #
 #end optimize
 #

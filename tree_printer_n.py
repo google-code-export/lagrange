@@ -1,6 +1,7 @@
 import sys
 from array import array
-import phylo, newick
+import  tree_reader_n
+from n_node import *
 
 class AsciiBuffer:
     def __init__(self, width, height):
@@ -35,13 +36,14 @@ def depth_length_preorder_traversal(node):
         p = node.parent
         node.depth = p.depth + 1
         node.length_to_root = p.length_to_root + (node.length or 0.0)
-
-    for ch in node.children():
-        depth_length_preorder_traversal(ch)
+    if node.children() != None:
+        for ch in node.children():
+            depth_length_preorder_traversal(ch)
 
 def smooth_cpos(node):
-    for ch in node.children():
-        smooth_cpos(ch)
+    if node.children() != None:
+        for ch in node.children():
+            smooth_cpos(ch)
         
     if node.parent and not node.istip:
         px = node.parent.c
@@ -61,7 +63,7 @@ def scale_cpos(node, scalef, root_offset):
 
 def tree2ascii(tree, unitlen=3, minwidth=50, maxwidth=None, scaled=False,
                show_internal_labels=True):
-    phylo.polarize(tree)
+    polarize(tree)
     depth_length_preorder_traversal(tree)
 
     leaves = tree.leaves(); nleaves = len(leaves)
@@ -89,7 +91,7 @@ def tree2ascii(tree, unitlen=3, minwidth=50, maxwidth=None, scaled=False,
         lf.c = width - max_labelwidth - 2
         lf.r = i*2
 
-    for node in tree.descendants(phylo.POSTORDER):
+    for node in tree.descendants(POSTORDER):
         if not node.istip:
             children = node.children()
             rmin = children[0].r; rmax = children[-1].r
@@ -103,7 +105,7 @@ def tree2ascii(tree, unitlen=3, minwidth=50, maxwidth=None, scaled=False,
         scalef = (leaves[0].c + 1 - root_offset)/maxlen
         scale_cpos(tree, scalef, root_offset)
 
-    for node in tree.descendants(phylo.POSTORDER):
+    for node in tree.descendants(POSTORDER):
 
         if node.parent:
             for r in range(min([node.r, node.parent.r]),
@@ -130,8 +132,8 @@ if __name__ == "__main__":
     import random
     rand = random.Random()
     
-    t = newick.parse("(foo,((bar,(dog,cat)),(shoe,(fly,(cow, bowwow)))));")
-    t = newick.parse("(((foo:4.6):5.6, (bar:6.5, baz:2.3):3.0):3.0);")
+    t = tree_reader.parse("(foo,((bar,(dog,cat)),(shoe,(fly,(cow, bowwow)))));")
+    #t = tree_reader.parse("(((foo:4.6):5.6, (bar:6.5, baz:2.3):3.0):3.0);")
     #print t, t.next.back, t.next.next.back, t.next.next.next.back,
 ##     print t, t.next, t.next.next, t.next.next.next
 ##     print t.fnodes()
@@ -143,4 +145,4 @@ if __name__ == "__main__":
             n.label = "n%s" % i
             i += 1
 
-    print tree2ascii(t, scaled=1, show_internal_labels=1)
+    print tree2ascii(t, scaled=0, show_internal_labels=1)

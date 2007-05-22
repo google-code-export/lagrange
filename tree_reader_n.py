@@ -1,25 +1,7 @@
-# Mavric -- a module for manipulating and visualizing phylogenies
-
-# Copyright (C) 2000 Rick Ree
-# Email : rree@post.harvard.edu
-# 	   
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2 
-# of the License, or (at your option) any later version.
-#   
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details. 
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 import string, sys
 from shlex import shlex
-import phylo
+import n_node
 from types import StringType
 from cStringIO import StringIO
 
@@ -56,7 +38,7 @@ def parse(input, ttable=None):
     start_pos = input.tell()
     tokens = Tokenizer(input)
 
-    node = None; root = None
+    curnode = None; root = None
     lp=0; rp=0; rooted=1
 
     prev_tok = None
@@ -72,39 +54,24 @@ def parse(input, ttable=None):
         # internal node
         elif token == '(':
             lp = lp+1
-            newnode = phylo.InternalNode()
-            if node:
-                if node.istip:
-                    if not node.back:
-                        node.back = newnode
-                        newnode.back = node
-                    else:
-                        node.back.add_child(newnode)
-                else:
-                    node.add_child(newnode)
-            node = newnode
+            newnode = n_node.Node(istip = 0)
+            if curnode:
+                curnode.add_child(newnode)
+            else:
+                newnode.isroot = 1
+                root = newnode
+            curnode = newnode
 
         elif token == ')':
             rp = rp+1
-            node = traverse(node)
+            curnode = curnode.parent           
             
         elif token == ',':
-            if lp == rp:
-                if node.back == None:
-                    pass
-                else:
-                    rooted = 0
-                    if node.next:
-                        node.insert_fnode(phylo.Fnode())
-                    node.next.isroot = 1
-                    root = node.next
-            else:
-                node = traverse(node)
+            curnode = curnode.parent
             
         # branch length
         elif token == ':':
             token = tokens.get_token()
-
             if not (token == ''):
                 try:
                     brlen = float(token)
@@ -114,55 +81,38 @@ def parse(input, ttable=None):
             else:
                 raise 'NewickError', \
                       'unexpected end-of-file (expecting branch length)'
-
-            if node.istip: node.length = brlen
-            else: node.next.length = brlen
-
+            curnode.length = brlen
         # comment
         elif token == '[':
             tokens.parse_comment()
-
         # leaf node or label
         else:
             if prev_tok != ')':
                 if ttable is not None:
                     token = ttable[token]
-                newnode = phylo.Fnode(label=token, istip=1)
-                if node:
-                    if node.istip:
-                        if not node.back:
-                            intnode = phylo.InternalNode()
-                            intnode.back = node
-                            node.back = intnode
-                        node.back.add_child(newnode)
-                        newnode = node.back
-                    else: node.add_child(newnode)
-                node = newnode
+                newnode = n_node.Node(label=token, istip=1)
+                if curnode:
+                    curnode.add_child(newnode)
+                curnode = newnode
             else:
-                node.next.label = token
-                #print "label %s for %s" % (token, node.next)
+                curnode.label = token
 
         prev_tok = token
         #print node
 
     input.seek(start_pos)
-
+    """
     if rooted:
-        root = phylo.Fnode(isroot=1)
-        root.label = node.next.label; node.next.label = None
-        root.length = node.next.length; node.next.length = None
-        node.insert_fnode(root)
+        root = Node(isroot=1)
+        root.label = node.label #node.next.label; node.next.label = None
+        root.length = node.length # node.next.length; node.next.length = None
+        #node.insert_fnode(root)
         
-
     for fn in root.fnodes()[1:]:
-        if not fn.back:
+        if not fn.parent:
             fn.prune()
-
+    """
     return root
-
-def traverse(node):
-    if node.istip: return node.back
-    else: return node.next.back
         
 def to_string(node, lengths = 1, length_fmt=":%s"):
     if not node.istip:
@@ -216,10 +166,9 @@ def parse_from_file(filename):
     return tree
 
 if __name__ == "__main__":
-    import ascii
+    import tree_printer_n
     s = "(a,(b,c)int)root;"
     n = parse(s)
-    print
-    print ascii.render(n)
+    print tree_printer_n.render(n)
     print to_string(n)
-    print n.next.back.label
+    #print n.next.back.label

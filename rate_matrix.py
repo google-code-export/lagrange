@@ -1,3 +1,8 @@
+"""
+this is a utility file with functions for transforming rate matrices
+"""
+import psyco
+psyco.full()
 import sys, random, time
 import scipy
 array = scipy.array
@@ -163,26 +168,3 @@ def sample_ancstates(nodes, preorder, states, fractionals, Qmap):
 if __name__ == "__main__":
     Q = Q2(0.1)
     print Q2P(Q, 1.0)
-##     from pprint import pprint
-
-##     t = newick.parse("(A:0.1, (B:0.1, C:0.1):0.1);")
-##     phylo.polarize(t)
-##     nodes = [ n for n in t.descendants() ]
-##     for i, n in enumerate(nodes):
-##         n.nodeNum = i
-##     postorder = [ n.nodeNum for n in t.descendants(phylo.POSTORDER) ]
-##     states = (0, 1)
-##     prior = (1.0, 1.0)
-##     data = {"A": 0, "B": 0, "C": 1}
-##     for n in t.leaves():
-##         data[n.nodeNum] = data[n.label]
-
-##     Q = Q2()
-##     Qmap = Q2Pdict(nodes, Q)
-
-##     tfracs = fractionals(nodes, postorder, data, states, prior, Qmap)
-##     pprint(tfracs)
-
-##     ancs = sample_ancstates(nodes, range(len(nodes)), states, tfracs, Qmap)
-##     print ancs
-

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+import psyco
+psyco.full()
 def comb(m, n):
     """m, n -> number of combinations of m items, n at a time.
 

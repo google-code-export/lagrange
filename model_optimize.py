@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import sys
 from pprint import pprint
-from model import *
+from marginal_range_reconstructor import *
 import scipy
 from scipy import optimize
 
 LARGE = 10e5
 PMAX = 10.0
 
-def likelihood_de(params, model, tree):
+def likelihood_de(params, model, rec):
     """
     demo function for optimizing dispersal and extinction rates, for
     use with scipy.optimize
@@ -27,7 +27,7 @@ def likelihood_de(params, model, tree):
     model.setup_E(e)
     model.setup_Q()
     try:
-        lh = tree.eval_likelihood()
+        lh = rec.eval_likelihood()
         return -(math.log(lh))
     except:
         return LARGE
@@ -125,6 +125,56 @@ def calculate_local_for_all_nodes(node, model):
             if opt > (results[0][0] + 2):
                 break
             print opt, d1, d2, params
+
+def calculate_global_for_all_nodes(node, model, d, e, skip=[], _rv={}):
+    if (not node.istip) and (not node.label in skip):
+        c1, c2 = node.children()
+        calculate_global_for_all_nodes(c1, model, d, e)
+        calculate_global_for_all_nodes(c2, model, d, e)
+        print ", ".join([node.label, c1.label, c2.label])
+        results = []
+        #node.tree.clear_startdist()
+        for disti, dist in model.enumerate_dists():
+            S = set()
+            for ancsplit in model.iter_ancsplits(dist):
+                d1, d2 = ancsplit.descdists
+                # calcuate likelihood of this split at this node
+                lh = ancsplit_likelihood_de(node, ancsplit, model, d, e)
+                
+                ds1 = model.diststrings[model.dist2i[d1]]
+                ds2 = model.diststrings[model.dist2i[d2]]
+                root = zip(scipy.log(node.tree.root.dist_conditionals),
+                           model.diststrings)
+                root.sort(); root.reverse()
+                for i, r in enumerate(root):
+                    dc, ds = r
+                    if dc < (root[0][0] - 2):
+                        break
+                root = root[:i]
+                try:
+                    results.append((-(math.log(lh)), ds1, ds2, root))
+                except:
+                    pass
+
+        results.sort()
+        v = []
+        for opt, ds1, ds2, root in results:
+            if opt > (results[0][0] + 2):
+                break
+            v.append((opt, ds1, ds2))
+            print "  -lnL %g, %s, %s" % (opt, ds1, ds2)
+        _rv[node.label] = v
+
+    return _rv
+
+def comb(ds1, ds2):
+    ret = ""
+    for i in range(len(ds1)):
+        if ds1[i] == '1' or ds2[i] == '1':
+            ret += '1'
+        else:
+            ret += '0'
+    return ret
 
 def calculate_global_for_all_nodes(node, model, d, e, skip=[], _rv={}):
     if (not node.istip) and (not node.label in skip):
