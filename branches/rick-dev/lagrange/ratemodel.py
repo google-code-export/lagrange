@@ -44,7 +44,7 @@ class RateModel:
         if type(self.labels) == str:
             self.labelsep = ""
         else:
-            self.labelsep = "."
+            self.labelsep = "+"
         self.periods = periods
         self.nperiods = len(periods)
         self.prange = range(self.nperiods)
@@ -416,57 +416,7 @@ def test_conditionals(model, period, duration, distconds):
         v[i] = sum(distconds * P[i])
     return v
 
-def ancdist_conditional_lh1(node):
-    """
-    recursive calculation of fractional likelihoods for dists at
-    internal nodes in a tree
-    """
-    if not node.istip:
-        c1, c2 = node.children()
-        if node.parent:
-            model = node.segments[0].model
-        else:
-            model = node.model
-        dist2i = model.dist2i
-
-        ancdist_conditional_lh1(c1)
-        ancdist_conditional_lh1(c2)
-
-        v1 = conditionals(c1)
-        v2 = conditionals(c2)
-
-        distconds = scipy.zeros((model.ndists,))
-        
-        ancsplits = []
-        for distidx, dist in model.enumerate_dists():
-            lh = 0.0
-
-            split_db = []
-            for split, wt in iter_dist_splits_weighted(dist):
-                if split in split_db:
-                    continue
-                else:
-                    split_db.append(split)
-                d1, d2 = split
-
-                lh_part = (v1[dist2i[d1]] * v2[dist2i[d2]])
-
-                lh += (lh_part * wt)
-
-                ancsplits.append(Ancsplit(model, dist, split,
-                                          weight=wt, likelihood=lh_part))
-            distconds[distidx] = lh
-        node.ancsplits = ancsplits
-
-    else:
-        distconds = node.segments[0].dist_conditionals
-    
-    if node.parent:
-        node.segments[0].dist_conditionals = distconds
-    else:
-        node.dist_conditionals = distconds
-
-def ancdist_conditional_lh2(node):
+def ancdist_conditional_lh(node):
     """
     recursive calculation of fractional likelihoods for dists at
     internal nodes in a tree
@@ -506,8 +456,6 @@ def ancdist_conditional_lh2(node):
     else:
         node.dist_conditionals = distconds
 
-ancdist_conditional_lh = ancdist_conditional_lh2
-
 def nondiag_indices(m):
     """
     m is a square array - iterate over the (i,j) pairs indexing the
@@ -521,6 +469,23 @@ def nondiag_indices(m):
             if i != j:
                 yield (i,j)
                 ind += 1
+
+
+if __name__ == "__main__":
+    from pprint import pprint
+    n = 7
+    cmat = scipy.ones((n,n))
+    for i, j in ((1,4),(1,7),
+                 (2,6),(2,7),
+                 (3,6),(3,7),
+                 (4,5),
+                 (5,6),):
+        cmat[i-1,j-1] = 0
+        cmat[j-1,i-1] = 0
+    pprint(cmat)
+    #pprint(list(nchoosem.dists_by_maxsize(n,4)))
+
+
 ## for x in nondiag_indices(scipy.zeros([6,6])):
 ##     print x
 ## sys.exit()

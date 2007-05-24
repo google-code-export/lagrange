@@ -1,7 +1,7 @@
 import scipy
 
 def summarize_splits(splits, weighted=True):
-    lines = []
+    rows = []
     if weighted:
         v = [ (x.likelihood * x.weight, x) for x in splits ]
     else:
@@ -10,12 +10,14 @@ def summarize_splits(splits, weighted=True):
     v.sort(); v.reverse()
     opt = scipy.log(v[0][0])
 
-    lines.append("".join(["split".ljust(8), "lnL".ljust(8), "Rel.Prob"]))
+    rows.append(["split", "lnL", "Rel.Prob"])
     for L, split in v:
         lnL = scipy.log(L)
         if (opt - lnL) < 2:
-            lines.append("".join(
-                [str(split).ljust(8), ("%.4g" % lnL).ljust(8),
-                 "%.4g" % (L/ptot)]
-                ))
-    return lines
+            rows.append([str(split), "%.4g" % lnL, "%.4g" % (L/ptot)])
+    widths = []
+    for i in range(3):
+        w = max([ len(x[i]) for x in rows ])
+        for x in rows:
+            x[i] = x[i].ljust(w)
+    return [ "  ".join(x) for x in rows ]

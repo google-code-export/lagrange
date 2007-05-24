@@ -1,5 +1,6 @@
 import sys, random, time
 import scipy
+import scipy.linalg
 array = scipy.array
 transpose = scipy.transpose
 exp = scipy.exp
@@ -10,7 +11,7 @@ log = scipy.log
 zeros = scipy.zeros
 linalg = scipy.linalg
 
-from LinearAlgebra import eigenvectors, eigenvalues, inverse
+#from LinearAlgebra import eigenvectors, eigenvalues, inverse
 #import phylo, newick
 
 rand = random.Random()
