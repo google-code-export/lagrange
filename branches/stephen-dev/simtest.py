@@ -125,15 +125,15 @@ def likelihood_de_multi(params, model, rec):
 reps = 20
 dists = None
 periods = [100]
-model = RateModelGE(3, periods=periods, dists=dists)
+model = RateModel(3, periods=periods, dists=dists)
 print "disp\text\tavgaccdisp\tavgaccext\tdisp\text"
 
 #make biogeotree
-extant = 20
-dispers = 0.3
-death = 0.0
-brate = 0.2
-numberofsimul = 10
+extant = 100
+dispers = 0.2
+death = 0.2
+brate = 0.4
+numberofsimul = 1
 ar = []
 ar1 = Area(0)
 ar2 = Area(1)
