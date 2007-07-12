@@ -45,7 +45,9 @@ class Tree:
                 periods = self.periods
                 anc = node.parent.age
                 des = node.age
-                assert anc > des
+                assert anc > des, "%s = %g, %s = %g\n%s" \
+                       % (node.parent.label, anc, node.label, des,
+                          self.root.render_ascii(scaled=1, minwidth=80))
                 t = des
                 for i, p in enumerate(periods):
                     s = sum(periods[:i+1])
