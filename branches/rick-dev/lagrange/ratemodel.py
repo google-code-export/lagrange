@@ -52,6 +52,8 @@ class RateModel:
         # number of areas; does not include the empty dist (vector of
         # all zeros) (cf. RateModelGE)
         self.setup_dists(dists)
+        pi = 1.0/self.ndists
+        self.dist_priors = [ pi for x in self.distrange ]
 
         # instantiate a matrix for each period
         # of nareas x nareas
@@ -63,7 +65,8 @@ class RateModel:
         self.setup_Q()
 
     def label2dist(self, label):
-        return self.dists[self.diststrings.index(label)]
+        v = self.dists[self.diststrings.index(label)]
+        return v
 
     def dist2label(self, dist):
         return self.diststrings[self.dist2i[dist]]
@@ -439,13 +442,15 @@ def ancdist_conditional_lh(node):
         ancsplits = []
         for distidx, dist in model.enumerate_dists():
             lh = 0.0
+            pi = model.dist_priors[distidx]
             for ancsplit in model.iter_ancsplits(dist):
                 d1, d2 = ancsplit.descdists
                 lh_part = (v1[dist2i[d1]] * v2[dist2i[d2]])
                 lh += (lh_part * ancsplit.weight)
                 ancsplit.likelihood = lh_part
                 ancsplits.append(ancsplit)
-            distconds[distidx] = lh
+            #distconds[distidx] = lh
+            distconds[distidx] = lh * pi
         node.ancsplits = ancsplits
 
     else:
