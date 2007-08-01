@@ -8,8 +8,8 @@ dist = shorthand for distribution = binary vector indicating
        presence/absence in a vector of areas
 
 """
-import psyco
-psyco.full()
+#import psyco
+#psyco.full()
 import sys, math, random, sets
 import scipy
 import n_node, tree_reader_n

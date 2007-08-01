@@ -1,6 +1,6 @@
-import psyco
-psyco.profile()
-psyco.log()
+#import psyco
+#psyco.profile()
+#psyco.log()
 import tree_reader_n
 from tree_reader_n import *
 import tree_printer_n
@@ -125,11 +125,11 @@ def likelihood_de_multi(params, model, rec):
 reps = 20
 dists = None
 periods = [100]
-model = RateModel(3, periods=periods, dists=dists)
+model = RateModelGE(3, periods=periods, dists=dists)
 print "disp\text\tavgaccdisp\tavgaccext\tdisp\text"
 
 #make biogeotree
-extant = 100
+extant = 20
 dispers = 0.2
 death = 0.2
 brate = 0.4

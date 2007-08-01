@@ -1,8 +1,8 @@
 """
 this is a utility file with functions for transforming rate matrices
 """
-import psyco
-psyco.full()
+#import psyco
+#psyco.full()
 import sys, random, time
 import scipy
 array = scipy.array
