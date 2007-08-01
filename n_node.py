@@ -2,8 +2,8 @@
 """
     new node class
 """
-import psyco
-psyco.full()
+#import psyco
+#psyco.full()
 PREORDER = 0
 POSTORDER = 1
 
