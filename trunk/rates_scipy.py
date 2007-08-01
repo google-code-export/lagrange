@@ -11,7 +11,7 @@ zeros = scipy.zeros
 import numpy
 linalg = numpy.linalg
 
-from LinearAlgebra import eigenvectors, eigenvalues, inverse
+#from LinearAlgebra import eigenvectors, eigenvalues, inverse
 #import phylo, newick
 
 rand = random.Random()
