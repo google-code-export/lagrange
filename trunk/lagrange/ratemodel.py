@@ -271,7 +271,7 @@ class RateModelGE(RateModel):
             emptydist = tuple([0]*self.nareas)
             if emptydist not in dists:
                 self.dists.insert(0, emptydist)
-
+        
         self.diststrings = []
         for d in self.dists:
             self.diststrings.append(self.labelsep.join(
@@ -494,12 +494,13 @@ if __name__ == "__main__":
 ## for x in nondiag_indices(scipy.zeros([6,6])):
 ##     print x
 ## sys.exit()
-
-## m = RateModelGE(4)
-## s = set()
-## for i, d in m.enumerate_dists():
-##     for as in iter_ancsplits(d):
-##         if as.descdists not in s:
-##             s.add(as.descdists)
-##         else:
-##             print "!", as.descdists
+"""
+m = RateModelGE(4)
+s = set()
+for i, d in m.enumerate_dists():
+    for as in iter_ancsplits(d):
+        if as.descdists not in s:
+            s.add(as.descdists)
+        else:
+            print "!", as.descdists
+"""
