@@ -11,10 +11,14 @@ def summarize_splits(splits, weighted=True):
     opt = scipy.log(v[0][0])
 
     rows.append(["split", "lnL", "Rel.Prob"])
+    sumprob = 0.0
     for L, split in v:
         lnL = scipy.log(L)
+        relprob = (L/ptot)
+        #if sumprob < 0.95:
         if (opt - lnL) < 2:
-            rows.append([str(split), "%.4g" % lnL, "%.4g" % (L/ptot)])
+            rows.append([str(split), "%.4g" % lnL, "%.4g" % relprob])
+        sumprob += relprob
     widths = []
     for i in range(3):
         w = max([ len(x[i]) for x in rows ])
