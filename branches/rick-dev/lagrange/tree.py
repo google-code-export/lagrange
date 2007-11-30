@@ -1,5 +1,8 @@
+import sys
 import phylo, newick, ratemodel
 import scipy
+
+SHORT = 1e-4
 
 class Tree:
     def __init__(self, newickstr, periods=None, root_age=None):
@@ -21,11 +24,15 @@ class Tree:
             node.number = i
             node.segments = []
             if (not node.istip) and (not node.label):
-                node.label = str(node.number)
+                node.label = "N%s" % node.number
             node.age = None
             if node.istip:
                 #node.age = 0.0
                 self.leaves.append(node)
+            else:
+                nc = len(node.children())
+                assert nc == 2, \
+                       "%s-way polytomy at node %s" % (nc, node.label)
             self.postorder_nodes.append(node)
 
         self.root_age = root_age
@@ -33,6 +40,15 @@ class Tree:
             self.calibrate(root_age)
 
         self.label2node = dict([(n.label, n) for n in self.postorder_nodes ])
+
+        for node in self.postorder_nodes:
+            if node.parent:
+                if not (node.length > 0):
+                    print >> sys.stderr, \
+                          "Warning: node %s: "\
+                          "changing branch length of %s to %g" \
+                          % (node.label, node.length, SHORT)
+                    node.length = SHORT
 
         self.assign_node_ages()
 ##         for node in self.postorder_nodes:
@@ -203,12 +219,13 @@ def ancdist_conditional_lh(node):
         ancsplits = []
         for distidx, dist in model.enumerate_dists():
             lh = 0.0
-            for ancsplit in model.iter_ancsplits(dist):
-                d1, d2 = ancsplit.descdists
-                lh_part = (v1[dist2i[d1]] * v2[dist2i[d2]])
-                lh += (lh_part * ancsplit.weight)
-                ancsplit.likelihood = lh_part
-                ancsplits.append(ancsplit)
+            if dist not in node.excluded_dists:
+                for ancsplit in model.iter_ancsplits(dist):
+                    d1, d2 = ancsplit.descdists
+                    lh_part = (v1[dist2i[d1]] * v2[dist2i[d2]])
+                    lh += (lh_part * ancsplit.weight)
+                    ancsplit.likelihood = lh_part
+                    ancsplits.append(ancsplit)
             distconds[distidx] = lh
         node.ancsplits = ancsplits
 

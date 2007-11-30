@@ -183,7 +183,7 @@ def to_string(node, lengths = 1, length_fmt=":%s"):
     s = "%s%s" % (node_str, length_str)
     return s
         
-             
+tostring = to_string
 
 ## def to_string(node, lengths = 1):
 ##     nstr = ''

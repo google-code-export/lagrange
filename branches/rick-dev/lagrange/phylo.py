@@ -69,6 +69,7 @@ class Fnode:
         self.istip = istip
         self.length = length
         self.label = label
+        self.excluded_dists = set()
 
     def __setitem__(self, item, value):
         self.data[item] = value

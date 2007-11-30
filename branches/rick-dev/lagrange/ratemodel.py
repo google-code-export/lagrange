@@ -45,6 +45,8 @@ class RateModel:
             self.labelsep = ""
         else:
             self.labelsep = "+"
+        self.label2i = dict([ (label, i) for i, label \
+                              in enumerate(self.labels) ])
         self.periods = periods
         self.nperiods = len(periods)
         self.prange = range(self.nperiods)
@@ -52,6 +54,7 @@ class RateModel:
         # number of areas; does not include the empty dist (vector of
         # all zeros) (cf. RateModelGE)
         self.setup_dists(dists)
+
         pi = 1.0/self.ndists
         self.dist_priors = [ pi for x in self.distrange ]
 
@@ -101,10 +104,31 @@ class RateModel:
                 self.D[period,i,i] = 0.0
         self.D *= self.Dmask
 
-    def set_D_cell(self, period, fromdist, todist, d):
-        i = self.dist2i[fromdist]
-        j = self.dist2i[todist]
-        self.D[period, i,j] = d
+#these are both wrong - should take area index as param, not dists
+##     def set_D_cell(self, period, fromdist, todist, d):
+##         i = self.dist2i[fromdist]
+##         j = self.dist2i[todist]
+##         self.D[period, i, j] = d
+
+##     def set_Dmask_cell(self, period, fromdist, todist, d, sym=False):
+##         i = self.dist2i[fromdist]
+##         j = self.dist2i[todist]
+##         self.Dmask[period, i, j] = d
+##         if sym:
+##             self.Dmask[period, j, i] = d
+
+    def set_Dmask_cell(self, period, a1, a2, d, sym=False):
+        if a1 in self.labels:
+            i = self.label2i[a1]
+        else:
+            i = a1
+        if a2 in self.labels:
+            j = self.label2i[a2]
+        else:
+            j = a2
+        self.Dmask[period, i, j] = d
+        if sym:
+            self.Dmask[period, j, i] = d
 
     def setup_E(self, e):
         self.E = scipy.ones((self.nperiods, self.nareas)) * e
@@ -443,6 +467,7 @@ def ancdist_conditional_lh(node):
         for distidx, dist in model.enumerate_dists():
             lh = 0.0
             pi = model.dist_priors[distidx]
+#            if dist not in node.excluded_dists:
             for ancsplit in model.iter_ancsplits(dist):
                 d1, d2 = ancsplit.descdists
                 lh_part = (v1[dist2i[d1]] * v2[dist2i[d2]])
