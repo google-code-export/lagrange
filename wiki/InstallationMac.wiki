@@ -1,14 +1,17 @@
-#summary Installation instructions for PPC and Intel macs
+#summary Installation instructions for required python tools in PPC and Intel macs
 #labels Phase-Deploy,Featured
 
-= Intel Mac 10.5 Leopard =
+==Introduction==
+These instructions are for correctly installed Python and SciPy for various Mac setups. This is not for "installing" lagrange. Lagrange can be "installed" many ways and can be run from inside the folder as well. However, in order to run lagrange, certain required software must be in place.
+
+== Intel Mac 10.5 Leopard ==
 
 You may use the installed python but you will need to install SciPy. There are a few ways to do this, but grabbing an installer from this site http://trichech.us/?page_id=5 seems easiest. On my installation I got a fortran error which I solved by installing from this page (http://hpc.sourceforge.net/) this link (http://prdownloads.sourceforge.net/hpc/gfortran-intel-leopard-bin.tar.gz?download) and may be installed with this command  "sudo tar -xvf gfortran-intel-leopard-bin.tar.gz -C /" or "sudo tar -xvf gfortran-intel-leopard-bin.tar -C /" if it is unzipped upon download. Everything should be fine and running.
 
-= Intel Mac 10.4 Tiger =
+== Intel Mac 10.4 Tiger ==
 
 You will need to install python 2.5. You may get it here (http://www.activestate.com/store/activepython/download/). The SciPy installer is no longer supported but can be found here (http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5). Install issues are unknown at this time after the installation of these two items. (Requires a brand of python called ActivePython which is free)
 
-= PPC Mac =
+== PPC Mac ==
 
 You will need to install python 2.5. You may get it here (http://www.activestate.com/store/activepython/download/). The SciPy installer is no longer supported but can be found here (http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip). Install issues are unknown at this time after the installation of these two items. (Requires a brand of python called ActivePython which is free)
