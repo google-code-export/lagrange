@@ -1,5 +1,5 @@
 #summary Installation instructions for PPC and Intel macs
-#labels Phase-Deploy
+#labels Phase-Deploy,Featured
 
 = Intel Mac 10.5 Leopard =
 
