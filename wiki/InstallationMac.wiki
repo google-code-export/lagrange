@@ -1,10 +1,9 @@
 #labels Phase-Deploy
 #Installation instructions for PPC and Intel macs
 
-= Introduction =
+= Intel Mac 10.5 Leopard =
 
-Add your content here.
-
+You may use the installed python but you will need to install SciPy. There are a few ways to do this, but grabbing an installer from this site http://trichech.us/?page_id=5 seems easiest. On my installation I got a fortran error which I solved by installing from this page (http://hpc.sourceforge.net/) this link (http://prdownloads.sourceforge.net/hpc/gfortran-intel-leopard-bin.tar.gz?download)
 
 = Details =
 
