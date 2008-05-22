@@ -8,6 +8,8 @@ These instructions are for correctly installed Python and SciPy for various Mac 
 
 You may use the installed python but you will need to install SciPy. There are a few ways to do this, but grabbing an installer from this site http://macinscience.org/?page_id=6 seems easiest. The latest update (20 May 2008) installs flawlessly (RR).
 
+PLEASE NOTE: this installs scipy and *ipython*, which must be run from a terminal.  *You must run lagrange using the installed ipython.*
+
 == Intel Mac 10.4 Tiger ==
 
 You will need to install python 2.5. You may get it here (http://www.activestate.com/store/activepython/download/). The SciPy installer is no longer supported but can be found here (http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5). Install issues are unknown at this time after the installation of these two items. (Requires a brand of python called ActivePython which is free)
