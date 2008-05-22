@@ -6,7 +6,7 @@ These instructions are for correctly installed Python and SciPy for various Mac 
 
 == Intel Mac 10.5 Leopard ==
 
-You may use the installed python but you will need to install SciPy. There are a few ways to do this, but grabbing an installer from this site http://macinscience.org/?page_id=6 seems easiest. ~~On my installation I got a fortran error which I solved by installing from this page (http://hpc.sourceforge.net/) this link (http://prdownloads.sourceforge.net/hpc/gfortran-intel-leopard-bin.tar.gz?download) and may be installed with this command  "sudo tar -xvf gfortran-intel-leopard-bin.tar.gz -C /" or "sudo tar -xvf gfortran-intel-leopard-bin.tar -C /" if it is unzipped upon download. Everything should be fine and running. (YOU MAY ALSO NEED TO "cd /usr/local/lib" AND "sudo cp libgfortran.3.dylib libgfortran.2.dylib")~~ The latest update (20 May 2008) install flawlessly (RR).
+You may use the installed python but you will need to install SciPy. There are a few ways to do this, but grabbing an installer from this site http://macinscience.org/?page_id=6 seems easiest. The latest update (20 May 2008) installs flawlessly (RR).
 
 == Intel Mac 10.4 Tiger ==
 
