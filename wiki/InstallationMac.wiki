@@ -8,6 +8,6 @@ Lagrange needs a python language interpreter and a code module called Scipy to r
 
 It is probably easiest to use the Scipy installer from [http://macinscience.org/?page_id=6 Macinscience.org].  *PLEASE NOTE*: this installs scipy and *ipython*, which must be run from a terminal.  *You must run lagrange using the installed ipython.*
 
-== Mac OS X 10.4 Tiger (PPC or Intel) ==
+== Mac OS X 10.4 Tiger (PPC) ==
 
-First you will need to install ActivePython 2.5 from [http://www.activestate.com/store/activepython/download/ ActiveState].  SciPy installers are available from [http://macinscience.org/?page_id=6 Macinscience.org] [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip for PPC] and  [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5.zip for Intel].
+First you will need to install ActivePython 2.5 from [http://www.activestate.com/store/activepython/download/ ActiveState].  SciPy installers are available from [http://macinscience.org/?page_id=6 Macinscience.org] [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip for PPC].
