@@ -10,4 +10,4 @@ It is probably easiest to use the Scipy installer from [http://macinscience.org/
 
 == Mac OS X 10.4 Tiger (PPC or Intel) ==
 
-First you will need to install ActivePython 2.5.1 from [http://www.activestate.com/store/activepython/download/ ActiveState].  SciPy installers are available from Macinscience.org [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip for PPC] and  [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5.zip for Intel].
+First you will need to install ActivePython 2.5.1 from [http://www.activestate.com/store/activepython/download/ ActiveState].  SciPy installers are available from [http://macinscience.org/?page_id=6 Macinscience.org] [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip for PPC] and  [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5.zip for Intel].
