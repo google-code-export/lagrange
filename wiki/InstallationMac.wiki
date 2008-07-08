@@ -1,19 +1,13 @@
-#summary Installation instructions for required python tools in PPC and Intel macs
+#summary Installation instructions for Lagrange requirements on PPC and Intel macs
 #labels Phase-Deploy,Featured
 
-==Introduction==
-These instructions are for correctly installed Python and SciPy for various Mac setups. This is not for "installing" lagrange. Lagrange can be "installed" many ways and can be run from inside the folder as well. However, in order to run lagrange, certain required software must be in place.
+==Software requirements==
+Lagrange needs a python language interpreter and a code module called Scipy to run.  Here is where to obtain these if you're running Mac OS X.
 
-== Intel Mac 10.5 Leopard ==
+== Mac 10.5 Leopard (Intel) ==
 
-You may use the installed python but you will need to install SciPy. There are a few ways to do this, but grabbing an installer from this site http://macinscience.org/?page_id=6 seems easiest. The latest update (20 May 2008) installs flawlessly (RR).
+It is probably easiest to use the Scipy installer from [http://macinscience.org/?page_id=6 Macinscience.org].  *PLEASE NOTE*: this installs scipy and *ipython*, which must be run from a terminal.  *You must run lagrange using the installed ipython.*
 
-PLEASE NOTE: this installs scipy and *ipython*, which must be run from a terminal.  *You must run lagrange using the installed ipython.*
+== Mac OS X 10.4 Tiger (PPC or Intel) ==
 
-== Intel Mac 10.4 Tiger ==
-
-You will need to install python 2.5. You may get it here (http://www.activestate.com/store/activepython/download/). The SciPy installer is no longer supported but can be found here (http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5). Install issues are unknown at this time after the installation of these two items. (Requires a brand of python called ActivePython which is free)
-
-== PPC Mac ==
-
-You will need to install python 2.5. You may get it here (http://www.activestate.com/store/activepython/download/). The SciPy installer is no longer supported but can be found here (http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip). Install issues are unknown at this time after the installation of these two items. (Requires a brand of python called ActivePython which is free)
+First you will need to install ActivePython 2.5.1 from [http://www.activestate.com/store/activepython/download/ ActiveState].  SciPy installers are available from Macinscience.org [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpackInstaller-PPC.zip for PPC] and  [http://idisk.mac.com/fonnesbeck-Public/ScipySuperpack-Intel-10.4-py2.5.zip for Intel].
