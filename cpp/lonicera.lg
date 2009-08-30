@@ -1,0 +1,7 @@
+treefile = lonicera.tre
+datafile = lonicera.data
+calctype = m
+areanames = EA ENA WNA EU
+logfile = logfile
+ancstate = _all_
+report = split
