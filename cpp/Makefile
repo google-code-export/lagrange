@@ -70,7 +70,6 @@ FORT_OBJS := \
 ./mataid.o \
 ./blas.o \
 ./lapack.o \
-./sample_d.o \
 ./my_matexp.o 
 
 
