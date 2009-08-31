@@ -20,6 +20,7 @@ class RateModel{
 	private:
 		int nareas;
 		bool globalext;
+		int numthreads;
 		vector<string> labels;
 		vector<double> periods;
 		vector<vector<int> > dists;
@@ -38,6 +39,8 @@ class RateModel{
 
 	public:
 		RateModel(int na, bool ge, vector<double> pers,bool);
+		void set_nthreads(int nthreads);
+		int get_nthreads();
 		void setup_dists();
 		void setup_dists(vector<vector<int> >, bool);
 		void setup_Dmask();
@@ -50,6 +53,7 @@ class RateModel{
 		vector<vector<double > > setup_fortran_P(int period, double t);
 		vector<vector<double > > setup_sparse_full_P(int period, double t);
 		vector<double > setup_sparse_single_column_P(int period, double t, int column);
+		vector<vector<double > > setup_pthread_sparse_P(int period, double t, vector<int> & columns);
 		string Q_repr(int period);
 		string P_repr(int period);
 		vector<vector<int> > enumerate_dists();

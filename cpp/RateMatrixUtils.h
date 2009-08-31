@@ -2,7 +2,7 @@
  * RateMatrixUtils.h
  *
  *  Created on: Aug 13, 2009
- *      Author: smitty
+ *      Author: Stephen A. Smith
  */
 
 #ifndef RATEMATRIXUTILS_H_
@@ -36,4 +36,19 @@ void convert_matrix_to_single_row_for_fortran(vector<vector<double> > & inmatrix
 vector<vector<vector<double> > > processRateMatrixConfigFile(string filename, int numareas, int nperiods);
 
 vector<int> get_columns_for_sparse(vector<double> &,RateModel *);
+
+/*
+	this is for pthread sparse columns
+ */
+struct sparse_thread_data{
+	int thread_id;
+	vector<int> columns;
+	vector<vector<double> > presults;
+	RateModel * rm;
+	double t;
+	int period;
+};
+
+void * sparse_column_pmatrix_pthread_go(void *threadarg);
+
 #endif /* RATEMATRIXUTILS_H_ */

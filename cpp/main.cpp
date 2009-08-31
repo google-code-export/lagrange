@@ -240,6 +240,8 @@ int main(int argc, char* argv[]){
 			periods.push_back(10000);
 		}
 		RateModel rm(ir.nareas,true,periods,sparse);
+		if(numthreads != 0)
+			rm.set_nthreads(numthreads);
 		rm.setup_Dmask();
 		/*
 		 * if there is a ratematrixfile then it will be processed
@@ -345,7 +347,6 @@ int main(int argc, char* argv[]){
 			 * initial likelihood calculation
 			 */
 			cout << "initial -ln likelihood: " << -log(bgt.eval_likelihood(marginal)) <<endl;
-
 			/*
 			 * optimize likelihood
 			 */
@@ -412,90 +413,5 @@ int main(int argc, char* argv[]){
 		}
 	}
 
-	return 0;
-}
-
-int test_main (void){
-	/*
-	 * reading and using trees
-	 */
-	InputReader ir;
-	vector<TreeTemplate<Node> *> intrees= ir.readMultipleTreeFile("aesculus.tre");
-	map<string,vector<int> > data = ir.readStandardInputData("aesculus.data");
-	ir.checkData(data,intrees);
-
-	/*
-	 * set up basic rate model for now
-	 */
-	vector<double> pers;
-	//pers.push_back(0.1);
-	pers.push_back(200);
-	RateModel rm(ir.nareas,true,pers,true);
-	rm.setup_Dmask();
-
-	//rm.set_Dmask_cell(0,1,2,0.1,true);
-	//rm.set_Dmask_cell(1,1,2,0.2,false);
-	rm.setup_dists();
-	rm.setup_D(0.01);
-	rm.setup_E(0.01);
-	rm.setup_Q();
-
-	/*
-	 * start basic analysis with first tree in file
-	 */
-	//vector<int> dista(4);dista[0] = 1;dista[1] = 0;dista[2] = 0;dista[3] = 0;
-	BioGeoTree bgt(intrees[0],pers);
-	/*for(unsigned int i=0;i<rm.getDists()->size();i++){
-		bool isnot = true;
-		for(unsigned int j=0;j<dista.size();j++){
-			if(dista[j] != rm.getDists()->at(i)[j])
-				isnot = false;
-		}
-		if(isnot == false){
-			bgt.set_excluded_dist(rm.getDists()->at(i),intrees[0]->getRootNode());
-		}
-	}*/
-
-	bgt.set_default_model(&rm);
-	bgt.set_tip_conditionals(data);
-
-	/*
-	 * fossil node test
-	 *
-	vector<string> hankensii; hankensii.push_back("Aesculus_pavia");hankensii.push_back("Aesculus_glabra");
-	vector<string> hickeyi; hickeyi.push_back("Aesculus_turbinata"); hickeyi.push_back("Aesculus_flava");
-	bgt.setFossilatNodeByMRCA(hankensii,2);
-	bgt.setFossilatNodeByMRCA(hickeyi,2);
-
-	vector<string> tip; tip.push_back("Aesculus_pavia");
-	bgt.setFossilatBranchByMRCA(tip,1,5.0);
-
-	*
-	 * fossil branch test
-	 */
-
-	cout << "initial -ln likelihood: " << -log(bgt.eval_likelihood(true)) <<endl;
-
-	cout << "Optimizing -ln likelihood." << endl;
-	OptimizeBioGeo opt(&bgt,&rm,true);
-	vector<double> disext  = opt.optimize_global_dispersal_extinction();
-	cout << "dis: " << disext[0] << " ext: " << disext[1] << endl;
-	rm.setup_D(disext[0]);
-	rm.setup_E(disext[1]);
-	rm.setup_Q();
-	bgt.update_default_model(&rm);
-	cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(true)) <<endl;
-
-
-	/*
-	 * ancestral splits calculation
-	 *
-	vector<AncSplit> ras = bgt.ancstat_calculation(intrees[0]->getRootNode(),dista);
-	for(unsigned int i=0;i<ras.size();i++){
-			cout << -log(ras[i].getLikelihood())<<endl;
-	}*/
-	for(unsigned int i=0;i<intrees.size();i++){
-		delete intrees[i];
-	}
 	return 0;
 }

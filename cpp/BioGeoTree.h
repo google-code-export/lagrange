@@ -41,6 +41,7 @@ class BioGeoTree{
 		clock_t c6;
 		int curancstatenodeid;
 		vector<int> * columns;
+		vector<int> * whichcolumns;
 		RateModel * rootratemodel;
 
 	public:

@@ -48,7 +48,8 @@ CPP_DEPS += \
 	@echo 'Finished building: $<'
 	@echo ' '
 
-LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm
+#requires fortran, bio++ libraries, gsl, and pthread
+LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
 
 FC	= /usr/local/bin/gfortran
 FFLAGS	= -O3

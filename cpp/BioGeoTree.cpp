@@ -155,8 +155,10 @@ void BioGeoTree::set_excluded_dist(vector<int> ind,Node * node){
 double BioGeoTree::eval_likelihood(bool marginal){
 	cleanNodesAndSegs();
 	columns = new vector<int>(rootratemodel->getDists()->size());
+	whichcolumns = new vector<int>();
 	ancdist_conditional_lh(*tree->getRootNode(),marginal);
 	delete columns;
+	delete whichcolumns;
 	return calculate_vector_double_sum(*
 			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
 
@@ -227,18 +229,30 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 					}
 				}
 			}else{//sparse
-				for(unsigned int j=0;j<distrange.size();j++){
-					bool inthere = false;
-					if(columns->at(distrange[j]) == 1)
-						inthere = true;
-					vector<double > p;
-					if(inthere == true){
-						p = rm->setup_sparse_single_column_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),distrange[j]);
-					}else{
-						p = vector<double>(distconds.size(),0);
+				/*
+				 testing pthread version
+				 */
+				if(rm->get_nthreads() > 0){
+					vector<vector<double > > p = rm->setup_pthread_sparse_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),*whichcolumns);
+					for(unsigned int j=0;j<distrange.size();j++){
+						for(unsigned int k=0;k<distconds.size();k++){
+							v->at(distrange[j]) += (distconds.at(k)*p[distrange[j]][k]);
+						}
 					}
-					for(unsigned int k=0;k<distconds.size();k++){
-						v->at(distrange[j]) += (distconds.at(k)*p[k]);
+				}else{
+					for(unsigned int j=0;j<distrange.size();j++){
+						bool inthere = false;
+						if(columns->at(distrange[j]) == 1)
+							inthere = true;
+						vector<double > p;
+						if(inthere == true){
+							p = rm->setup_sparse_single_column_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),distrange[j]);
+						}else{
+							p = vector<double>(distconds.size(),0);
+						}
+						for(unsigned int k=0;k<distconds.size();k++){
+							v->at(distrange[j]) += (distconds.at(k)*p[k]);
+						}
 					}
 				}
 			}
@@ -293,10 +307,13 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 			vector<int> lcols = get_columns_for_sparse(*c1tsegs->at(0).distconds,rootratemodel);
 			vector<int> rcols = get_columns_for_sparse(*c2tsegs->at(0).distconds,rootratemodel);
 			for(unsigned int i=0;i<lcols.size();i++){
-				if(lcols[i]==1 || rcols[i] ==1)
+				if(lcols[i]==1 || rcols[i] ==1){
 					columns->at(i)=1;
-				else
+					if(i!=0)
+						whichcolumns->push_back(i);
+				}else{
 					columns->at(i)=0;
+				}
 			}
 			if(calculate_vector_int_sum(columns)==0){
 				for(unsigned int i=0;i<lcols.size();i++){
