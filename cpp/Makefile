@@ -1,4 +1,4 @@
--include ./makefile.init
+#-include ./makefile.init
 
 RM := rm -rf
 
