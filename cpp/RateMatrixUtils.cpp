@@ -164,18 +164,12 @@ vector<vector<int> > generate_dists_from_num_max_areas(int totalnumareas, int nu
  */
 vector<AncSplit> iter_ancsplits(RateModel *rm, vector<int> & dist){
 	vector<AncSplit> ans;
-	//vector<vector<vector<int> > > splits = rm->iter_dist_splits(dist);
-	vector<vector<vector<int> > > splits = rm->get_iter_dist_splits(dist);
-	if(splits[0].size()>0){
-		int nsplits = splits[0].size();
+	vector<vector<vector<int> > > * splits = rm->get_iter_dist_splits(dist);
+	if(splits->at(0).size()>0){
+		int nsplits = splits->at(0).size();
 		double weight = 1.0/nsplits;
-		for (unsigned int i=0;i<splits[0].size();i++){
-			AncSplit an(rm,dist,splits[0][i],splits[1][i],weight);
-			/*AncSplit an(rm,get_vector_int_index_from_multi_vector_int(dist,*rm->getDists()),
-					get_vector_int_index_from_multi_vector_int(splits[0][i],*rm->getDists()),
-					get_vector_int_index_from_multi_vector_int(splits[1][i],*rm->getDists()),
-					weight);*/
-
+		for (unsigned int i=0;i<splits->at(0).size();i++){
+			AncSplit an(rm,dist,splits->at(0)[i],splits->at(1)[i],weight);
 			ans.push_back(an);
 		}
 	}

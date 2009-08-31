@@ -582,8 +582,8 @@ vector<vector<int> > * RateModel::getDists(){
 	return &dists;
 }
 
-vector<vector<vector<int> > > RateModel::get_iter_dist_splits(vector<int> & dist){
-	return iter_dists[dist];
+vector<vector<vector<int> > > * RateModel::get_iter_dist_splits(vector<int> & dist){
+	return &iter_dists[dist];
 }
 
 /**/

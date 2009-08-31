@@ -56,7 +56,7 @@ class RateModel{
 		vector<vector<vector<int> > > iter_dist_splits(vector<int> & dist);
 		//vector<AncSplit> iter_ancsplits(vector<int> dist);
 		vector<vector<int> > * getDists();
-		vector<vector<vector<int> > > get_iter_dist_splits(vector<int> & dist);
+		vector<vector<vector<int> > > * get_iter_dist_splits(vector<int> & dist);
 		void remove_dist(vector<int> dist);
 		void iter_all_dist_splits();
 		bool sparse;

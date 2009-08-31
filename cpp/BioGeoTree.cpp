@@ -268,81 +268,6 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 	return distconds;
 }
 
-/*
- * sparse conditional calculation
- *
-Vector<double> BioGeoTree::sparse_conditionals(Node & node, bool marginal){
-	Vector<double> distconds;
-	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node.getNodeProperty(seg));
-	distconds = *tsegs->at(0).distconds;
-	for(unsigned int i=0;i<tsegs->size();i++){
-		for(unsigned int j=0;j<distconds.size();j++){
-			tsegs->at(i).distconds->at(j) = distconds.at(j);
-		}
-		RateModel * rm = tsegs->at(i).getModel();
-		Vector<double> * v = new Vector<double> (rootratemodel->getDists()->size(), 0);
-		vector<int> distrange;
-		if (tsegs->at(i).getStartDist().size()>0){//!=NULL
-			//distrange = (model.dist2i[seg.startdist],)
-			int ind1 = get_vector_int_index_from_multi_vector_int(&tsegs->at(i).getStartDist()
-											,rootratemodel->getDists());
-			distrange.push_back(ind1);
-		}else if(tsegs->at(i).getFossilAreas().size()>0){
-			for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
-				distrange.push_back(j);
-			}
-			for(unsigned int k=0;k<distrange.size();k++){
-				bool flag = true;
-				for(unsigned int x = 0;x<tsegs->at(i).getFossilAreas().size();x++){
-					if (tsegs->at(i).getFossilAreas()[x] == 1 && distrange.at(x) == 0){
-						flag = false;
-					}
-				}
-				if(flag == true){
-                    distrange.erase(distrange.begin()+k);
-				}
-			}
-		}else{
-			for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
-				distrange.push_back(j);
-			}
-		}
-		*
-		 * only difference for sparse
-		 *
-
-
-		*
-		 * marginal
-		 *
-		if(marginal == true){
-			for(unsigned int j=0;j<distrange.size();j++){
-				bool inthere = false;
-				if(columns->at(j) == 1)
-					inthere = true;
-				vector<double > p;
-				if(inthere == true){
-					p = rm->setup_sparse_single_column_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),j);
-				}else{
-					p = vector<double>(distconds.size(),0);
-				}
-				for(unsigned int k=0;k<distconds.size();k++){
-					v->at(distrange[j]) += (distconds.at(k)*p[k]);
-				}
-			}
-		}
-		*
-		 * joint reconstruction not here yet
-		 *
-
-		for(unsigned int j=0;j<distconds.size();j++){
-			distconds[j] = v->at(j);
-		}
-		delete v;
-	}
-	return distconds;
-}*/
-
 void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 	Vector<double> distconds(rootratemodel->getDists()->size(), 0);
 	if (node.isLeaf()==false){//is not a tip
@@ -396,15 +321,10 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 				if(cou == 0){
 					vector<AncSplit> ans = iter_ancsplits(rootratemodel,dists->at(i));
 					for (unsigned int j=0;j<ans.size();j++){
-						//int ind1 = get_vector_int_index_from_multi_vector_int(
-						//		&ans[j].getLDescDist(),dists);
 						it = find(dists->begin(),dists->end(),ans[j].getLDescDist());
 						int ind1 = it-dists->begin();
-						//int ind2 = get_vector_int_index_from_multi_vector_int(
-						//		&ans[j].getRDescDist(),dists);
 						it = find(dists->begin(),dists->end(),ans[j].getRDescDist());
 						int ind2 = it-dists->begin() ;
-						//cout << ind2 << " " << it-dists->begin() << endl;
 						double lh_part = v1.at(ind1)*v2.at(ind2);
 						lh += (lh_part * ans[j].getWeight());
 						ans[j].setLikelihood(lh_part);
@@ -504,13 +424,8 @@ void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, b
 				if(cou == 0){
 					vector<AncSplit> ans = iter_ancsplits(rootratemodel,dists->at(i));
 					for (unsigned int j=0;j<ans.size();j++){
-
-						//int ind1 = get_vector_int_index_from_multi_vector_int(
-						//		&ans[j].getLDescDist(),dists);
 						it = find(dists->begin(),dists->end(),ans[j].getLDescDist());
 						int ind1 = it-dists->begin();
-						//int ind2 = get_vector_int_index_from_multi_vector_int(
-						//		&ans[j].getRDescDist(),dists);
 						it = find(dists->begin(),dists->end(),ans[j].getRDescDist());
 						int ind2 = it-dists->begin();
 						double lh_part = v1.at(ind1)*v2.at(ind2);

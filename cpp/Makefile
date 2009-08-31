@@ -1,5 +1,3 @@
-#-include ./makefile.init
-
 RM := rm -rf
 
 CPP_SRCS += \

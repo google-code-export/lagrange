@@ -2,7 +2,7 @@
  * AncSplit.cpp
  *
  *  Created on: Aug 15, 2009
- *      Author: smitty
+ *      Author: Stephen A. Smith
  */
 
 #include "AncSplit.h"
