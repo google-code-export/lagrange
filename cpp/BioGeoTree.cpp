@@ -40,11 +40,10 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	nasp = "ancsplit";
 	ast = "anstate";//current node with ancstate
 	andc = "anc_dist_conditionals";
+	store_p_matrices = false;
+	use_stored_matrices = false;
 	tree = tr;
 	periods = ps;
-	ti = 0;
-	ti2 = 0;
-	ti3 = 0;
 	TreeTemplateTools * ttt = new TreeTemplateTools();
 	/*
 	 * initialize each node with segments
@@ -94,6 +93,14 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 		}
 	}
 	delete ttt;
+}
+
+void BioGeoTree::set_store_p_matrices(bool i){
+	store_p_matrices = i;
+}
+
+void BioGeoTree::set_use_stored_matrices(bool i){
+	use_stored_matrices = i;
 }
 
 void BioGeoTree::cleanNodesAndSegs(){
@@ -222,7 +229,14 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 		 */
 		if(marginal == true){
 			if(sparse == false){
-				vector<vector<double > > p = rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration());
+				
+				vector<vector<double > > p;
+				if(use_stored_matrices == false){
+					p= rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),
+																 store_p_matrices);
+				}else{
+					p = rm->stored_p_matrices[tsegs->at(i).getPeriod()][tsegs->at(i).getDuration()];
+				}
 				for(unsigned int j=0;j<distrange.size();j++){
 					for(unsigned int k=0;k<distconds.size();k++){
 						v->at(distrange[j]) += (distconds.at(k)*p[distrange[j]][k]);
@@ -262,7 +276,7 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 		 */
 		else{
 			if(sparse == false){
-				vector<vector<double > > p = rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration());
+				vector<vector<double > > p = rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),store_p_matrices);
 				for(unsigned int j=0;j<distrange.size();j++){
 					double maxnum = 0;
 					for(unsigned int k=0;k<distconds.size();k++){

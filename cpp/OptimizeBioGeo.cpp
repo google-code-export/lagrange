@@ -7,6 +7,7 @@
 
 #include <math.h>
 #include <vector>
+#include <limits>
 using namespace std;
 
 #include "OptimizeBioGeo.h"
@@ -28,17 +29,18 @@ double OptimizeBioGeo::GetLikelihoodWithOptimizedDispersalExtinction(const gsl_v
 {
 	double dispersal=gsl_vector_get(variables,0);
 	double extinction=gsl_vector_get(variables,1);
+	double like;
 	if(dispersal <= 0 || extinction <= 0)
-		return 100000000;
+		like = 100000000;
 	if(dispersal > 100 || extinction > 100)
-		return 100000000;
+		like = 100000000;
 	rm->setup_D(dispersal);
 	rm->setup_E(extinction);
 	rm->setup_Q();
 	tree->update_default_model(rm);
-	double like = -log(tree->eval_likelihood(marginal));
-	if(like < 0)
-		return 100000000;
+	like = -log(tree->eval_likelihood(marginal));
+	if(like < 0 || like == std::numeric_limits<double>::infinity())
+		like = 100000000;
 	//cout << "dis: "<< dispersal << " ext: " << extinction << " like: "<< like << endl;
 	return like;
 }
@@ -66,7 +68,7 @@ vector<double> OptimizeBioGeo::optimize_global_dispersal_extinction(){
 	/* Initial vertex size vector */
 	ss = gsl_vector_alloc (np);
 	/* Set all step sizes to .01 */ //Note that it was originally 1
-	gsl_vector_set_all (ss, .1);
+	gsl_vector_set_all (ss, .01);
 	/* Starting point */
 	//cout<<"Now in OPtimizaRateWithGivenTipVariance in OptimizationFn"<<endl;
 	x = gsl_vector_alloc (np);

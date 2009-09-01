@@ -315,7 +315,7 @@ extern"C" {
 /*
  * runs the basic padm fortran expokit full matrix exp
  */
-vector<vector<double > > RateModel::setup_fortran_P(int period, double t){
+vector<vector<double > > RateModel::setup_fortran_P(int period, double t, bool store_p_matrices){
 	/*
 	return P, the matrix of dist-to-dist transition probabilities,
 	from the model's rate matrix (Q) over a time duration (t)
@@ -376,6 +376,14 @@ vector<vector<double > > RateModel::setup_fortran_P(int period, double t){
 			}
 		}
 	}*/
+	
+	/*
+	 if store_p_matrices we will store them
+	 */
+	if(store_p_matrices == true){
+		stored_p_matrices[period][t] = p;
+	}
+	
 	if(VERBOSE){
 		cout << "p " << period << " "<< t << endl;
 		for (unsigned int i=0;i<p.size();i++){

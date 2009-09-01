@@ -359,7 +359,9 @@ int main(int argc, char* argv[]){
 				rm.setup_E(disext[1]);
 				rm.setup_Q();
 				bgt.update_default_model(&rm);
+				bgt.set_store_p_matrices(true);
 				cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
+				bgt.set_store_p_matrices(false);
 			}else{
 				cout << "Optimizing (Powell) -ln likelihood." << endl;
 				OptimizeBioGeoPowell opt(&bgt,&rm,marginal);
@@ -377,6 +379,7 @@ int main(int argc, char* argv[]){
 			 * ancestral splits calculation
 			 */
 			if(ancstates.size() > 0){
+				bgt.set_use_stored_matrices(true);
 				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
 					for(unsigned int j=0;j<intrees[i]->getNumberOfNodes();j++){
 						if(intrees[i]->getNode(j)->isLeaf()==false){

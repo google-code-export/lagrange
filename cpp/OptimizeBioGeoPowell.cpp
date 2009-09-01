@@ -273,7 +273,7 @@ double OptimizeBioGeoPowell::func(vector<double> &p){
 		if(like == std::numeric_limits<double>::infinity())
 			like = 10000000;
 	}
-	//cout <<p[0] << " " << p[1] << " " <<  like << endl;
+	cout <<p[0] << " " << p[1] << " " <<  like << endl;
 	return like;
 }
 

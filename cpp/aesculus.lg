@@ -5,7 +5,7 @@ datafile = aesculus.data
 calctype = m
 mrca = hankensii Aesculus_pavia Aesculus_glabra
 mrca = ROOT Aesculus_pavia Aesculus_wilsonii
-#areanames = EA ENA WNA EU
+areanames = EA ENA WNA EU
 logfile = logfile
 
 

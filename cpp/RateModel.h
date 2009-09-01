@@ -36,7 +36,8 @@ class RateModel{
 		vector<vector<int> > ia_s;
 		vector<vector<int> > ja_s;
 		vector<vector<double> > a_s;
-
+		
+	
 	public:
 		RateModel(int na, bool ge, vector<double> pers,bool);
 		void set_nthreads(int nthreads);
@@ -50,7 +51,7 @@ class RateModel{
 		void set_Qdiag(int period);
 		void setup_Q();
 		vector<vector<double > > setup_P(int period, double t);
-		vector<vector<double > > setup_fortran_P(int period, double t);
+		vector<vector<double > > setup_fortran_P(int period, double t, bool store_p_matrices);
 		vector<vector<double > > setup_sparse_full_P(int period, double t);
 		vector<double > setup_sparse_single_column_P(int period, double t, int column);
 		vector<vector<double > > setup_pthread_sparse_P(int period, double t, vector<int> & columns);
@@ -64,6 +65,12 @@ class RateModel{
 		void remove_dist(vector<int> dist);
 		void iter_all_dist_splits();
 		bool sparse;
+		/*
+		 testing storing once optimization has occured
+		 map of period and map of bl and p matrix
+		 map<period,map<branch length,p matrix>>
+		 */
+		map<int,map<double, vector<vector<double> > > > stored_p_matrices;
 };
 
 #endif /* RATEMATRIX_H_ */
