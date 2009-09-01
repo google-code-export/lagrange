@@ -10,11 +10,11 @@ logfile = logfile
 #fixnode = ROOT 1000
 #excludedists = 1100
 #includedists = 1000,0100,0010,0001,1100,1010,1001,0110,0101,0011
-includedists = 3
+#includedists = 3
 #mrca = ONEUP a d
 #ancstate = _all_
 #ancstate = hankensii
 #ancstate = ONEUP
 #report = split
-sparse
+#sparse
 #numthreads = 1

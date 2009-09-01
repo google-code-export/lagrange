@@ -161,11 +161,15 @@ void BioGeoTree::set_excluded_dist(vector<int> ind,Node * node){
 
 double BioGeoTree::eval_likelihood(bool marginal){
 	cleanNodesAndSegs();
-	columns = new vector<int>(rootratemodel->getDists()->size());
-	whichcolumns = new vector<int>();
+	if( rootratemodel->sparse == true){
+		columns = new vector<int>(rootratemodel->getDists()->size());
+		whichcolumns = new vector<int>();
+	}
 	ancdist_conditional_lh(*tree->getRootNode(),marginal);
-	delete columns;
-	delete whichcolumns;
+	if( rootratemodel->sparse == true){
+		delete columns;
+		delete whichcolumns;
+	}
 	return calculate_vector_double_sum(*
 			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
 
@@ -389,9 +393,13 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
  */
 double BioGeoTree::eval_likelihood_ancstate(bool marginal,bpp::Node &startnode){
 	cleanNodesAndSegs();
-	columns = new vector<int>(rootratemodel->getDists()->size());
+	if( rootratemodel->sparse == true){
+		columns = new vector<int>(rootratemodel->getDists()->size());
+	}
 	ancstate_ancdist_conditional_lh(NULL,&startnode,marginal);
-	delete columns;
+	if( rootratemodel->sparse == true){
+		delete columns;
+	}
 	return calculate_vector_double_sum(*
 			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
 }

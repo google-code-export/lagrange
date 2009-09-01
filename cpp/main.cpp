@@ -240,8 +240,10 @@ int main(int argc, char* argv[]){
 			periods.push_back(10000);
 		}
 		RateModel rm(ir.nareas,true,periods,sparse);
-		if(numthreads != 0)
+		if(numthreads != 0){
 			rm.set_nthreads(numthreads);
+			cout << "Setting the number of threads: " << numthreads << endl;
+		}
 		rm.setup_Dmask();
 		/*
 		 * if there is a ratematrixfile then it will be processed
@@ -408,6 +410,7 @@ int main(int argc, char* argv[]){
 				outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
 				outTreeFile.close();
 			}
+			exit(0);
 			//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 
 		}

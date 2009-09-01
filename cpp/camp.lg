@@ -1,4 +1,4 @@
-treefile = thin.tre
+treefile = camp.tre
 datafile = camp.data
 areanames =	SEA	AGC	AZT	MAD	SAF	SA	HOL
 logfile = logfile
@@ -13,3 +13,4 @@ ancstate = _all_
 #ancstate = hankensii
 #ancstate = ONEUP
 #report = split
+#sparse
