@@ -40,6 +40,7 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	nasp = "ancsplit";
 	ast = "anstate";//current node with ancstate
 	andc = "anc_dist_conditionals";
+	tvec = "temporary vector";
 	store_p_matrices = false;
 	use_stored_matrices = false;
 	tree = tr;
@@ -119,7 +120,9 @@ void BioGeoTree::set_default_model(RateModel * mod){
 			tsegs->at(j).distconds = distconds;
 			Vector<double> * ancdistconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
 			tsegs->at(j).ancdistconds = ancdistconds;
-		}
+        }
+        //Vector<double> * tempvec = new Vector<double>(rootratemodel->getDists()->size(), 0);
+        //tree->setNodeProperty(i,tvec,*tempvec);
 	}
 	Vector<double> * distconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
 	tree->getRootNode()->setNodeProperty(dc,*distconds);
@@ -226,14 +229,11 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 			}
 		}
 		/*
-		 * typical case where there is no sparse matrix
-		 */
-		/*
 		 * marginal
 		 */
 		if(marginal == true){
 			if(sparse == false){
-				
+
 				vector<vector<double > > p;
 				if(use_stored_matrices == false){
 					p= rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),
@@ -340,8 +340,8 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 			}
 			columns->at(0) = 0;
 		}
-		v1 = conditionals(*c1,marginal,false,false,sparse);
-		v2 = conditionals(*c2,marginal,false,false,sparse);
+		v1 =conditionals(*c1,marginal,false,false,sparse);
+		v2 =conditionals(*c2,marginal,false,false,sparse);
 
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		Vector<AncSplit> * ancsplits = (Vector<AncSplit> *) node.getNodeProperty(nasp);
@@ -404,6 +404,12 @@ double BioGeoTree::eval_likelihood_ancstate(bool marginal,bpp::Node &startnode){
 			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
 }
 
+/*
+    This calculates the conditionals for internal nodes when calculating ancestral states.
+    The major difference between this and typical conditional calculation is that it calculates
+    down the backbone and therefore requires the node calling this procedure.
+
+ */
 void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, bool marginal){
 	Vector<double> distconds(rootratemodel->getDists()->size(), 0);
 	if (node->isLeaf()==false){//is not a tip
@@ -438,12 +444,12 @@ void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, b
 			columns->at(0) = 0;
 		}
 		if(node->getId() == curancstatenodeid){
-			v1 = conditionals(*c1,marginal,false,true,sparse);
-			v2 = conditionals(*c2,marginal,false,true,sparse);
+			v1 =conditionals(*c1,marginal,false,true,sparse);
+			v2 =conditionals(*c2,marginal,false,true,sparse);
 		}else{
 			if(c1 == fromnode){
-				v1 = conditionals(*c1,marginal,true,true,sparse);
-				v2 = conditionals(*c2,marginal,false,true,sparse);
+				v1 =conditionals(*c1,marginal,true,true,sparse);
+				v2 =conditionals(*c2,marginal,false,true,sparse);
 			}else if(c2 == fromnode){
 				v1 = conditionals(*c1,marginal,false,true,sparse);
 				v2 = conditionals(*c2,marginal,true,true,sparse);
@@ -452,7 +458,7 @@ void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, b
 
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		Vector<AncSplit> * ancsplits = (Vector<AncSplit> *) node->getNodeProperty(nasp);
-		vector<vector<int> >::iterator it;
+//		vector<vector<int> >::iterator it;
 		//cl1 = clock();
 		for (unsigned int i=0;i<dists->size();i++){
 			//if (calculate_vector_int_sum(&dists->at(i)) > 0){

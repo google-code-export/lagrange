@@ -11,7 +11,7 @@ CPP_SRCS += \
 ./RateMatrixUtils.cpp \
 ./RateModel.cpp \
 ./Utils.cpp \
-./main.cpp 
+./main.cpp
 
 OBJS += \
 ./AncSplit.o \
@@ -24,7 +24,7 @@ OBJS += \
 ./RateMatrixUtils.o \
 ./RateModel.o \
 ./Utils.o \
-./main.o 
+./main.o
 
 CPP_DEPS += \
 ./AncSplit.d \
@@ -37,7 +37,7 @@ CPP_DEPS += \
 ./RateMatrixUtils.d \
 ./RateModel.d \
 ./Utils.d \
-./main.d 
+./main.d
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -69,7 +69,7 @@ FORT_OBJS := \
 ./mataid.o \
 ./blas.o \
 ./lapack.o \
-./my_matexp.o 
+./my_matexp.o
 
 
 # All Target

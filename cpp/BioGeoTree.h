@@ -33,6 +33,7 @@ private:
 	string nasp;
 	string ast;
 	string andc;
+	string tvec;
 	clock_t cl1;
 	clock_t cl2;
 	clock_t c3;
@@ -45,7 +46,7 @@ private:
 	RateModel * rootratemodel;
 	bool store_p_matrices;
 	bool use_stored_matrices;
-	
+
 public:
 	BioGeoTree(bpp::TreeTemplate<bpp::Node> * tr, vector<double> ps);
 	void cleanNodesAndSegs();
@@ -55,7 +56,7 @@ public:
 	void set_excluded_dist(vector<int> ind,bpp::Node * node);
 	void set_tip_conditionals(map<string,vector<int> > distrib_data);
 	bpp::Vector<double> conditionals(bpp::Node & node, bool marg, bool , bool, bool);
-	bpp::Vector<double> sparse_conditionals(bpp::Node & node, bool marginal);
+	//, bpp::Vector<double>&);
 	void ancdist_conditional_lh(bpp::Node & node, bool marg);
 	double eval_likelihood_ancstate(bool marginal,bpp::Node & startnode);
 	void ancstate_ancdist_conditional_lh(bpp::Node * fromnode,bpp::Node * node, bool marginal);
@@ -67,7 +68,7 @@ public:
 	void setFossilatBranchByMRCA_id(int id, int fossilarea, double age);
 	void set_store_p_matrices(bool);
 	void set_use_stored_matrices(bool);
-	
+
 	double ti;
 	double ti2;
 	double ti3;

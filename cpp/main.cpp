@@ -20,6 +20,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string.h>
 #include <map>
 #include <math.h>
 using namespace std;
@@ -389,6 +390,7 @@ int main(int argc, char* argv[]){
 							map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
 							tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev);
 							cout << endl;
+							exit(0);
 						}
 					}
 					/*
@@ -410,7 +412,6 @@ int main(int argc, char* argv[]){
 				outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
 				outTreeFile.close();
 			}
-			exit(0);
 			//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 
 		}

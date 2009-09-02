@@ -16,5 +16,5 @@ logfile = logfile
 #ancstate = hankensii
 #ancstate = ONEUP
 #report = split
-#sparse
-#numthreads = 1
+sparse
+numthreads = 2
