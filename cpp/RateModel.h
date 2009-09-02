@@ -26,6 +26,8 @@ class RateModel{
 		vector<vector<int> > dists;
 		map<vector<int>,vector<vector<vector<int> > > > iter_dists;
 		map<vector<int>,string> distsmap;
+		map<vector<int>, int> distsintmap;
+		map<int,vector<int> > intdistsmap;
 		vector< vector< vector<double> > >D;
 		vector< vector< vector<double> > >Dmask;
 		vector< vector<double> > E;
@@ -61,6 +63,8 @@ class RateModel{
 		vector<vector<vector<int> > > iter_dist_splits(vector<int> & dist);
 		//vector<AncSplit> iter_ancsplits(vector<int> dist);
 		vector<vector<int> > * getDists();
+		map<vector<int>,int> * get_dists_int_map();
+		map<int,vector<int> > * get_int_dists_map();
 		vector<vector<vector<int> > > * get_iter_dist_splits(vector<int> & dist);
 		void remove_dist(vector<int> dist);
 		void iter_all_dist_splits();

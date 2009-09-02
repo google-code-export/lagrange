@@ -15,18 +15,20 @@ using namespace std;
 BranchSegment::BranchSegment(double dur,int per){
 	duration = dur;
 	period = per;
+	startdistint = -666;
 }
 
 void BranchSegment::setModel(RateModel * mod){
 	model = mod;
 }
 
-void BranchSegment::setStartDist(vector<int> sd){
+/*void BranchSegment::setStartDist(vector<int> sd){
 	startdist = sd;
-}
+}*/
 
 void BranchSegment::clearStartDist(){
-	startdist.clear();
+	//startdist.clear();
+	startdistint = -666; //null is -666
 }
 
 double BranchSegment::getDuration(){
@@ -36,9 +38,17 @@ double BranchSegment::getDuration(){
 int BranchSegment::getPeriod(){
 	return period;
 }
-
+/*
 vector<int> BranchSegment::getStartDist(){
 	return startdist;
+}*/
+
+void BranchSegment::set_start_dist_int(int d){
+	startdistint = d;
+}
+
+int BranchSegment::get_start_dist_int(){
+	return startdistint;
 }
 
 RateModel * BranchSegment::getModel(){

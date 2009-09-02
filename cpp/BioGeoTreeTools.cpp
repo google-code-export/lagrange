@@ -65,9 +65,11 @@ int BioGeoTreeTools::getLastCommonAncestor(TreeTemplate<bpp::Node> & tree, const
   return lca;
 }
 
-void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > ans,map<int,string>areanamemaprev){
+void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > & ans,map<int,string> &areanamemaprev, RateModel * rm){
 	double best = 0;
 	double sum = 0;
+	int areasize = (*ans.begin()).first.size();
+	map<int, vector<int> > * distmap = rm->get_int_dists_map(); 
 	vector<int> bestldist;
 	vector<int> bestrdist;
 	map<vector<int>,vector<AncSplit> >::iterator it;
@@ -78,8 +80,8 @@ void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSpli
 		for (unsigned int i=0;i<tans.size();i++){
 			if (tans[i].getLikelihood() > best){
 				best = tans[i].getLikelihood();
-				bestldist = tans[i].getLDescDist();
-				bestrdist = tans[i].getRDescDist();
+				bestldist = (*distmap)[tans[i].ldescdistint];//tans[i].getLDescDist();
+				bestrdist = (*distmap)[tans[i].rdescdistint];//tans[i].getRDescDist();
 			}
 			//cout << tans[i].getLikelihood() << endl;
 			sum += tans[i].getLikelihood();
@@ -92,22 +94,27 @@ void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSpli
 			if ((log(best)-log(tans[i].getLikelihood()) ) < 2){
 				string tdisstring ="";
 				int  count1 = 0;
-				for(unsigned int m=0;m<tans[i].getLDescDist().size();m++){
-					if(tans[i].getLDescDist()[m] == 1){
+				for(int m=0;m<areasize;
+					//tans[i].getLDescDist().size();
+					m++){
+					//if(tans[i].getLDescDist()[m] == 1){
+					if((*distmap)[tans[i].ldescdistint][m] == 1){
 						tdisstring += areanamemaprev[m];
 						count1 += 1;
-						if(count1 < calculate_vector_int_sum(&tans[i].getLDescDist())){
+						if(count1 < calculate_vector_int_sum(&(*distmap)[tans[i].ldescdistint])){
 							tdisstring += "_";
 						}
 					}
 
 				}tdisstring += "|";
 				count1 = 0;
-				for(unsigned int m=0;m<tans[i].getRDescDist().size();m++){
-					if(tans[i].getRDescDist()[m] == 1){
+				for(int m=0;m<areasize;
+					//tans[i].getRDescDist().size();
+					m++){
+					if((*distmap)[tans[i].rdescdistint][m] == 1){
 						tdisstring += areanamemaprev[m];
 						count1 += 1;
-						if(count1 < calculate_vector_int_sum(&tans[i].getRDescDist())){
+						if(count1 < calculate_vector_int_sum(&(*distmap)[tans[i].rdescdistint])){
 							tdisstring += "_";
 						}
 					}

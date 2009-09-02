@@ -58,6 +58,18 @@ void RateModel::setup_dists(){
 	 * precalculate the iterdists
 	 */
 	iter_all_dist_splits();
+	/*
+	 calculate the distribution map
+	 */
+	for(unsigned int i=0;i<dists.size();i++){
+		distsintmap[dists[i]] = i;
+	}
+	for(unsigned int i=0;i<dists.size();i++){
+		intdistsmap[i] = dists[i];
+	}
+	/*
+	 print out a visual representation of the matrix
+	 */
 	if (VERBOSE){
 		cout << "dists" <<endl;
 		for (unsigned int j=0; j< dists.size(); j++){
@@ -107,9 +119,21 @@ void RateModel::setup_dists(vector<vector<int> > indists, bool include){
 		}
 	}
 	/*
-	 * precalculate the iterdists
+	precalculate the iterdists
 	 */
 	iter_all_dist_splits();
+	/*
+	calculate the distribution map
+	 */
+	for(unsigned int i=0;i<dists.size();i++){
+		distsintmap[dists[i]] = i;
+	}
+	for(unsigned int i=0;i<dists.size();i++){
+		intdistsmap[i] = dists[i];
+	}
+	/*
+	 print out a visual representation of the matrix
+	 */
 	if (VERBOSE){
 		cout << "dists" <<endl;
 		for (unsigned int j=0; j< dists.size(); j++){
@@ -665,6 +689,14 @@ void RateModel::iter_all_dist_splits(){
 
 vector<vector<int> > * RateModel::getDists(){
 	return &dists;
+}
+
+map<vector<int>,int> * RateModel::get_dists_int_map(){
+	return &distsintmap;
+}
+
+map<int,vector<int> > * RateModel::get_int_dists_map(){
+	return &intdistsmap;
 }
 
 vector<vector<vector<int> > > * RateModel::get_iter_dist_splits(vector<int> & dist){

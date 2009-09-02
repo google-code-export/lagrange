@@ -26,14 +26,14 @@ class AncSplit{
 		double weight;
 		double likelihood;
 	public:
-		AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc);
+		/*AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc);
 		AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc, double we);
-		AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc, double we, double like);
+		AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc, double we, double like);*/
 		AncSplit(RateModel * mod,int,int,int,double);
 		RateModel * getModel();
-		vector<int> getAncDist();
+/*		vector<int> getAncDist();
 		vector<int> getLDescDist();
-		vector<int> getRDescDist();
+		vector<int> getRDescDist();*/
 		double getWeight();
 		double getLikelihood();
 		void setLikelihood(double li);

@@ -11,7 +11,7 @@
 #include <vector>
 using namespace std;
 
-AncSplit::AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc){
+/*AncSplit::AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector<int> rdesc){
 	model = mod;
 	ancdist = dist;
 	ldescdist = ldesc;
@@ -36,7 +36,7 @@ AncSplit::AncSplit(RateModel * mod, vector<int> dist, vector<int > ldesc, vector
 	rdescdist = rdesc;
 	weight = we;
 	likelihood = like;
-}
+}*/
 
 AncSplit::AncSplit(RateModel * mod,int dist,int ldesc,int rdesc,double we){
 	model = mod;
@@ -50,7 +50,7 @@ RateModel * AncSplit::getModel(){
 	return model;
 }
 
-vector<int> AncSplit::getAncDist(){
+/*vector<int> AncSplit::getAncDist(){
 	return ancdist;
 }
 
@@ -60,7 +60,7 @@ vector<int> AncSplit::getLDescDist(){
 
 vector<int> AncSplit::getRDescDist(){
 	return rdescdist;
-}
+}*/
 
 double AncSplit::getWeight(){
 	return weight;

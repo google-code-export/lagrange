@@ -388,9 +388,8 @@ int main(int argc, char* argv[]){
 						if(intrees[i]->getNode(j)->isLeaf()==false){
 							cout << "Ancestral states for:\t" << intrees[i]->getNode(j)->getId() <<endl;
 							map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
-							tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev);
+							tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev,&rm);
 							cout << endl;
-							exit(0);
 						}
 					}
 					/*
@@ -404,7 +403,7 @@ int main(int argc, char* argv[]){
 					for(unsigned int j=0;j<ancstates.size();j++){
 						cout << "Ancestral states for: " << ancstates[j] <<endl;
 						map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-						tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev);
+						tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
 					}
 				}
 				outTreeFile.open((treefile+".bgout.tre").c_str(),ios::app );
