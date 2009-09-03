@@ -55,10 +55,6 @@ void RateModel::setup_dists(){
 		dists.push_back(a[f]);
 	}
 	/*
-	 * precalculate the iterdists
-	 */
-	iter_all_dist_splits();
-	/*
 	 calculate the distribution map
 	 */
 	for(unsigned int i=0;i<dists.size();i++){
@@ -67,6 +63,11 @@ void RateModel::setup_dists(){
 	for(unsigned int i=0;i<dists.size();i++){
 		intdistsmap[i] = dists[i];
 	}
+	/*
+	 * precalculate the iterdists
+	 */
+	iter_all_dist_splits();
+	
 	/*
 	 print out a visual representation of the matrix
 	 */
@@ -119,11 +120,7 @@ void RateModel::setup_dists(vector<vector<int> > indists, bool include){
 		}
 	}
 	/*
-	precalculate the iterdists
-	 */
-	iter_all_dist_splits();
-	/*
-	calculate the distribution map
+	 calculate the distribution map
 	 */
 	for(unsigned int i=0;i<dists.size();i++){
 		distsintmap[dists[i]] = i;
@@ -131,6 +128,11 @@ void RateModel::setup_dists(vector<vector<int> > indists, bool include){
 	for(unsigned int i=0;i<dists.size();i++){
 		intdistsmap[i] = dists[i];
 	}
+	/*
+	precalculate the iterdists
+	 */
+	iter_all_dist_splits();
+	
 	/*
 	 print out a visual representation of the matrix
 	 */
@@ -625,11 +627,9 @@ vector<vector<double > > RateModel::setup_pthread_sparse_P(int period, double t,
 
 
 vector<vector<vector<int> > > RateModel::iter_dist_splits(vector<int> & dist){
-	//assert dist in dists
 	vector< vector <vector<int> > > ret;
 	vector< vector<int> > left;
 	vector< vector<int> > right;
-//	if(calculate_vector_int_sum(&dist) == 1){
 	if(accumulate(dist.begin(),dist.end(),0) == 1){
 		left.push_back(dist);
 		right.push_back(dist);
@@ -640,7 +640,6 @@ vector<vector<vector<int> > > RateModel::iter_dist_splits(vector<int> & dist){
 				vector<int> x(dist.size(),0);
 				x[i] = 1;
 				int cou = count(dists.begin(),dists.end(),x);
-				//if (is_vector_int_in_multi_vector_int(x,dists)){
 				if(cou > 0){
 					left.push_back(x);right.push_back(dist);
 					left.push_back(dist);right.push_back(x);
@@ -653,10 +652,8 @@ vector<vector<vector<int> > > RateModel::iter_dist_splits(vector<int> & dist){
 						}
 					}
 					int cou2 = count(dists.begin(),dists.end(),y);
-					//if (is_vector_int_in_multi_vector_int(y,dists)){
 					if(cou2 > 0){
 						left.push_back(x);right.push_back(y);
-						//if(calculate_vector_int_sum(&y)>1){
 						if(accumulate(y.begin(),y.end(),0) > 1){
 							left.push_back(y);right.push_back(x);
 						}

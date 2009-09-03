@@ -31,9 +31,9 @@ double OptimizeBioGeo::GetLikelihoodWithOptimizedDispersalExtinction(const gsl_v
 	double extinction=gsl_vector_get(variables,1);
 	double like;
 	if(dispersal <= 0 || extinction <= 0)
-		like = 100000000;
+		return 100000000;
 	if(dispersal > 100 || extinction > 100)
-		like = 100000000;
+		return 100000000;
 	rm->setup_D(dispersal);
 	rm->setup_E(extinction);
 	rm->setup_Q();

@@ -22,6 +22,7 @@ int calculate_vector_int_sum_xor(vector<int> & in,vector<int> & in2);
 int locate_vector_int_single_xor(vector<int> & in, vector<int> & in2);
 //bool is_vector_int_equal_to_vector_int(vector<int> &,vector<int> &);
 vector<AncSplit> iter_ancsplits(RateModel *rm, vector<int> & dist);
+void iter_ancsplits_just_int(RateModel *rm, vector<int> & dist,vector<int> & leftdists, vector<int> & rightdists, double & weight);
 void print_vector_int(vector<int> & in);
 void print_vector_double(vector<double> & in);
 int get_vector_int_index_from_multi_vector_int(vector<int> * in, vector<vector<int> > * in2);

@@ -22,7 +22,7 @@ class BioGeoTreeTools {
 		TreeTemplate<Node> * getTreeFromString(string treestring) throw (Exception);
 		vector<int> getAncestors(TreeTemplate<bpp::Node> & tree, int nodeId);
 		int getLastCommonAncestor(TreeTemplate<bpp::Node> & tree, const vector<int>& nodeIds);
-		void summarizeSplits(Node *,map<vector<int>,vector<AncSplit> > &,map<int,string> &, RateModel * rm);
+		void summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > & ans,map<int,string> &areanamemaprev, RateModel * rm);
 		void summarizeAncState(Node,map<vector<int>,vector<AncSplit> >);
 };
 

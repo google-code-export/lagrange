@@ -1,7 +1,8 @@
 treefile = lonicera.tre
 datafile = lonicera.data
 calctype = m
-areanames = EA ENA WNA EU
+areanames = WNA ENA EU EA
 logfile = logfile
 ancstate = _all_
 report = split
+#sparse

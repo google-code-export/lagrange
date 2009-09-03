@@ -30,10 +30,7 @@ private:
 	string age;
 	string dc;
 	string en;
-	string nasp;
-	string ast;
 	string andc;
-	string tvec;
 	clock_t cl1;
 	clock_t cl2;
 	clock_t c3;
@@ -50,18 +47,15 @@ private:
 
 public:
 	BioGeoTree(bpp::TreeTemplate<bpp::Node> * tr, vector<double> ps);
-	void cleanNodesAndSegs();
 	void set_default_model(RateModel * mod);
 	void update_default_model(RateModel * mod);
 	double eval_likelihood(bool marg);
 	void set_excluded_dist(vector<int> ind,bpp::Node * node);
 	void set_tip_conditionals(map<string,vector<int> > distrib_data);
 	bpp::Vector<double> conditionals(bpp::Node & node, bool marg, bool , bool, bool);
-	//, bpp::Vector<double>&);
 	void ancdist_conditional_lh(bpp::Node & node, bool marg);
 	double eval_likelihood_ancstate(bool marginal,bpp::Node & startnode);
 	void ancstate_ancdist_conditional_lh(bpp::Node * fromnode,bpp::Node * node, bool marginal);
-	vector<AncSplit> ancstate_calculation(bpp::Node & node,vector<int> & dist,bool marg);
 	map<vector<int>,vector<AncSplit> > ancstate_calculation_all_dists(bpp::Node & node, bool marginal);
 	void setFossilatNodeByMRCA(vector<string> nodeNames, int fossilarea);
 	void setFossilatNodeByMRCA_id(int id, int fossilarea);

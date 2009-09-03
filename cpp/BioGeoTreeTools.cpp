@@ -18,6 +18,7 @@ using namespace std;
 #include <Phyl/Newick.h>
 #include <Phyl/Tree.h>
 #include <Phyl/TreeTools.h>
+#include <Utils/BppVector.h>
 using namespace bpp;
 
 TreeTemplate<Node> * BioGeoTreeTools::getTreeFromString(string stringtree) throw (Exception)

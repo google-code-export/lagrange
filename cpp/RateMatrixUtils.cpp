@@ -160,7 +160,7 @@ vector<vector<int> > generate_dists_from_num_max_areas(int totalnumareas, int nu
 }
 
 /*
- * TODO: change this to store to memory instead of creating them
+ TODO: change this to store to memory instead of creating them
  */
 vector<AncSplit> iter_ancsplits(RateModel *rm, vector<int> & dist){
 	vector<AncSplit> ans;
@@ -176,6 +176,20 @@ vector<AncSplit> iter_ancsplits(RateModel *rm, vector<int> & dist){
 		}
 	}
 	return ans;
+}
+
+void iter_ancsplits_just_int(RateModel *rm, vector<int> & dist,vector<int> & leftdists, vector<int> & rightdists, double & weight){
+	leftdists.clear();rightdists.clear();
+	vector<vector<vector<int> > > * splits = rm->get_iter_dist_splits(dist);
+	map<vector<int>,int> * distsmap = rm->get_dists_int_map();
+	if(splits->at(0).size()>0){
+		int nsplits = splits->at(0).size();
+		weight = 1.0/nsplits;
+		for (unsigned int i=0;i<splits->at(0).size();i++){
+			leftdists.push_back((*distsmap)[splits->at(0)[i]]);
+			rightdists.push_back((*distsmap)[splits->at(1)[i]]);
+		}
+	}
 }
 
 void print_vector_int(vector<int> & in){

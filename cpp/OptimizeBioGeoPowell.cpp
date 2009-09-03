@@ -31,7 +31,7 @@ namespace {
 
 OptimizeBioGeoPowell::OptimizeBioGeoPowell(BioGeoTree * intree, RateModel * inrm,bool marg){
 	NDIM=2;
-	FTOL=1.0e-6;//accuracy?
+	FTOL=0.001;//stopping criterion fraction
 	ITMAX = 50;
 	CGOLD = 0.3819660;
 	GOLD = 1.618034;
@@ -48,7 +48,7 @@ vector<double> OptimizeBioGeoPowell::optimize_global_dispersal_extinction(){
 	vector<vector<double> > xi = vector<vector<double> > (NDIM,vector<double>(NDIM));
 	for (int i=0;i<NDIM;i++)
 		for (int j=0;j<NDIM;j++)
-			xi[i][j]=(i == j ? 1.0 : 0.0);
+			xi[i][j]=(i == j ? 1.0 : -1.0);
 	powell(p,xi,FTOL,iter,fret);
 /*	cout << "Iterations: " << iter << endl << endl;;
 	cout << "Minimum found at: " << endl;
@@ -262,7 +262,7 @@ double OptimizeBioGeoPowell::f1dim(const double x)
 
 double OptimizeBioGeoPowell::func(vector<double> &p){
 	double like;
-	if (p[0] < 0 || p[1] < 0){
+	if (p[0] <= 0 || p[1] <= 0){
 		like = 10000000;
 	}else{
 		rm->setup_D(p[0]);
@@ -273,7 +273,7 @@ double OptimizeBioGeoPowell::func(vector<double> &p){
 		if(like == std::numeric_limits<double>::infinity())
 			like = 10000000;
 	}
-	cout <<p[0] << " " << p[1] << " " <<  like << endl;
+	//cout <<p[0] << " " << p[1] << " " <<  like << endl;
 	return like;
 }
 

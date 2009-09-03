@@ -2,11 +2,9 @@ treefile = aesculus.tre
 datafile = aesculus.data
 #ratematrix = aesculus.rm
 #periods = 5,100
-calctype = m
-mrca = hankensii Aesculus_pavia Aesculus_glabra
-mrca = ROOT Aesculus_pavia Aesculus_wilsonii
+#mrca = hankensii Aesculus_pavia Aesculus_glabra
+#mrca = ROOT Aesculus_pavia Aesculus_wilsonii
 areanames = EA ENA WNA EU
-logfile = logfile
 
 
 #fixnode = ROOT 1000
@@ -16,5 +14,3 @@ logfile = logfile
 ancstate = _all_
 #ancstate = hankensii
 #ancstate = ROOT
-#report = split
-#sparse

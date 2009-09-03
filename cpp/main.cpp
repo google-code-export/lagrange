@@ -350,6 +350,7 @@ int main(int argc, char* argv[]){
 			 * initial likelihood calculation
 			 */
 			cout << "initial -ln likelihood: " << -log(bgt.eval_likelihood(marginal)) <<endl;
+			//exit(0);
 			/*
 			 * optimize likelihood
 			 */
@@ -402,8 +403,8 @@ int main(int argc, char* argv[]){
 				}else{
 					for(unsigned int j=0;j<ancstates.size();j++){
 						cout << "Ancestral states for: " << ancstates[j] <<endl;
-						map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-						tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
+						//map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
+						//tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
 					}
 				}
 				outTreeFile.open((treefile+".bgout.tre").c_str(),ios::app );

@@ -37,10 +37,7 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	age = "age";
 	dc = "dist_conditionals";
 	en = "excluded_dists";
-	nasp = "ancsplit";
-	ast = "anstate";//current node with ancstate
 	andc = "anc_dist_conditionals";
-	tvec = "temporary vector";
 	store_p_matrices = false;
 	use_stored_matrices = false;
 	tree = tr;
@@ -54,8 +51,6 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 		tree->setNodeProperty(i,seg,*segs);
 		Vector<vector<int> > * ens = new Vector<vector<int> >;
 		tree->setNodeProperty(i,en,*ens);
-		Vector<AncSplit> * ancsplits = new Vector<AncSplit>();
-		tree->setNodeProperty(i,nasp,*ancsplits);
 	}
 	/*
 	 * initialize the actual branch segments for each node
@@ -104,12 +99,6 @@ void BioGeoTree::set_use_stored_matrices(bool i){
 	use_stored_matrices = i;
 }
 
-void BioGeoTree::cleanNodesAndSegs(){
-	for(unsigned int i=0;i<tree->getNumberOfNodes();i++){
-		((bpp::Vector<AncSplit>*) tree->getNodeProperty(i,nasp))->clear();
-	}
-}
-
 void BioGeoTree::set_default_model(RateModel * mod){
 	rootratemodel = mod;
 	for(unsigned int i=0;i<tree->getNumberOfNodes();i++){
@@ -121,8 +110,6 @@ void BioGeoTree::set_default_model(RateModel * mod){
 			Vector<double> * ancdistconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
 			tsegs->at(j).ancdistconds = ancdistconds;
         }
-        //Vector<double> * tempvec = new Vector<double>(rootratemodel->getDists()->size(), 0);
-        //tree->setNodeProperty(i,tvec,*tempvec);
 	}
 	Vector<double> * distconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
 	tree->getRootNode()->setNodeProperty(dc,*distconds);
@@ -163,7 +150,6 @@ void BioGeoTree::set_excluded_dist(vector<int> ind,Node * node){
  */
 
 double BioGeoTree::eval_likelihood(bool marginal){
-	cleanNodesAndSegs();
 	if( rootratemodel->sparse == true){
 		columns = new vector<int>(rootratemodel->getDists()->size());
 		whichcolumns = new vector<int>();
@@ -205,9 +191,7 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 		Vector<double> * v = new Vector<double> (rootratemodel->getDists()->size(), 0);
 		vector<int> distrange;
 		if(tsegs->at(i).get_start_dist_int() != -666){
-		//if (tsegs->at(i).getStartDist().size()>0){//!=NULL
 			int ind1 = tsegs->at(i).get_start_dist_int();
-			//(*rootratemodel->get_dists_int_map())[tsegs->at(i).getStartDist()];
 			distrange.push_back(ind1);
 		}else if(tsegs->at(i).getFossilAreas().size()>0){
 			for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
@@ -323,10 +307,11 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 			bpp::Vector<BranchSegment>* c2tsegs = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
 			vector<int> lcols = get_columns_for_sparse(*c1tsegs->at(0).distconds,rootratemodel);
 			vector<int> rcols = get_columns_for_sparse(*c2tsegs->at(0).distconds,rootratemodel);
+			whichcolumns->clear();
 			for(unsigned int i=0;i<lcols.size();i++){
 				if(lcols[i]==1 || rcols[i] ==1){
 					columns->at(i)=1;
-					if(i!=0)
+					if(i!=0 && count(whichcolumns->begin(),whichcolumns->end(),i) == 0)
 						whichcolumns->push_back(i);
 				}else{
 					columns->at(i)=0;
@@ -343,26 +328,22 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 		v2 =conditionals(*c2,marginal,false,false,sparse);
 
 		vector<vector<int> > * dists = rootratemodel->getDists();
-//		map<vector<int>,int> * distmap = rootratemodel->get_dists_int_map(); 
-		Vector<AncSplit> * ancsplits = (Vector<AncSplit> *) node.getNodeProperty(nasp);
+		vector<int> leftdists;
+		vector<int> rightdists;
+		double weight;
 		//cl1 = clock();
 		for (unsigned int i=0;i<dists->size();i++){
-			//if (calculate_vector_int_sum(&dists->at(i)) > 0){
 			if(accumulate(dists->at(i).begin(),dists->at(i).end(),0) > 0){
 				double lh = 0.0;
 				bpp::Vector<vector<int> >* exdist = ((bpp::Vector<vector<int> >*) node.getNodeProperty(en));
 				int cou = count(exdist->begin(),exdist->end(),dists->at(i));
 				if(cou == 0){
-					vector<AncSplit> ans = iter_ancsplits(rootratemodel,dists->at(i));
-					for (unsigned int j=0;j<ans.size();j++){
-						int ind1 = ans[j].ldescdistint;
-						//(*distmap)[ans[j].getLDescDist()];
-						int ind2 = ans[j].rdescdistint;
-						//(*distmap)[ans[j].getRDescDist()];
+					iter_ancsplits_just_int(rootratemodel,dists->at(i),leftdists,rightdists,weight);
+					for (unsigned int j=0;j<leftdists.size();j++){
+						int ind1 = leftdists[j];
+						int ind2 = rightdists[j];
 						double lh_part = v1.at(ind1)*v2.at(ind2);
-						lh += (lh_part * ans[j].getWeight());
-						ans[j].setLikelihood(lh_part);
-						ancsplits->push_back(ans[j]);
+						lh += (lh_part * weight);
 					}
 				}
 				distconds.at(i)= lh;
@@ -391,13 +372,14 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
  * all ancestral state calculations
  */
 double BioGeoTree::eval_likelihood_ancstate(bool marginal,bpp::Node &startnode){
-	cleanNodesAndSegs();
 	if( rootratemodel->sparse == true){
 		columns = new vector<int>(rootratemodel->getDists()->size());
+		whichcolumns = new vector<int>();
 	}
 	ancstate_ancdist_conditional_lh(NULL,&startnode,marginal);
 	if( rootratemodel->sparse == true){
 		delete columns;
+		delete whichcolumns;
 	}
 	return calculate_vector_double_sum(*
 			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
@@ -429,11 +411,15 @@ void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, b
 			bpp::Vector<BranchSegment>* c2tsegs = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
 			vector<int> lcols = get_columns_for_sparse(*c1tsegs->at(0).distconds,rootratemodel);
 			vector<int> rcols = get_columns_for_sparse(*c2tsegs->at(0).distconds,rootratemodel);
+			whichcolumns->clear();
 			for(unsigned int i=0;i<lcols.size();i++){
-				if(lcols[i]==1 || rcols[i] ==1)
+				if(lcols[i]==1 || rcols[i] ==1){
 					columns->at(i)=1;
-				else
+					if(i!=0 && count(whichcolumns->begin(),whichcolumns->end(),i) == 0)
+						whichcolumns->push_back(i);
+				}else{
 					columns->at(i)=0;
+				}
 			}
 			if(calculate_vector_int_sum(columns)==0){
 				for(unsigned int i=0;i<lcols.size();i++){
@@ -456,26 +442,22 @@ void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, b
 		}
 
 		vector<vector<int> > * dists = rootratemodel->getDists();
-//		map<vector<int>,int> * distmap = rootratemodel->get_dists_int_map(); 
-		Vector<AncSplit> * ancsplits = (Vector<AncSplit> *) node->getNodeProperty(nasp);
 		//cl1 = clock();
+		vector<int> leftdists;
+		vector<int> rightdists;
+		double weight;
 		for (unsigned int i=0;i<dists->size();i++){
-			//if (calculate_vector_int_sum(&dists->at(i)) > 0){
 			if(accumulate(dists->at(i).begin(),dists->at(i).end(),0) > 0){
 				double lh = 0.0;
 				bpp::Vector<vector<int> >* exdist = ((bpp::Vector<vector<int> >*) node->getNodeProperty(en));
 				int cou = count(exdist->begin(),exdist->end(),dists->at(i));
 				if(cou == 0){
-					vector<AncSplit> ans = iter_ancsplits(rootratemodel,dists->at(i));
-					for (unsigned int j=0;j<ans.size();j++){
-						int ind1 = ans[j].ldescdistint;
-						//(*distmap)[ans[j].getLDescDist()];
-						int ind2 = ans[j].rdescdistint;
-						//(*distmap)[ans[j].getRDescDist()];
+					iter_ancsplits_just_int(rootratemodel,dists->at(i),leftdists,rightdists,weight);
+					for (unsigned int j=0;j<leftdists.size();j++){
+						int ind1 = leftdists[j];
+						int ind2 = rightdists[j];
 						double lh_part = v1.at(ind1)*v2.at(ind2);
-						lh += (lh_part * ans[j].getWeight());
-						ans[j].setLikelihood(lh_part);
-						ancsplits->push_back(ans[j]);
+						lh += (lh_part * weight);
 					}
 				}
 				distconds.at(i)= lh;
@@ -503,6 +485,7 @@ void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, b
 	}
 }
 
+/* This is just for a single distribution
 vector<AncSplit> BioGeoTree::ancstate_calculation(bpp::Node & node,vector<int> & dist, bool marginal){
 	vector<AncSplit> ans = iter_ancsplits(rootratemodel,dist);
 	if (node.isLeaf()==false){//is not a tip
@@ -512,9 +495,7 @@ vector<AncSplit> BioGeoTree::ancstate_calculation(bpp::Node & node,vector<int> &
 		bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
 		bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
 		for (unsigned int i=0;i<ans.size();i++){
-			//tsegs1->at(tsegs1->size()-1).setStartDist(ans[i].getLDescDist());
 			tsegs1->at(tsegs1->size()-1).set_start_dist_int(ans[i].ldescdistint);
-			//tsegs2->at(tsegs2->size()-1).setStartDist(ans[i].getRDescDist());
 			tsegs2->at(tsegs2->size()-1).set_start_dist_int(ans[i].rdescdistint);
 			double lh = eval_likelihood_ancstate(marginal,node);
 			ans[i].setLikelihood(lh);
@@ -523,28 +504,25 @@ vector<AncSplit> BioGeoTree::ancstate_calculation(bpp::Node & node,vector<int> &
 		tsegs2->at(tsegs2->size()-1).clearStartDist();
 	}
 	return ans;
-}
+}*/
 
-map<vector<int>,vector<AncSplit> > BioGeoTree::ancstate_calculation_all_dists(bpp::Node & node, bool marginal){
-	curancstatenodeid = node.getId();
+map<vector<int>,vector<AncSplit> >  BioGeoTree::ancstate_calculation_all_dists(bpp::Node & node, bool marginal){
+	curancstatenodeid = node.getId();	
 	map<vector<int>,vector<AncSplit> > ret;
 	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
 		vector<int> dist = rootratemodel->getDists()->at(j);
 		vector<AncSplit> ans = iter_ancsplits(rootratemodel,dist);
 		if (node.isLeaf()==false){//is not a tip
-			//cout << node->getId()<< " " << tree->getRootId() << endl;
 			Node * c1 = node.getSon(0);
 			Node * c2 = node.getSon(1);
 			bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
 			bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
 			for (unsigned int i=0;i<ans.size();i++){
-				//tsegs1->at(tsegs1->size()-1).setStartDist(ans[i].getLDescDist());
 				tsegs1->at(tsegs1->size()-1).set_start_dist_int(ans[i].ldescdistint);
-				//tsegs2->at(tsegs2->size()-1).setStartDist(ans[i].getRDescDist());
 				tsegs2->at(tsegs2->size()-1).set_start_dist_int(ans[i].rdescdistint);
 				double lh = eval_likelihood_ancstate(marginal,node);
-				//cout << lh << endl;
 				ans[i].setLikelihood(lh);
+				//cout << lh << endl;
 			}
 			tsegs1->at(tsegs1->size()-1).clearStartDist();
 			tsegs2->at(tsegs2->size()-1).clearStartDist();
