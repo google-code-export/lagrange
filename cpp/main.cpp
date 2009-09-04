@@ -350,7 +350,6 @@ int main(int argc, char* argv[]){
 			 * initial likelihood calculation
 			 */
 			cout << "initial -ln likelihood: " << -log(bgt.eval_likelihood(marginal)) <<endl;
-			exit(0);
 			/*
 			 * optimize likelihood
 			 */

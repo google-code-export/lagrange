@@ -17,4 +17,4 @@ logfile = logfile
 #ancstate = ONEUP
 #report = split
 sparse
-numthreads = 2
+#numthreads = 2
