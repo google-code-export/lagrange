@@ -335,7 +335,7 @@ void * sparse_column_pmatrix_pthread_go(void *threadarg){
 	/*
 		get each column
 	 */
-	for(unsigned int i=0;i<columns.size();i++){
+    for(unsigned int i=0;i<columns.size();i++){
 		presults.push_back(rm->setup_sparse_single_column_P(period, t, columns[i]));
 	}
 	my_data->presults = presults;

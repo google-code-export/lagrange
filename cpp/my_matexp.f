@@ -71,7 +71,7 @@
          res(j) = w(j)
       enddo
       end subroutine wrapsingledmexpv
-      
+
       subroutine wrapdgpadm(ideg,m,t,H,ldh,wsp,lwsp,ipiv,iexph,
      .                        ns,iflag )
       implicit none

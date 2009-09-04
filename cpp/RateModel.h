@@ -39,7 +39,7 @@ private:
 	vector<vector<int> > ja_s;
 	vector<vector<double> > a_s;
 	void iter_all_dist_splits();
-	
+
 public:
 	RateModel(int na, bool ge, vector<double> pers,bool);
 	void set_nthreads(int nthreads);

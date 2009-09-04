@@ -67,7 +67,7 @@ void RateModel::setup_dists(){
 	 * precalculate the iterdists
 	 */
 	iter_all_dist_splits();
-	
+
 	/*
 	 print out a visual representation of the matrix
 	 */
@@ -132,7 +132,7 @@ void RateModel::setup_dists(vector<vector<int> > indists, bool include){
 	precalculate the iterdists
 	 */
 	iter_all_dist_splits();
-	
+
 	/*
 	 print out a visual representation of the matrix
 	 */
@@ -402,14 +402,14 @@ vector<vector<double > > RateModel::setup_fortran_P(int period, double t, bool s
 			}
 		}
 	}*/
-	
+
 	/*
 	 if store_p_matrices we will store them
 	 */
 	if(store_p_matrices == true){
 		stored_p_matrices[period][t] = p;
 	}
-	
+
 	if(VERBOSE){
 		cout << "p " << period << " "<< t << endl;
 		for (unsigned int i=0;i<p.size();i++){
@@ -560,7 +560,9 @@ vector<double >  RateModel::setup_sparse_single_column_P(int period, double t, i
 }
 
 /*
-	for returning all columns for pthread fortran sparse matrix calculation 
+	for returning all columns for pthread fortran sparse matrix calculation
+
+	NOT GOING TO BE FASTER UNTIL THE FORTRAN CODE GOES TO C
  */
 vector<vector<double > > RateModel::setup_pthread_sparse_P(int period, double t, vector<int> & columns){
 	struct sparse_thread_data thread_data_array[numthreads];
