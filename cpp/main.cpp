@@ -406,6 +406,7 @@ int main(int argc, char* argv[]){
 						//tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
 					}
 				}
+				exit(0);
 				outTreeFile.open((treefile+".bgout.tre").c_str(),ios::app );
 				TreeTemplateTools ttt;
 				outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;

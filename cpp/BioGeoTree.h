@@ -31,12 +31,9 @@ private:
 	string dc;
 	string en;
 	string andc;
-	clock_t cl1;
-	clock_t cl2;
-	clock_t c3;
-	clock_t c4;
-	clock_t c5;
-	clock_t c6;
+	//reverse bits
+	string revB;
+	//end reverse bits
 	int curancstatenodeid;
 	vector<int> * columns;
 	vector<int> * whichcolumns;
@@ -45,8 +42,20 @@ private:
 	bool store_p_matrices;
 	bool use_stored_matrices;
 
+/*
+    benchmark variables
+ */
+	clock_t cl1;
+	clock_t cl2;
+	clock_t c3;
+	clock_t c4;
+	clock_t c5;
+	clock_t c6;
+
 public:
 	BioGeoTree(bpp::TreeTemplate<bpp::Node> * tr, vector<double> ps);
+	void set_store_p_matrices(bool);
+	void set_use_stored_matrices(bool);
 	void set_default_model(RateModel * mod);
 	void update_default_model(RateModel * mod);
 	double eval_likelihood(bool marg);
@@ -57,13 +66,24 @@ public:
 	double eval_likelihood_ancstate(bool marginal,bpp::Node & startnode);
 	void ancstate_ancdist_conditional_lh(bpp::Node * fromnode,bpp::Node * node, bool marginal);
 	map<vector<int>,vector<AncSplit> > ancstate_calculation_all_dists(bpp::Node & node, bool marginal);
+
+/*
+	fossil data
+ */
 	void setFossilatNodeByMRCA(vector<string> nodeNames, int fossilarea);
 	void setFossilatNodeByMRCA_id(int id, int fossilarea);
 	void setFossilatBranchByMRCA(vector<string> nodeNames, int fossilarea, double age);
 	void setFossilatBranchByMRCA_id(int id, int fossilarea, double age);
-	void set_store_p_matrices(bool);
-	void set_use_stored_matrices(bool);
 
+/*
+	for calculating forward and reverse
+ */
+	void calculate_reverse();
+	void reverse(bpp::Node &);
+
+/*
+	for timing things
+ */
 	double ti;
 	double ti2;
 	double ti3;

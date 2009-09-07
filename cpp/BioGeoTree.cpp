@@ -38,6 +38,13 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	dc = "dist_conditionals";
 	en = "excluded_dists";
 	andc = "anc_dist_conditionals";
+	/*
+        reverse bit
+	 */
+	revB  = "revB";
+	/*
+	end of the reverse bits
+	*/
 	store_p_matrices = false;
 	use_stored_matrices = false;
 	tree = tr;
@@ -507,7 +514,7 @@ vector<AncSplit> BioGeoTree::ancstate_calculation(bpp::Node & node,vector<int> &
 }*/
 
 map<vector<int>,vector<AncSplit> >  BioGeoTree::ancstate_calculation_all_dists(bpp::Node & node, bool marginal){
-	curancstatenodeid = node.getId();	
+	curancstatenodeid = node.getId();
 	map<vector<int>,vector<AncSplit> > ret;
 	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
 		vector<int> dist = rootratemodel->getDists()->at(j);
@@ -595,4 +602,33 @@ void BioGeoTree::setFossilatBranchByMRCA_id(int id, int fossilarea, double age){
 	}
 	delete ttt;
 }
+
+
+/************************************************************
+ forward and reverse stuff
+ ************************************************************/
+
+void BioGeoTree::calculate_reverse(){
+    reverse(*tree->getRootNode());
+
+}
+
+void BioGeoTree::reverse(Node & node){
+	Vector<double> * revconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
+	if (node == *tree->getRootNode() == true) {
+		for(int i=0;i<rootratemodel->getDists()->size();i++){
+			revconds->at(i) = 1.0;//prior
+		}
+		node.setNodeProperty(revB,*revconds);
+	}else if(node.isLeaf() == false){
+		//calculate A i 
+		//sum over all alpha k of sister node of the parent times the priors of the speciations 
+		//(weights) times B of parent j
+		for(int i=0;i<rootratemodel->getDists()->size();i++){
+			
+		}
+	}//there should be no else
+}
+
+
 
