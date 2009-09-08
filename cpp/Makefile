@@ -63,7 +63,7 @@ FFLAGS	= -O3
 	@echo 'Finished building: $<'
 	@echo ' '
 
-FORT_OBJS := \
+FORT_OBJS += \
 ./clock.o \
 ./my_expokit.o \
 ./mataid.o \
@@ -85,5 +85,5 @@ lagrange_cpp: $(OBJS) $(FORT_OBJS)
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(FORT_OBJS)$(C++_DEPS)$(EXECUTABLES)$(CC_DEPS)$(C_DEPS)$(CPP_DEPS)$(CXX_DEPS)$(C_UPPER_DEPS) lagrange_cpp
+	-$(RM) $(OBJS) $(FORT_OBJS) $(C++_DEPS) $(EXECUTABLES) $(CC_DEPS) $(C_DEPS) $(CPP_DEPS) $(CXX_DEPS) $(C_UPPER_DEPS) lagrange_cpp
 	-@echo ' '
