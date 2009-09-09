@@ -44,7 +44,7 @@ CPP_DEPS += \
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I/Users/smitty/programming/LIBRARIES/boost_1_39_0 -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I/Users/smitty/programming/LIBRARIES/boost_1_39_0 -arch i386 -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -79,7 +79,7 @@ all: lagrange_cpp
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++ -L/usr/local/lib/ -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
+	g++ -L/usr/local/lib/ -arch i386 -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
