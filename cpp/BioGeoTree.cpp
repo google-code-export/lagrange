@@ -324,10 +324,8 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 			}
 			columns->at(0) = 0;
 		}
-		v1 =conditionals(*c1,marginal,//false,false,
-				sparse);
-		v2 =conditionals(*c2,marginal,//false,false,
-				sparse);
+		v1 =conditionals(*c1,marginal,sparse);
+		v2 =conditionals(*c2,marginal,sparse);
 
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;

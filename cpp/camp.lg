@@ -1,4 +1,4 @@
-treefile = camp.tre
+treefile = camp.one
 datafile = camp.data
 areanames =	SEA	AGC	AZT	MAD	SAF	SA	HOL
 logfile = logfile
@@ -13,5 +13,3 @@ ancstate = _all_
 #ancstate = hankensii
 #ancstate = ONEUP
 #report = split
-#sparse
-#numthreads  =2

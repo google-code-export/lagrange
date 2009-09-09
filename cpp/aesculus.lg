@@ -14,3 +14,5 @@ areanames = EA ENA WNA EU
 ancstate = _all_
 #ancstate = hankensii
 #ancstate = ROOT
+#sparse
+#numthreads=2
