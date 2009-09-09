@@ -34,7 +34,6 @@ private:
 	//reverse bits
 	string revB;
 	//end reverse bits
-	int curancstatenodeid;
 	vector<int> * columns;
 	vector<int> * whichcolumns;
 	RateModel * rootratemodel;
@@ -61,11 +60,8 @@ public:
 	double eval_likelihood(bool marg);
 	void set_excluded_dist(vector<int> ind,bpp::Node * node);
 	void set_tip_conditionals(map<string,vector<int> > distrib_data);
-	bpp::Vector<double> conditionals(bpp::Node & node, bool marg, bool , bool, bool);
+	bpp::Vector<double> conditionals(bpp::Node & node, bool marg, bool sparse);
 	void ancdist_conditional_lh(bpp::Node & node, bool marg);
-	double eval_likelihood_ancstate(bool marginal,bpp::Node & startnode);
-	void ancstate_ancdist_conditional_lh(bpp::Node * fromnode,bpp::Node * node, bool marginal);
-	map<vector<int>,vector<AncSplit> > ancstate_calculation_all_dists(bpp::Node & node, bool marginal);
 
 /*
 	fossil data
@@ -78,8 +74,9 @@ public:
 /*
 	for calculating forward and reverse
  */
-	void calculate_reverse();
+	void prepare_ancstate_reverse();
 	void reverse(bpp::Node &);
+	map<vector<int>,vector<AncSplit> > calculate_ancstate_reverse(bpp::Node & node,bool marg);
 
 /*
 	for timing things
@@ -87,6 +84,7 @@ public:
 	double ti;
 	double ti2;
 	double ti3;
+
 };
 
 #endif /* BIOGEOTREE_H_ */

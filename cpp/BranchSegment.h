@@ -21,7 +21,6 @@ class BranchSegment{
 		double duration;
 		int period;
 		RateModel * model;
-		//vector<int> startdist;
 		vector<int> fossilareaindices;
 		int startdistint;
 
@@ -39,6 +38,7 @@ class BranchSegment{
 		vector<int> getFossilAreas();
 		void setFossilArea(int area);
 		Vector<double> * distconds;
+		Vector<double> alphas;
 		Vector<double> * ancdistconds;//for ancestral state reconstructions
 };
 

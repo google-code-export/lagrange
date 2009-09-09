@@ -5,15 +5,6 @@
  *      Author: Stephen A. Smith
  */
 
-#include "RateMatrixUtils.h"
-#include "BioGeoTreeTools.h"
-#include "RateModel.h"
-#include "BioGeoTree.h"
-#include "OptimizeBioGeo.h"
-#include "OptimizeBioGeoPowell.h"
-#include "InputReader.h"
-#include "Utils.h"
-
 #include <ctime>
 #include <vector>
 #include <stdio.h>
@@ -24,6 +15,15 @@
 #include <map>
 #include <math.h>
 using namespace std;
+
+#include "RateMatrixUtils.h"
+#include "BioGeoTreeTools.h"
+#include "RateModel.h"
+#include "BioGeoTree.h"
+#include "OptimizeBioGeo.h"
+#include "OptimizeBioGeoPowell.h"
+#include "InputReader.h"
+#include "Utils.h"
 
 #include "expm.h"
 
@@ -376,18 +376,18 @@ int main(int argc, char* argv[]){
 				bgt.update_default_model(&rm);
 				cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
 			}
-
-
 			/*
 			 * ancestral splits calculation
 			 */
 			if(ancstates.size() > 0){
 				bgt.set_use_stored_matrices(true);
+				bgt.prepare_ancstate_reverse();
 				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
 					for(unsigned int j=0;j<intrees[i]->getNumberOfNodes();j++){
 						if(intrees[i]->getNode(j)->isLeaf()==false){
 							cout << "Ancestral states for:\t" << intrees[i]->getNode(j)->getId() <<endl;
-							map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
+							map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(j),marginal);
+							//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
 							tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev,&rm);
 							cout << endl;
 						}
@@ -402,17 +402,17 @@ int main(int argc, char* argv[]){
 				}else{
 					for(unsigned int j=0;j<ancstates.size();j++){
 						cout << "Ancestral states for: " << ancstates[j] <<endl;
-						//map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-						//tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
+						map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
+						//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
+						tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
 					}
 				}
-				exit(0);
 				outTreeFile.open((treefile+".bgout.tre").c_str(),ios::app );
 				TreeTemplateTools ttt;
 				outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
 				outTreeFile.close();
+				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 			}
-			//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 
 		}
 		for(unsigned int i=0;i<intrees.size();i++){

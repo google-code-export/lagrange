@@ -171,28 +171,13 @@ double BioGeoTree::eval_likelihood(bool marginal){
 
 }
 
-Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
-						bool curancstate, bool calcancstate, bool sparse){
+Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,bool sparse){
 	Vector<double> distconds;
 	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node.getNodeProperty(seg));
-	if(calcancstate == false){
-		distconds = *tsegs->at(0).distconds;
-	}else{
-		if (curancstate == false){
-			distconds = *tsegs->at(0).distconds;
-		}else{//calc == true and cur == true
-			distconds = *tsegs->at(0).ancdistconds;
-		}
-	}
+	distconds = *tsegs->at(0).distconds;
 	for(unsigned int i=0;i<tsegs->size();i++){
-		if(calcancstate == false){
-			for(unsigned int j=0;j<distconds.size();j++){
+		for(unsigned int j=0;j<distconds.size();j++){
 				tsegs->at(i).distconds->at(j) = distconds.at(j);
-			}
-		}else{
-			for(unsigned int j=0;j<distconds.size();j++){
-				tsegs->at(i).ancdistconds->at(j) = distconds.at(j);
-			}
 		}
 		RateModel * rm = tsegs->at(i).getModel();
 		Vector<double> * v = new Vector<double> (rootratemodel->getDists()->size(), 0);
@@ -268,6 +253,7 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 		}
 		/*
 		 * joint reconstruction
+		 * NOT FINISHED YET -- DONT USE
 		 */
 		else{
 			if(sparse == false){
@@ -287,6 +273,13 @@ Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
 			distconds[j] = v->at(j);
 		}
 		delete v;
+	}
+	/*
+	 * if store is true we want to store the conditionals for each node
+	 * for possible use in ancestral state reconstruction
+	 */
+	if(store_p_matrices == true){
+		tsegs->at(0).alphas = distconds;
 	}
 	return distconds;
 }
@@ -331,8 +324,10 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 			}
 			columns->at(0) = 0;
 		}
-		v1 =conditionals(*c1,marginal,false,false,sparse);
-		v2 =conditionals(*c2,marginal,false,false,sparse);
+		v1 =conditionals(*c1,marginal,//false,false,
+				sparse);
+		v2 =conditionals(*c2,marginal,//false,false,
+				sparse);
 
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;
@@ -372,174 +367,7 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 			((Vector<double>*)node.getNodeProperty(dc))->at(i) = distconds.at(i);
 		}
 	}
-
 }
-
-/*
- * all ancestral state calculations
- */
-double BioGeoTree::eval_likelihood_ancstate(bool marginal,bpp::Node &startnode){
-	if( rootratemodel->sparse == true){
-		columns = new vector<int>(rootratemodel->getDists()->size());
-		whichcolumns = new vector<int>();
-	}
-	ancstate_ancdist_conditional_lh(NULL,&startnode,marginal);
-	if( rootratemodel->sparse == true){
-		delete columns;
-		delete whichcolumns;
-	}
-	return calculate_vector_double_sum(*
-			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
-}
-
-/*
-    This calculates the conditionals for internal nodes when calculating ancestral states.
-    The major difference between this and typical conditional calculation is that it calculates
-    down the backbone and therefore requires the node calling this procedure.
-
- */
-void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, bool marginal){
-	Vector<double> distconds(rootratemodel->getDists()->size(), 0);
-	if (node->isLeaf()==false){//is not a tip
-		Node * c1 = node->getSon(0);
-		Node * c2 = node->getSon(1);
-		RateModel * model;
-		if(node->hasFather()==true){
-			bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node->getNodeProperty(seg));
-			model = tsegs->at(0).getModel();
-		}else{
-			model = rootratemodel;
-		}
-		bool sparse = rootratemodel->sparse;
-		Vector<double> v1;
-		Vector<double> v2;
-		if(sparse == true){
-			bpp::Vector<BranchSegment>* c1tsegs = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
-			bpp::Vector<BranchSegment>* c2tsegs = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
-			vector<int> lcols = get_columns_for_sparse(*c1tsegs->at(0).distconds,rootratemodel);
-			vector<int> rcols = get_columns_for_sparse(*c2tsegs->at(0).distconds,rootratemodel);
-			whichcolumns->clear();
-			for(unsigned int i=0;i<lcols.size();i++){
-				if(lcols[i]==1 || rcols[i] ==1){
-					columns->at(i)=1;
-					if(i!=0 && count(whichcolumns->begin(),whichcolumns->end(),i) == 0)
-						whichcolumns->push_back(i);
-				}else{
-					columns->at(i)=0;
-				}
-			}
-			if(calculate_vector_int_sum(columns)==0){
-				for(unsigned int i=0;i<lcols.size();i++){
-					columns->at(i)=1;
-				}
-			}
-			columns->at(0) = 0;
-		}
-		if(node->getId() == curancstatenodeid){
-			v1 =conditionals(*c1,marginal,false,true,sparse);
-			v2 =conditionals(*c2,marginal,false,true,sparse);
-		}else{
-			if(c1 == fromnode){
-				v1 =conditionals(*c1,marginal,true,true,sparse);
-				v2 =conditionals(*c2,marginal,false,true,sparse);
-			}else if(c2 == fromnode){
-				v1 = conditionals(*c1,marginal,false,true,sparse);
-				v2 = conditionals(*c2,marginal,true,true,sparse);
-			}
-		}
-
-		vector<vector<int> > * dists = rootratemodel->getDists();
-		//cl1 = clock();
-		vector<int> leftdists;
-		vector<int> rightdists;
-		double weight;
-		for (unsigned int i=0;i<dists->size();i++){
-			if(accumulate(dists->at(i).begin(),dists->at(i).end(),0) > 0){
-				double lh = 0.0;
-				bpp::Vector<vector<int> >* exdist = ((bpp::Vector<vector<int> >*) node->getNodeProperty(en));
-				int cou = count(exdist->begin(),exdist->end(),dists->at(i));
-				if(cou == 0){
-					iter_ancsplits_just_int(rootratemodel,dists->at(i),leftdists,rightdists,weight);
-					for (unsigned int j=0;j<leftdists.size();j++){
-						int ind1 = leftdists[j];
-						int ind2 = rightdists[j];
-						double lh_part = v1.at(ind1)*v2.at(ind2);
-						lh += (lh_part * weight);
-					}
-				}
-				distconds.at(i)= lh;
-			}
-		}
-		//cl2 = clock();
-		//ti += cl2-cl1;
-		//cout << ti/CLOCKS_PER_SEC << endl;
-	}else{
-		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node->getNodeProperty(seg));
-		distconds = *tsegs->at(0).distconds;
-	}
-	if(node->hasFather() == true){
-		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node->getNodeProperty(seg));
-		for(unsigned int i=0;i<distconds.size();i++){
-			tsegs->at(0).ancdistconds->at(i) = distconds.at(i);
-		}
-	}else{
-		for(unsigned int i=0;i<distconds.size();i++){
-			((Vector<double>*)node->getNodeProperty(dc))->at(i) = distconds.at(i);
-		}
-	}
-	if(node->hasFather()){
-		ancstate_ancdist_conditional_lh(node,node->getFather(),marginal);
-	}
-}
-
-/* This is just for a single distribution
-vector<AncSplit> BioGeoTree::ancstate_calculation(bpp::Node & node,vector<int> & dist, bool marginal){
-	vector<AncSplit> ans = iter_ancsplits(rootratemodel,dist);
-	if (node.isLeaf()==false){//is not a tip
-		//cout << node->getId()<< " " << tree->getRootId() << endl;
-		Node * c1 = node.getSon(0);
-		Node * c2 = node.getSon(1);
-		bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
-		bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
-		for (unsigned int i=0;i<ans.size();i++){
-			tsegs1->at(tsegs1->size()-1).set_start_dist_int(ans[i].ldescdistint);
-			tsegs2->at(tsegs2->size()-1).set_start_dist_int(ans[i].rdescdistint);
-			double lh = eval_likelihood_ancstate(marginal,node);
-			ans[i].setLikelihood(lh);
-		}
-		tsegs1->at(tsegs1->size()-1).clearStartDist();
-		tsegs2->at(tsegs2->size()-1).clearStartDist();
-	}
-	return ans;
-}*/
-
-map<vector<int>,vector<AncSplit> >  BioGeoTree::ancstate_calculation_all_dists(bpp::Node & node, bool marginal){
-	curancstatenodeid = node.getId();
-	map<vector<int>,vector<AncSplit> > ret;
-	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
-		vector<int> dist = rootratemodel->getDists()->at(j);
-		vector<AncSplit> ans = iter_ancsplits(rootratemodel,dist);
-		if (node.isLeaf()==false){//is not a tip
-			Node * c1 = node.getSon(0);
-			Node * c2 = node.getSon(1);
-			bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
-			bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
-			for (unsigned int i=0;i<ans.size();i++){
-				tsegs1->at(tsegs1->size()-1).set_start_dist_int(ans[i].ldescdistint);
-				tsegs2->at(tsegs2->size()-1).set_start_dist_int(ans[i].rdescdistint);
-				double lh = eval_likelihood_ancstate(marginal,node);
-				ans[i].setLikelihood(lh);
-				//cout << lh << endl;
-			}
-			tsegs1->at(tsegs1->size()-1).clearStartDist();
-			tsegs2->at(tsegs2->size()-1).clearStartDist();
-		}
-		ret[dist] = ans;
-	}
-	curancstatenodeid = NULL;
-	return ret;
-}
-
 
 /*
  * ********************************************
@@ -607,28 +435,112 @@ void BioGeoTree::setFossilatBranchByMRCA_id(int id, int fossilarea, double age){
 /************************************************************
  forward and reverse stuff
  ************************************************************/
-
-void BioGeoTree::calculate_reverse(){
+//add joint
+void BioGeoTree::prepare_ancstate_reverse(){
     reverse(*tree->getRootNode());
-
 }
 
+/*
+ * called from prepare_ancstate_reverse and that is all
+ */
 void BioGeoTree::reverse(Node & node){
-	Vector<double> * revconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
-	if (node == *tree->getRootNode() == true) {
-		for(int i=0;i<rootratemodel->getDists()->size();i++){
+	Vector<double> * revconds = new Vector<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
+	if (node == *tree->getRootNode()) {
+		for(unsigned int i=0;i<rootratemodel->getDists()->size();i++){
 			revconds->at(i) = 1.0;//prior
 		}
 		node.setNodeProperty(revB,*revconds);
+		for(unsigned int i = 0;i<node.getNumberOfSons();i++){
+			reverse(*node.getSon(i));
+		}
 	}else if(node.isLeaf() == false){
 		//calculate A i 
 		//sum over all alpha k of sister node of the parent times the priors of the speciations 
 		//(weights) times B of parent j
-		for(int i=0;i<rootratemodel->getDists()->size();i++){
-			
+		Vector<double> * parrev = ((Vector<double>*)node.getFather()->getNodeProperty(revB));
+		Vector<double> sisdistconds;
+		if(node.getFather()->getSon(0) != &node){
+			bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node.getFather()->getSon(0)->getNodeProperty(seg));
+			sisdistconds = tsegs->at(0).alphas;
+		}else{
+			bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node.getFather()->getSon(1)->getNodeProperty(seg));
+			sisdistconds = tsegs->at(0).alphas;
+		}
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		vector<int> leftdists;
+		vector<int> rightdists;
+		double weight;
+		//cl1 = clock();
+		Vector<double> tempA (rootratemodel->getDists()->size(),0);
+		for (unsigned int i = 0; i < dists->size(); i++) {
+			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+				bpp::Vector<vector<int> >* exdist =
+						((bpp::Vector<vector<int> >*) node.getNodeProperty(en));
+				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+				if (cou == 0) {
+					iter_ancsplits_just_int(rootratemodel, dists->at(i),
+							leftdists, rightdists, weight);
+					//root has i, curnode has left, sister of cur has right
+					for (unsigned int j = 0; j < leftdists.size(); j++) {
+						int ind1 = leftdists[j];
+						int ind2 = rightdists[j];
+						tempA[ind1] += (sisdistconds.at(ind2)*weight*parrev->at(i));
+					}
+				}
+			}
+		}
+
+		//now calculate node B
+		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node.getNodeProperty(seg));
+		for(unsigned int k=0;k<tsegs->size();k++){
+			RateModel * rm = tsegs->at(k).getModel();
+			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
+			for(unsigned int j=0;j < dists->size();j++){
+				if(accumulate(dists->at(j).begin(), dists->at(j).end(), 0) > 0){
+					for (unsigned int i = 0; i < dists->size(); i++) {
+						if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+							revconds->at(j) += tempA[i]*((*p)[i][j]);
+						}
+					}
+				}
+			}
+		}
+		node.setNodeProperty(revB,*revconds);
+		for(unsigned int i = 0;i<node.getNumberOfSons();i++){
+			reverse(*node.getSon(i));
 		}
 	}//there should be no else
 }
 
+map<vector<int>,vector<AncSplit> > BioGeoTree::calculate_ancstate_reverse(Node & node,bool marg){
+	Vector<double> * Bs = (Vector<double> *) node.getNodeProperty(revB);
+	map<vector<int>,vector<AncSplit> > ret;
+	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
+		vector<int> dist = rootratemodel->getDists()->at(j);
+		vector<AncSplit> ans = iter_ancsplits(rootratemodel,dist);
+		if (node.isLeaf()==false){//is not a tip
+			Node * c1 = node.getSon(0);
+			Node * c2 = node.getSon(1);
+			bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
+			bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
+			for (unsigned int i=0;i<ans.size();i++){
+				Vector<double> v1  =tsegs1->at(0).alphas;
+				Vector<double> v2 = tsegs2->at(0).alphas;
+				double lh = (v1[ans[i].ldescdistint]*v2[ans[i].rdescdistint]*Bs->at(j)*ans[i].getWeight());
+				ans[i].setLikelihood(lh);
+				//cout << lh << endl;
+			}
+		}
+		ret[dist] = ans;
+	}
+/*	cout << "Ancestral state for " << node.getId() << endl;
+	tt.summarizeSplits(&node,ret,areanamemaprev,rootratemodel);
+	for(unsigned int i = 0;i<node.getNumberOfSons();i++){
+		if(node.getSon(i)->isLeaf()==false){
+			reverse_ancstate(*node.getSon(i),areanamemaprev);
+		}
+	}*/
+	return ret;
+}
 
 
