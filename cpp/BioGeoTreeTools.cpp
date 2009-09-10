@@ -154,7 +154,53 @@ void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSpli
 	//cout << -log(best) << " "<< best/sum << endl;
 }
 
-void BioGeoTreeTools::summarizeAncState(Node node,map<vector<int>,vector<AncSplit> > ans){
-
+void BioGeoTreeTools::summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm){
+	double best = 0;
+	double sum = 0;
+	int areasize = rm->get_num_areas();
+	map<int, vector<int> > * distmap = rm->get_int_dists_map(); 
+	vector<int> bestancdist;
+	map<double,string > printstring;
+	for(unsigned int i=0;i<ans.size();i++){
+		if (ans[i] > best){
+			best = ans[i];
+			bestancdist = (*distmap)[i];
+		}
+		sum += ans[i];
+	}
+	for(unsigned int i=0;i<ans.size();i++){
+		if ((log(best)-log(ans[i]) ) < 2){
+			string tdisstring ="";
+			int  count1 = 0;
+			for(int m=0;m<areasize;m++){
+				if((*distmap)[i][m] == 1){
+					tdisstring += areanamemaprev[m];
+					count1 += 1;
+					if(count1 < calculate_vector_int_sum(&(*distmap)[i])){
+						tdisstring += "_";
+					}
+				}
+			}
+			printstring[-ans[i]] = tdisstring;
+		}
+	}
+ 	map<double,string >::iterator pit;
+	for(pit=printstring.begin();pit != printstring.end();pit++){
+		cout << "\t" << (*pit).second << "\t" << (-(*pit).first)/sum << "\t(" << -log(-(*pit).first) << ")"<< endl;
+	}
+	bpp::String disstring ="";
+	int  count = 0;
+	for(unsigned int m=0;m<bestancdist.size();m++){
+		if(bestancdist[m] == 1){
+			disstring += areanamemaprev[m];
+			count += 1;
+			//if(count < calculate_vector_int_sum(&bestldist))
+			if(count < accumulate(bestancdist.begin(),bestancdist.end(),0))
+				disstring += "_";
+		}
+	}
+	string spl = "state";
+	node->setBranchProperty(spl,disstring);
+	//cout << -log(best) << " "<< best/sum << endl;	
 }
 

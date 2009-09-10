@@ -18,8 +18,8 @@ using namespace std;
 
 class RateModel{
 private:
-	int nareas;
 	bool globalext;
+	int nareas;
 	int numthreads;
 	vector<string> labels;
 	vector<double> periods;
@@ -68,6 +68,7 @@ public:
 	vector<vector<vector<int> > > * get_iter_dist_splits(vector<int> & dist);
 	void remove_dist(vector<int> dist);
 	bool sparse;
+	int get_num_areas();
 	/*
 	 testing storing once optimization has occured
 	 map of period and map of bl and p matrix

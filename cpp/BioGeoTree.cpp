@@ -510,7 +510,11 @@ void BioGeoTree::reverse(Node & node){
 	}//there should be no else
 }
 
-map<vector<int>,vector<AncSplit> > BioGeoTree::calculate_ancstate_reverse(Node & node,bool marg){
+/*
+ * calculates the most likely split (not state) -- the traditional result for lagrange
+ */
+
+map<vector<int>,vector<AncSplit> > BioGeoTree::calculate_ancsplit_reverse(Node & node,bool marg){
 	Vector<double> * Bs = (Vector<double> *) node.getNodeProperty(revB);
 	map<vector<int>,vector<AncSplit> > ret;
 	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
@@ -531,14 +535,48 @@ map<vector<int>,vector<AncSplit> > BioGeoTree::calculate_ancstate_reverse(Node &
 		}
 		ret[dist] = ans;
 	}
-/*	cout << "Ancestral state for " << node.getId() << endl;
-	tt.summarizeSplits(&node,ret,areanamemaprev,rootratemodel);
-	for(unsigned int i = 0;i<node.getNumberOfSons();i++){
-		if(node.getSon(i)->isLeaf()==false){
-			reverse_ancstate(*node.getSon(i),areanamemaprev);
-		}
-	}*/
 	return ret;
+}
+
+/*
+ * calculates the ancestral area over all the possible splits
+ */
+
+vector<double> BioGeoTree::calculate_ancstate_reverse(Node & node,bool marg){
+	if (node.isLeaf()==false){//is not a tip
+		Vector<double> * Bs = (Vector<double> *) node.getNodeProperty(revB);
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		vector<int> leftdists;
+		vector<int> rightdists;
+		double weight;
+		Node * c1 = node.getSon(0);
+		Node * c2 = node.getSon(1);
+		bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
+		bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
+		Vector<double> v1  =tsegs1->at(0).alphas;
+		Vector<double> v2 = tsegs2->at(0).alphas;
+		//cl1 = clock();
+		Vector<double> LHOODS (rootratemodel->getDists()->size(),0);
+		for (unsigned int i = 0; i < dists->size(); i++) {
+			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+				bpp::Vector<vector<int> >* exdist =
+				((bpp::Vector<vector<int> >*) node.getNodeProperty(en));
+				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+				if (cou == 0) {
+					iter_ancsplits_just_int(rootratemodel, dists->at(i),
+											leftdists, rightdists, weight);
+					for (unsigned int j=0;j<leftdists.size();j++){
+						int ind1 = leftdists[j];
+						int ind2 = rightdists[j];
+						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
+					}
+					LHOODS[i] *= Bs->at(i);
+				}
+			}
+		}
+		return LHOODS;
+	}
+	
 }
 
 

@@ -702,6 +702,8 @@ vector<vector<vector<int> > > * RateModel::get_iter_dist_splits(vector<int> & di
 	return &iter_dists[dist];
 }
 
+int RateModel::get_num_areas(){return nareas;}
+
 /**/
 
 

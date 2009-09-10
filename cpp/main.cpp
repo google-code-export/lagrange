@@ -64,7 +64,8 @@ int main(int argc, char* argv[]){
 		vector<double> fossilage;//0's for N type and # for B type
 
 		bool marginal = true; // false means joint
-		bool splits = true;
+		bool splits = false;
+		bool states = false;
 		int numthreads = 0;
 		bool sparse = false;
 
@@ -202,6 +203,10 @@ int main(int argc, char* argv[]){
 						}
 					}else if(!strcmp(tokens[0].c_str(),  "sparse")){
 						sparse = true;
+					}else if(!strcmp(tokens[0].c_str(),  "splits")){
+						splits = true;
+					}else if(!strcmp(tokens[0].c_str(),  "states")){
+						states = true;
 					}else if(!strcmp(tokens[0].c_str(),  "numthreads")){
 						numthreads = atoi(tokens[1].c_str());
 					}
@@ -385,11 +390,19 @@ int main(int argc, char* argv[]){
 				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
 					for(unsigned int j=0;j<intrees[i]->getNumberOfNodes();j++){
 						if(intrees[i]->getNode(j)->isLeaf()==false){
-							cout << "Ancestral states for:\t" << intrees[i]->getNode(j)->getId() <<endl;
-							map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(j),marginal);
-							//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
-							tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev,&rm);
-							cout << endl;
+							if(splits){
+								cout << "Ancestral splits for:\t" << intrees[i]->getNode(j)->getId() <<endl;
+								map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancsplit_reverse(*intrees[i]->getNode(j),marginal);
+								//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
+								tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev,&rm);
+								cout << endl;
+							}
+							if(states){
+								cout << "Ancestral states for:\t" << intrees[i]->getNode(j)->getId() <<endl;
+								vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(j),marginal);
+								tt.summarizeAncState(intrees[i]->getNode(j),rast,areanamemaprev,&rm);
+								cout << endl;
+							}
 						}
 					}
 					/*
@@ -401,16 +414,30 @@ int main(int argc, char* argv[]){
 					outTreeKeyFile.close();
 				}else{
 					for(unsigned int j=0;j<ancstates.size();j++){
-						cout << "Ancestral states for: " << ancstates[j] <<endl;
-						map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-						//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-						tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
+						if(splits){
+							cout << "Ancestral splits for: " << ancstates[j] <<endl;
+							map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancsplit_reverse(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
+							tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
+						}
+						if(states){
+							cout << "Ancestral splits for: " << ancstates[j] <<endl;
+							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
+							tt.summarizeAncState(intrees[i]->getNode(mrcanodeint[ancstates[j]]),rast,areanamemaprev,&rm);
+						}
 					}
 				}
-				outTreeFile.open((treefile+".bgout.tre").c_str(),ios::app );
-				TreeTemplateTools ttt;
-				outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
-				outTreeFile.close();
+				if(splits){
+					outTreeFile.open((treefile+".bgsplits.tre").c_str(),ios::app );
+					TreeTemplateTools ttt;
+					outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
+					outTreeFile.close();
+				}
+				if(states){
+					TreeTemplateTools ttt;
+					outTreeFile.open((treefile+".bgstates.tre").c_str(),ios::app );
+					outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"state") << ";"<< endl;
+					outTreeFile.close();
+				}
 				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 			}
 

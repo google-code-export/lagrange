@@ -76,7 +76,8 @@ public:
  */
 	void prepare_ancstate_reverse();
 	void reverse(bpp::Node &);
-	map<vector<int>,vector<AncSplit> > calculate_ancstate_reverse(bpp::Node & node,bool marg);
+	map<vector<int>,vector<AncSplit> > calculate_ancsplit_reverse(bpp::Node & node,bool marg);
+	vector<double> calculate_ancstate_reverse(bpp::Node & node,bool marg);
 
 /*
 	for timing things
@@ -84,7 +85,6 @@ public:
 	double ti;
 	double ti2;
 	double ti3;
-
 };
 
 #endif /* BIOGEOTREE_H_ */

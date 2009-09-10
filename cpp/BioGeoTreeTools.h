@@ -23,7 +23,7 @@ class BioGeoTreeTools {
 		vector<int> getAncestors(TreeTemplate<bpp::Node> & tree, int nodeId);
 		int getLastCommonAncestor(TreeTemplate<bpp::Node> & tree, const vector<int>& nodeIds);
 		void summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > & ans,map<int,string> &areanamemaprev, RateModel * rm);
-		void summarizeAncState(Node,map<vector<int>,vector<AncSplit> >);
+		void summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm);
 };
 
 #endif /* PHYLOTREE_H_ */

@@ -12,4 +12,5 @@ logfile = logfile
 ancstate = _all_
 #ancstate = hankensii
 #ancstate = ONEUP
-#report = split
+#states
+splits
