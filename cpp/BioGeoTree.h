@@ -15,6 +15,7 @@ using namespace std;
 
 #include "RateModel.h"
 #include "AncSplit.h"
+#include "BranchSegment.h"
 
 #include <Phyl/TreeTemplateTools.h>
 #include <Phyl/TreeTemplate.h>
@@ -25,6 +26,7 @@ using namespace std;
 class BioGeoTree{
 private:
 	bpp::TreeTemplate<bpp::Node> * tree;
+	int numofnodes;
 	vector<double> periods;
 	string seg;
 	string age;
@@ -41,9 +43,9 @@ private:
 	bool store_p_matrices;
 	bool use_stored_matrices;
 
-/*
-    benchmark variables
- */
+	/*
+	 * benchmark variables
+	 */
 	clock_t cl1;
 	clock_t cl2;
 	clock_t c3;

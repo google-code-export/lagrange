@@ -48,12 +48,13 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	store_p_matrices = false;
 	use_stored_matrices = false;
 	tree = tr;
+	numofnodes = tree->getNumberOfNodes();
 	periods = ps;
 	TreeTemplateTools * ttt = new TreeTemplateTools();
 	/*
 	 * initialize each node with segments
 	 */
-	for (unsigned int i=0;i<tree->getNumberOfNodes();i++){
+	for (int i=0;i<numofnodes;i++){
 		Vector<BranchSegment> * segs = new Vector<BranchSegment>();
 		tree->setNodeProperty(i,seg,*segs);
 		Vector<vector<int> > * ens = new Vector<vector<int> >;
@@ -62,7 +63,7 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	/*
 	 * initialize the actual branch segments for each node
 	 */
-	for (unsigned int i=0;i<tree->getNumberOfNodes();i++){
+	for (int i=0;i<numofnodes;i++){
 		if (tree->getNode(i)->hasFather()){
 			vector<double> pers(periods);
 			double anc = ttt->getHeight(*tree->getNode(i)->getFather());
@@ -108,7 +109,7 @@ void BioGeoTree::set_use_stored_matrices(bool i){
 
 void BioGeoTree::set_default_model(RateModel * mod){
 	rootratemodel = mod;
-	for(unsigned int i=0;i<tree->getNumberOfNodes();i++){
+	for(int i=0;i<numofnodes;i++){
 		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(i)->getNodeProperty(seg));
 		for(unsigned int j=0;j<tsegs->size();j++){
 			tsegs->at(j).setModel(mod);
@@ -126,7 +127,7 @@ void BioGeoTree::set_default_model(RateModel * mod){
 
 void BioGeoTree::update_default_model(RateModel * mod){
 	rootratemodel = mod;
-	for(unsigned int i=0;i<tree->getNumberOfNodes();i++){
+	for(int i=0;i<numofnodes;i++){
 		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(i)->getNodeProperty(seg));
 		for(unsigned int j=0;j<tsegs->size();j++){
 			tsegs->at(j).setModel(mod);
