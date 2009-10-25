@@ -54,20 +54,29 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 	/*
 	 * initialize each node with segments
 	 */
+	cout << "initializing nodes..." << endl;
 	for (int i=0;i<numofnodes;i++){
+		tree_get_node_from_id[i] = tree->getNode(i);
 		Vector<BranchSegment> * segs = new Vector<BranchSegment>();
-		tree->setNodeProperty(i,seg,*segs);
-		Vector<vector<int> > * ens = new Vector<vector<int> >;
-		tree->setNodeProperty(i,en,*ens);
+		tree_get_node_from_id[i]->setNodeProperty(seg,*segs);
+		//tree->setNodeProperty(i,seg,*segs);
+		Vector<vector<int> > * ens = new Vector<vector<int> >();
+		//tree->setNodeProperty(i,en,*ens);
+		tree_get_node_from_id[i]->setNodeProperty(en,*ens);
 	}
+
 	/*
 	 * initialize the actual branch segments for each node
 	 */
+	cout << "initializing branch segments..." << endl;
 	for (int i=0;i<numofnodes;i++){
-		if (tree->getNode(i)->hasFather()){
+		//if (tree->getNode(i)->hasFather()){
+		if (tree_get_node_from_id[i]->hasFather()){
 			vector<double> pers(periods);
-			double anc = ttt->getHeight(*tree->getNode(i)->getFather());
-			double des = ttt->getHeight(*tree->getNode(i));
+			//double anc = ttt->getHeight(*tree->getNode(i)->getFather());
+			//double des = ttt->getHeight(*tree->getNode(i));
+			double anc = ttt->getHeight(*tree_get_node_from_id[i]->getFather());
+			double des = ttt->getHeight(*tree_get_node_from_id[i]);
 			//assert anc > des
 			double t = des;
 			if (pers.size() > 0){
@@ -82,7 +91,8 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 						double duration = min(s-t,anc-t);
 						if (duration > 0){
 							BranchSegment tseg = BranchSegment(duration,j);
-							((bpp::Vector<BranchSegment>*) tree->getNodeProperty(i,seg))->push_back(tseg);
+							//((bpp::Vector<BranchSegment>*) tree->getNodeProperty(i,seg))->push_back(tseg);
+							((bpp::Vector<BranchSegment>*) tree_get_node_from_id[i]->getNodeProperty(seg))->push_back(tseg);
 						}
 						t += pers[j];
 					}
@@ -91,8 +101,10 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 					}
 				}
 			}else{
-				BranchSegment tseg = BranchSegment(tree->getNode(i)->getDistanceToFather(),0);
-				((bpp::Vector<BranchSegment>*) tree->getNodeProperty(i,seg))->push_back(tseg);
+				//BranchSegment tseg = BranchSegment(tree->getNode(i)->getDistanceToFather(),0);
+				//((bpp::Vector<BranchSegment>*) tree->getNodeProperty(i,seg))->push_back(tseg);
+				BranchSegment tseg = BranchSegment(tree_get_node_from_id[i]->getDistanceToFather(),0);
+				((bpp::Vector<BranchSegment>*) tree_get_node_from_id[i]->getNodeProperty(seg))->push_back(tseg);
 			}
 		}
 	}
@@ -110,7 +122,8 @@ void BioGeoTree::set_use_stored_matrices(bool i){
 void BioGeoTree::set_default_model(RateModel * mod){
 	rootratemodel = mod;
 	for(int i=0;i<numofnodes;i++){
-		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(i)->getNodeProperty(seg));
+		//bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(i)->getNodeProperty(seg));
+		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree_get_node_from_id[i]->getNodeProperty(seg));
 		for(unsigned int j=0;j<tsegs->size();j++){
 			tsegs->at(j).setModel(mod);
 			Vector<double> * distconds = new Vector<double> (rootratemodel->getDists()->size(), 0);
@@ -128,7 +141,8 @@ void BioGeoTree::set_default_model(RateModel * mod){
 void BioGeoTree::update_default_model(RateModel * mod){
 	rootratemodel = mod;
 	for(int i=0;i<numofnodes;i++){
-		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(i)->getNodeProperty(seg));
+		//bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(i)->getNodeProperty(seg));
+		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree_get_node_from_id[i]->getNodeProperty(seg));
 		for(unsigned int j=0;j<tsegs->size();j++){
 			tsegs->at(j).setModel(mod);
 		}
@@ -136,11 +150,16 @@ void BioGeoTree::update_default_model(RateModel * mod){
 }
 
 void BioGeoTree::set_tip_conditionals(map<string,vector<int> > distrib_data){
-	for(unsigned int i=0;i<tree->getNumberOfLeaves();i++){
-		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getLeaves().at(i)->getNodeProperty(seg));
+	int numofleaves = tree->getNumberOfLeaves();
+	vector<Node *> lvs = tree->getLeaves();
+	for(int i=0;i<numofleaves;i++){
+		//bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getLeaves().at(i)->getNodeProperty(seg));
+		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) lvs.at(i)->getNodeProperty(seg));
 		RateModel * mod = tsegs->at(0).getModel();
+		//int ind1 = get_vector_int_index_from_multi_vector_int(
+		//		&distrib_data[tree->getLeaves().at(i)->getName()],mod->getDists());
 		int ind1 = get_vector_int_index_from_multi_vector_int(
-				&distrib_data[tree->getLeaves().at(i)->getName()],mod->getDists());
+						&distrib_data[lvs.at(i)->getName()],mod->getDists());
 		tsegs->at(0).distconds->at(ind1) = 1.0;
 	}
 }
@@ -352,7 +371,6 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 					scale += 1;
 				}
 				distconds.at(i)= lh;
-				cout << lh << endl;
 			}
 		}
 		///cl2 = clock();
@@ -412,8 +430,10 @@ void BioGeoTree::setFossilatBranchByMRCA(vector<string> nodeNames, int fossilare
 		nodeIds.push_back(tree->getNode(nodeNames[i])->getId());
 	}
 	int id = tt.getLastCommonAncestor(*tree,nodeIds);
-	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(id)->getNodeProperty(seg));
-	double startage = ttt->getHeight(*tree->getNode(id));
+	//bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(id)->getNodeProperty(seg));
+	//double startage = ttt->getHeight(*tree->getNode(id));
+	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree_get_node_from_id[id]->getNodeProperty(seg));
+	double startage = ttt->getHeight(*tree_get_node_from_id[id]);
 	for(unsigned int i=0;i<tsegs->size();i++){
 		if(age > startage && age < (startage+tsegs->at(i).getDuration())){
 			tsegs->at(i).setFossilArea(fossilarea);
@@ -424,8 +444,11 @@ void BioGeoTree::setFossilatBranchByMRCA(vector<string> nodeNames, int fossilare
 }
 void BioGeoTree::setFossilatBranchByMRCA_id(int id, int fossilarea, double age){
 	TreeTemplateTools * ttt = new TreeTemplateTools();
-	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(id)->getNodeProperty(seg));
-	double startage = ttt->getHeight(*tree->getNode(id));
+	//bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree->getNode(id)->getNodeProperty(seg));
+	//double startage = ttt->getHeight(*tree->getNode(id));
+	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) tree_get_node_from_id[id]->getNodeProperty(seg));
+	double startage = ttt->getHeight(*tree_get_node_from_id[id]);
+
 	for(unsigned int i=0;i<tsegs->size();i++){
 		if(age > startage && age < (startage+tsegs->at(i).getDuration())){
 			tsegs->at(i).setFossilArea(fossilarea);

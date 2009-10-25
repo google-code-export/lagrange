@@ -45,6 +45,11 @@ private:
 	double scale;
 
 	/*
+	 * replaces tree.getNodeID
+	 * when given i it will return tree->getNode(i)
+	 */
+	map<int,bpp::Node *> tree_get_node_from_id;
+	/*
 	 * benchmark variables
 	 */
 	clock_t cl1;
