@@ -14,6 +14,7 @@
 #include <string.h>
 #include <map>
 #include <math.h>
+#include <float.h>
 using namespace std;
 
 #include "RateMatrixUtils.h"
@@ -39,6 +40,7 @@ int main(int argc, char* argv[]){
 	if(argc != 2){
 		cout << "you need more arguments." << endl;
 		cout << "usage: lagrange configfile" << endl;
+		//cout << DBL_MIN << " " << DBL_EPSILON << endl;
 		exit(0);
 	}else{
 		string treefile;
@@ -218,8 +220,11 @@ int main(int argc, char* argv[]){
 		 * after reading the input file
 		 */
 		InputReader ir;
+		cout << "reading tree..." << endl;
 		vector<TreeTemplate<Node> *> intrees= ir.readMultipleTreeFile(treefile);
+		cout << "reading data..." << endl;
 		map<string,vector<int> > data = ir.readStandardInputData(datafile);
+		cout << "checking data..." << endl;
 		ir.checkData(data,intrees);
 
 		/*
@@ -293,6 +298,7 @@ int main(int argc, char* argv[]){
 		rm.setup_E(0.01);
 		rm.setup_Q();
 
+
 		/*
 		 * outfile for tree reconstructed states
 		 */
@@ -334,8 +340,9 @@ int main(int argc, char* argv[]){
 				cout << "fixing " << (*fnit).first << " = ";print_vector_int((*fnit).second);
 			}
 
-
+			cout << "setting default model..." << endl;
 			bgt.set_default_model(&rm);
+			cout << "setting up tips..." << endl;
 			bgt.set_tip_conditionals(data);
 
 			/*
@@ -354,6 +361,7 @@ int main(int argc, char* argv[]){
 			/*
 			 * initial likelihood calculation
 			 */
+			cout << "starting likelihood calculations" << endl;
 			cout << "initial -ln likelihood: " << -log(bgt.eval_likelihood(marginal)) <<endl;
 			/*
 			 * optimize likelihood

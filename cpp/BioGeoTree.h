@@ -42,6 +42,7 @@ private:
 	map<int, vector<int> > * distmap; // a map of int and dist
 	bool store_p_matrices;
 	bool use_stored_matrices;
+	double scale;
 
 	/*
 	 * benchmark variables
