@@ -366,10 +366,6 @@ void BioGeoTree::ancdist_conditional_lh(Node & node, bool marginal){
 						lh += (lh_part * weight);
 					}
 				}
-				if (lh < 1.48388e-143){
-					lh = lh*1.0e+100;
-					scale += 1;
-				}
 				distconds.at(i)= lh;
 			}
 		}

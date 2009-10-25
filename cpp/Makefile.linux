@@ -49,7 +49,7 @@ CPP_DEPS += \
 	@echo ' '
 
 #requires fortran, bio++ libraries, gsl, and pthread
-LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
+LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread -lgmp
 
 FC	= /usr/bin/gfortran
 FFLAGS	= -O3

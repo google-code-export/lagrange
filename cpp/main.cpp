@@ -15,6 +15,9 @@
 #include <map>
 #include <math.h>
 #include <float.h>
+#include <gmp.h>
+
+
 using namespace std;
 
 #include "RateMatrixUtils.h"
