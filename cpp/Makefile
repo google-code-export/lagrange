@@ -7,6 +7,7 @@ CPP_SRCS += \
 ./BioGeoTreeTools.cpp \
 ./BranchSegment.cpp \
 ./OptimizeBioGeo.cpp \
+./OptimizeBioGeoAllDispersal.cpp \
 ./OptimizeBioGeoPowell.cpp \
 ./RateMatrixUtils.cpp \
 ./RateModel.cpp \
@@ -20,6 +21,7 @@ OBJS += \
 ./BioGeoTreeTools.o \
 ./BranchSegment.o \
 ./OptimizeBioGeo.o \
+./OptimizeBioGeoAllDispersal.o \
 ./OptimizeBioGeoPowell.o \
 ./RateMatrixUtils.o \
 ./RateModel.o \
@@ -33,6 +35,7 @@ CPP_DEPS += \
 ./BioGeoTreeTools.d \
 ./BranchSegment.d \
 ./OptimizeBioGeo.d \
+./OptimizeBioGeoAllDispersal.d \
 ./OptimizeBioGeoPowell.d \
 ./RateMatrixUtils.d \
 ./RateModel.d \
@@ -44,7 +47,7 @@ CPP_DEPS += \
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I/Users/smitty/programming/LIBRARIES/boost_1_39_0 -arch i386 -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I/Users/smitty/programming/LIBRARIES/boost_1_39_0 -I/System/Library/Frameworks/Python.framework/Headers/ -arch i386 -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -79,7 +82,7 @@ all: lagrange_cpp
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++ -L/usr/local/lib/ -arch i386 -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
+	g++ -L/usr/local/lib/ -L/usr/lib/ -u _PyMac_Error /System/Library/Frameworks/Python.framework/Versions/2.6/Python -arch i386 -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

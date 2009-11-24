@@ -4,5 +4,6 @@ calctype = m
 areanames = WNA ENA EU EA
 logfile = logfile
 ancstate = _all_
-report = split
+#states
 #sparse
+estimate_dispersal_mask

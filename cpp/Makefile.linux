@@ -7,6 +7,7 @@ CPP_SRCS += \
 ./BioGeoTreeTools.cpp \
 ./BranchSegment.cpp \
 ./OptimizeBioGeo.cpp \
+./OptimizeBioGeoAllDispersal.cpp \
 ./OptimizeBioGeoPowell.cpp \
 ./RateMatrixUtils.cpp \
 ./RateModel.cpp \
@@ -20,6 +21,7 @@ OBJS += \
 ./BioGeoTreeTools.o \
 ./BranchSegment.o \
 ./OptimizeBioGeo.o \
+./OptimizeBioGeoAllDispersal.o \
 ./OptimizeBioGeoPowell.o \
 ./RateMatrixUtils.o \
 ./RateModel.o \
@@ -33,6 +35,7 @@ CPP_DEPS += \
 ./BioGeoTreeTools.d \
 ./BranchSegment.d \
 ./OptimizeBioGeo.d \
+./OptimizeBioGeoAllDispersal.d \
 ./OptimizeBioGeoPowell.d \
 ./RateMatrixUtils.d \
 ./RateModel.d \
@@ -78,7 +81,7 @@ all: lagrange_cpp
 # Tool invocations
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
-	@echo 'Invoking: MacOS X C++ Linker'
+	@echo 'Invoking: C++ Linker'
 	g++ -L/usr/local/lib/ -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '

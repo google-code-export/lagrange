@@ -194,6 +194,38 @@ void RateModel::setup_D(double d){
 	}
 }
 
+/*
+ * this is for estimating the D matrix
+ * in this case, a setup dmatrix is being sent and
+ * the dmask is then applied to it
+ */
+
+void RateModel::setup_D_provided(double d, vector< vector< vector<double> > > & D_mask_in){
+	vector<double> cols(nareas, 1*d);
+	vector< vector<double> > rows(nareas, cols);
+	D = vector< vector< vector<double> > > (periods.size(), rows);
+	for (unsigned int i=0;i<D.size();i++){
+		for (unsigned int j=0;j<D[i].size();j++){
+			D[i][j][j] = 0.0;
+			for (unsigned int k=0;k<D[i][j].size();k++){
+				D[i][j][k] = D[i][j][k] * Dmask[i][j][k]*D_mask_in[i][j][k];
+			}
+		}
+	}
+	if (VERBOSE){
+		cout << "D" <<endl;
+		for (unsigned int i=0;i<D.size();i++){
+			for (unsigned int j=0;j<D[i].size();j++){
+				for (unsigned int k=0;k<D[i][j].size();k++){
+					cout << D[i][j][k] << " ";
+				}
+				cout << endl;
+			}
+			cout << endl;
+		}
+	}
+}
+
 void RateModel::setup_E(double e){
 	vector<double> cols(nareas, 1*e);
 	E = vector<vector<double> > (periods.size(), cols);
@@ -703,6 +735,8 @@ vector<vector<vector<int> > > * RateModel::get_iter_dist_splits(vector<int> & di
 }
 
 int RateModel::get_num_areas(){return nareas;}
+
+int RateModel::get_num_periods(){return periods.size();}
 
 /**/
 

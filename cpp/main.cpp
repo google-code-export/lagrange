@@ -5,6 +5,8 @@
  *      Author: Stephen A. Smith
  */
 
+#include <Python.h>
+
 #include <ctime>
 #include <vector>
 #include <stdio.h>
@@ -25,6 +27,7 @@ using namespace std;
 #include "RateModel.h"
 #include "BioGeoTree.h"
 #include "OptimizeBioGeo.h"
+#include "OptimizeBioGeoAllDispersal.h"
 #include "OptimizeBioGeoPowell.h"
 #include "InputReader.h"
 #include "Utils.h"
@@ -74,9 +77,14 @@ int main(int argc, char* argv[]){
 		int numthreads = 0;
 		bool sparse = false;
 
+		//estimating the dispersal mask
+		bool estimate_dispersal_mask = false;
+
 		BioGeoTreeTools tt;
 
-		//read file
+		/*************
+		 * read the configuration file
+		 **************/
 		ifstream ifs(argv[1]);
 		string line;
 		while(getline(ifs,line)){
@@ -212,6 +220,8 @@ int main(int argc, char* argv[]){
 						splits = true;
 					}else if(!strcmp(tokens[0].c_str(),  "states")){
 						states = true;
+					}else if(!strcmp(tokens[0].c_str(),  "estimate_dispersal_mask")){
+						estimate_dispersal_mask = true;
 					}else if(!strcmp(tokens[0].c_str(),  "numthreads")){
 						numthreads = atoi(tokens[1].c_str());
 					}
@@ -219,6 +229,9 @@ int main(int argc, char* argv[]){
 			}
 		}
 		ifs.close();
+		/*****************
+		 * finish reading the configuration file
+		 *****************/
 		/*
 		 * after reading the input file
 		 */
@@ -369,28 +382,73 @@ int main(int argc, char* argv[]){
 			/*
 			 * optimize likelihood
 			 */
-			if(sparse == false){
-				cout << "Optimizing (simplex) -ln likelihood." << endl;
-				OptimizeBioGeo opt(&bgt,&rm,marginal);
-				vector<double> disext  = opt.optimize_global_dispersal_extinction();
-				cout << "dis: " << disext[0] << " ext: " << disext[1] << endl;
-				rm.setup_D(disext[0]);
-				rm.setup_E(disext[1]);
+			if(estimate_dispersal_mask == false){
+				if(sparse == false){
+					cout << "Optimizing (simplex) -ln likelihood." << endl;
+					OptimizeBioGeo opt(&bgt,&rm,marginal);
+					vector<double> disext  = opt.optimize_global_dispersal_extinction();
+					cout << "dis: " << disext[0] << " ext: " << disext[1] << endl;
+					rm.setup_D(disext[0]);
+					rm.setup_E(disext[1]);
+					rm.setup_Q();
+					bgt.update_default_model(&rm);
+					bgt.set_store_p_matrices(true);
+					cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
+					bgt.set_store_p_matrices(false);
+				}else{
+					cout << "Optimizing (Powell) -ln likelihood." << endl;
+					OptimizeBioGeoPowell opt(&bgt,&rm,marginal);
+					vector<double> disext  = opt.optimize_global_dispersal_extinction();
+					cout << "dis: " << disext[0] << " ext: " << disext[1] << endl;
+					rm.setup_D(disext[0]);
+					rm.setup_E(disext[1]);
+					rm.setup_Q();
+					bgt.update_default_model(&rm);
+					cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
+				}
+			}else{//optimize all the dispersal matrix
+				cout << "Optimizing (simplex) -ln likelihood with all dispersal parameters free." << endl;
+				OptimizeBioGeoAllDispersal opt(&bgt,&rm,marginal);
+				vector<double> disextrm  = opt.optimize_global_dispersal_extinction();
+				cout << "dis: " << disextrm[0] << " ext: " << disextrm[1] << endl;
+				vector<double> cols(rm.get_num_areas(), 0);
+				vector< vector<double> > rows(rm.get_num_areas(), cols);
+				vector< vector< vector<double> > > D_mask = vector< vector< vector<double> > > (periods.size(), rows);
+				int count = 2;
+				for (unsigned int i=0;i<D_mask.size();i++){
+					for (unsigned int j=0;j<D_mask[i].size();j++){
+						D_mask[i][j][j] = 0.0;
+						for (unsigned int k=0;k<D_mask[i][j].size();k++){
+							if(k!= j){
+								D_mask[i][j][k] = disextrm[count];
+								count += 1;
+							}
+						}
+					}
+				}
+				cout << "D_mask" <<endl;
+				for (unsigned int i=0;i<D_mask.size();i++){
+					cout << "\t";
+					for(unsigned int j=0;j<D_mask[i].size();j++){
+						cout << areanames[j] << "\t" ;
+					}
+					cout << endl;
+					for (unsigned int j=0;j<D_mask[i].size();j++){
+						cout << areanames[j] << "\t" ;
+						for (unsigned int k=0;k<D_mask[i][j].size();k++){
+							cout << D_mask[i][j][k] << "\t";
+						}
+						cout << endl;
+					}
+					cout << endl;
+				}
+				rm.setup_D_provided(disextrm[0],D_mask);
+				rm.setup_E(disextrm[1]);
 				rm.setup_Q();
 				bgt.update_default_model(&rm);
 				bgt.set_store_p_matrices(true);
 				cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
 				bgt.set_store_p_matrices(false);
-			}else{
-				cout << "Optimizing (Powell) -ln likelihood." << endl;
-				OptimizeBioGeoPowell opt(&bgt,&rm,marginal);
-				vector<double> disext  = opt.optimize_global_dispersal_extinction();
-				cout << "dis: " << disext[0] << " ext: " << disext[1] << endl;
-				rm.setup_D(disext[0]);
-				rm.setup_E(disext[1]);
-				rm.setup_Q();
-				bgt.update_default_model(&rm);
-				cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
 			}
 			/*
 			 * ancestral splits calculation
@@ -457,6 +515,9 @@ int main(int argc, char* argv[]){
 			delete intrees[i];
 		}
 	}
-
+	Py_Initialize();
+	PyRun_SimpleString("from time import time,ctime\n"
+			"print 'Today is',ctime(time())\n");
+	Py_Finalize();
 	return 0;
 }

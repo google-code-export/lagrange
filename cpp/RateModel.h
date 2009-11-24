@@ -47,6 +47,7 @@ public:
 	void setup_dists();
 	void setup_dists(vector<vector<int> >, bool);
 	void setup_Dmask();
+	void setup_D_provided(double d, vector< vector< vector<double> > > & D_mask_in);
 	void set_Dmask_cell(int period, int area, int area2, double prob, bool sym);
 	void setup_D(double d);
 	void setup_E(double e);
@@ -69,6 +70,7 @@ public:
 	void remove_dist(vector<int> dist);
 	bool sparse;
 	int get_num_areas();
+	int get_num_periods();
 	/*
 	 testing storing once optimization has occured
 	 map of period and map of bl and p matrix

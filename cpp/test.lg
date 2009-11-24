@@ -18,3 +18,4 @@ logfile = logfile
 #report = split
 sparse
 #numthreads = 2
+estimate_dispersal_mask
