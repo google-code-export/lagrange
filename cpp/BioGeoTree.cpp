@@ -94,9 +94,10 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 							//((bpp::Vector<BranchSegment>*) tree->getNodeProperty(i,seg))->push_back(tseg);
 							((bpp::Vector<BranchSegment>*) tree_get_node_from_id[i]->getNodeProperty(seg))->push_back(tseg);
 						}
-						t += pers[j];
+						//t += pers[j];
+						t += duration; // TODO: make sure that this is all working
 					}
-					if (t > anc){
+					if (t > anc || pers[j] > t){
 						break;
 					}
 				}

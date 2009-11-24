@@ -1,6 +1,7 @@
-treefile = lonicera.tre
+treefile = lonicera.single.tre
 datafile = lonicera.data
 calctype = m
+periods = 20 200
 areanames = WNA ENA EU EA
 logfile = logfile
 ancstate = _all_

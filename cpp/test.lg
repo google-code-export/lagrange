@@ -1,10 +1,10 @@
 treefile = test.tre
 datafile = test.data
 #ratematrix = aesculus.rm
-#periods = 5,100
-calctype = m
+periods = 0.03,0.08,0.12,0.13,1.
+#calctype = m
 #areanames = EA ENA WNA EU
-logfile = logfile
+#logfile = logfile
 
 
 #fixnode = ROOT 1000
@@ -16,6 +16,6 @@ logfile = logfile
 #ancstate = hankensii
 #ancstate = ONEUP
 #report = split
-sparse
+#sparse
 #numthreads = 2
 estimate_dispersal_mask
