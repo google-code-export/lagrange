@@ -77,7 +77,7 @@ BioGeoTree::BioGeoTree(TreeTemplate<Node> * tr, vector<double> ps){
 			//double des = ttt->getHeight(*tree->getNode(i));
 			double anc = ttt->getHeight(*tree_get_node_from_id[i]->getFather());
 			double des = ttt->getHeight(*tree_get_node_from_id[i]);
-			//assert anc > des
+			//assert anc > des:q
 			double t = des;
 			if (pers.size() > 0){
 				for(unsigned int j=0;j<pers.size();j++){

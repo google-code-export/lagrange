@@ -47,12 +47,12 @@ CPP_DEPS += \
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I/usr/include/python2.6/ -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 #requires fortran, bio++ libraries, gsl, and pthread
-LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread -lgmp
+LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 
 FC	= /usr/bin/gfortran
 FFLAGS	= -O3
@@ -82,7 +82,7 @@ all: lagrange_cpp
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: C++ Linker'
-	g++ -L/usr/local/lib/ -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
+	g++ -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions -L/usr/lib/ -L/usr/local/lib/ -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

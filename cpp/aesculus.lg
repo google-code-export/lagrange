@@ -1,7 +1,7 @@
 treefile = aesculus.tre
 datafile = aesculus.data
 #ratematrix = aesculus.rm
-#periods = 5,100
+periods = 10 100
 #mrca = hankensii Aesculus_pavia Aesculus_glabra
 #mrca = ROOT Aesculus_pavia Aesculus_wilsonii
 areanames = EA ENA WNA EU
@@ -11,7 +11,7 @@ areanames = EA ENA WNA EU
 #excludedists = 1111
 #includedists = 1000,0100,0010,0001,1100,1010,1001,0110,0101,0011
 #includedists = 2
-ancstate = _all_
+#ancstate = _all_
 #ancstate = hankensii
 #ancstate = ROOT
 #splits
