@@ -42,12 +42,15 @@ CPP_DEPS += \
 ./Utils.d \
 ./main.d
 
+C_OPT = -arch i386 -O3 -ftree-vectorize -ffast-math -Wall -g
+#C_OPT = -arch i386 -O3 -Wall -g
+
 
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I/Users/smitty/programming/LIBRARIES/boost_1_39_0 -I/System/Library/Frameworks/Python.framework/Headers/ -arch i386 -O3 -Wall -g -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ -I/Users/smitty/programming/LIBRARIES/boost_1_39_0 -I/System/Library/Frameworks/Python.framework/Headers/ $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
