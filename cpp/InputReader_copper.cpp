@@ -11,19 +11,10 @@
 #include <stdlib.h>
 using namespace std;
 
-#include "InputReader.h"
-#include "BioGeoTreeTools.h"
+#include "InputReader_copper.h"
+#include "BioGeoTreeTools_copper.h"
 #include "Utils.h"
 #include "RateMatrixUtils.h"
-
-/*
-#include <Phyl/TreeTemplate.h>
-#include <Phyl/PhylogeneticsApplicationTools.h>
-#include <Phyl/Newick.h>
-#include <Phyl/Tree.h>
-#include <Utils/BppVector.h>
-using namespace bpp;
-*/
 
 InputReader::InputReader(){
 }

@@ -5,7 +5,7 @@
  *      Author: Stephen A. Smith
  */
 
-#include "BioGeoTreeTools.h"
+#include "BioGeoTreeTools_copper.h"
 #include "RateMatrixUtils.h"
 #include <iostream>
 #include <sstream>
@@ -13,75 +13,33 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <cmath>
 using namespace std;
 
-/*
-#include <Phyl/TreeTemplate.h>
-#include <Phyl/Newick.h>
-#include <Phyl/Tree.h>
-#include <Phyl/TreeTools.h>
-#include <Utils/BppVector.h>
-using namespace bpp;
-*/
 
 #include "tree.h"
 #include "tree_reader.h"
 #include "node.h"
 #include "vector_node_object.h"
+#include "string_node_object.h"
 
-/*
-TreeTemplate<Node> * BioGeoTreeTools::getTreeFromString(string stringtree) throw (Exception){
-  istringstream iss (stringtree,istringstream::in);
-  //Read the tree file:
-  Newick newick(true);
-  TreeTemplate<Node> * tree = dynamic_cast<TreeTemplate<Node> *>(newick.read(iss));
-  return tree;
-}
-*/
-
-Tree * BioGeoTreeTools::getTreeFromString(string treestring){
+Tree * BioGeoTreeTools_copper::getTreeFromString(string treestring){
 	TreeReader tr;
-	Tree tree = tr.readTree(treestring);
-	return &tr;
+	Tree * tree = &tr.readTree(treestring);
+	return tree;
 }
 
-vector<int> BioGeoTreeTools::getAncestors(TreeTemplate<bpp::Node> & tree, int nodeId){
-  vector<int> ids;
-  int currentId = nodeId;
-  while(tree.hasFather(currentId))
-  {
-    currentId = tree.getFatherId(currentId);
-    ids.push_back(currentId);
-  }
-  return ids;
+vector<Node *> BioGeoTreeTools_copper::getAncestors(Tree & tree, Node & nodeId){
+	vector<Node *> nodes;
+	Node * current = &nodeId;
+	while(current->hasParent()){
+		current = current->getParent();
+		nodes.push_back(current);
+	}
+	return nodes;
 }
 
-int BioGeoTreeTools::getLastCommonAncestor(TreeTemplate<bpp::Node> & tree, const vector<int>& nodeIds){
-  vector< vector<int> > ancestors(nodeIds.size());
-  for(unsigned int i = 0; i < nodeIds.size(); i++)
-  {
-    ancestors[i] = getAncestors(tree, nodeIds[i]);
-    ancestors[i].insert(ancestors[i].begin(),nodeIds[i]);
-  }
-  int lca = tree.getRootId();
-  unsigned int count = 1;
-  for(;;)
-  {
-    if(ancestors[0].size() <= count) return lca;
-    int current = ancestors[0][ancestors[0].size() - count - 1];
-    for(unsigned int i = 1; i < nodeIds.size(); i++)
-    {
-      if(ancestors[i].size() <= count) return lca;
-      if(ancestors[i][ancestors[i].size() - count - 1] != current) return lca;
-    }
-    lca = current;
-    count++;
-  }
-  //This line is never reached!
-  return lca;
-}
-
-void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > & ans,map<int,string> &areanamemaprev, RateModel * rm){
+void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > & ans,map<int,string> &areanamemaprev, RateModel * rm){
 	double best = 0;
 	double sum = 0;
 	int areasize = (*ans.begin()).first.size();
@@ -143,7 +101,7 @@ void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSpli
 	for(pit=printstring.begin();pit != printstring.end();pit++){
 		cout << "\t" << (*pit).second << "\t" << (-(*pit).first)/sum << "\t(" << -log(-(*pit).first) << ")"<< endl;
 	}
-	bpp::String disstring ="";
+	StringNodeObject disstring ="";
 	int  count = 0;
 	for(unsigned int m=0;m<bestldist.size();m++){
 		if(bestldist[m] == 1){
@@ -165,11 +123,11 @@ void BioGeoTreeTools::summarizeSplits(Node * node,map<vector<int>,vector<AncSpli
 		}
 	}
 	string spl = "split";
-	node->setBranchProperty(spl,disstring);
+	node->assocObject(spl,disstring);
 	//cout << -log(best) << " "<< best/sum << endl;
 }
 
-void BioGeoTreeTools::summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm){
+void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm){
 	double best = 0;
 	double sum = 0;
 	int areasize = rm->get_num_areas();
@@ -203,7 +161,7 @@ void BioGeoTreeTools::summarizeAncState(Node * node,vector<double> & ans,map<int
 	for(pit=printstring.begin();pit != printstring.end();pit++){
 		cout << "\t" << (*pit).second << "\t" << (-(*pit).first)/sum << "\t(" << -log(-(*pit).first) << ")"<< endl;
 	}
-	bpp::String disstring ="";
+	StringNodeObject disstring ="";
 	int  count = 0;
 	for(unsigned int m=0;m<bestancdist.size();m++){
 		if(bestancdist[m] == 1){
@@ -215,7 +173,7 @@ void BioGeoTreeTools::summarizeAncState(Node * node,vector<double> & ans,map<int
 		}
 	}
 	string spl = "state";
-	node->setBranchProperty(spl,disstring);
+	node->assocObject(spl,disstring);
 	//cout << -log(best) << " "<< best/sum << endl;	
 }
 

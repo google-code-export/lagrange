@@ -23,26 +23,17 @@
 using namespace std;
 
 #include "RateMatrixUtils.h"
-#include "BioGeoTreeTools.h"
+#include "BioGeoTreeTools_copper.h"
 #include "RateModel.h"
-#include "BioGeoTree.h"
+#include "BioGeoTree_copper.h"
 #include "OptimizeBioGeo.h"
 #include "OptimizeBioGeoAllDispersal.h"
 #include "OptimizeBioGeoPowell.h"
-#include "InputReader.h"
+#include "InputReader_copper.h"
 #include "Utils.h"
 
 #include "expm.h"
 
-/*
-#include <Phyl/TreeTemplate.h>
-#include <Phyl/TreeTemplateTools.h>
-#include <Phyl/PhylogeneticsApplicationTools.h>
-#include <Phyl/Newick.h>
-#include <Phyl/Tree.h>
-#include <Utils/BppVector.h>
-using namespace bpp;
-*/
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
