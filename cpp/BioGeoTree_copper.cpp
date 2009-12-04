@@ -54,14 +54,18 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	for(int i=0;i<tree->getExternalNodeCount();i++){
 		VectorNodeObject<BranchSegment> * segs = new VectorNodeObject<BranchSegment>();
 		tree->getExternalNode(i)->assocObject(seg,*segs);
+		delete segs;
 		VectorNodeObject<vector<int> > * ens = new VectorNodeObject<vector<int> >();
 		tree->getExternalNode(i)->assocObject(en,*ens);
+		delete ens;
 	}
 	for(int i=0;i<tree->getInternalNodeCount();i++){
 		VectorNodeObject<BranchSegment> * segs = new VectorNodeObject<BranchSegment>();
 		tree->getInternalNode(i)->assocObject(seg,*segs);
+		delete segs;
 		VectorNodeObject<vector<int> > * ens = new VectorNodeObject<vector<int> >();
 		tree->getInternalNode(i)->assocObject(en,*ens);
+		delete ens;
 	}
 
 
@@ -172,8 +176,10 @@ void BioGeoTree_copper::set_default_model(RateModel * mod){
 	}
 	VectorNodeObject<double> * distconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
 	tree->getRoot()->assocObject(dc,*distconds);
+	delete distconds;
 	VectorNodeObject<double> * ancdistconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
 	tree->getRoot()->assocObject(andc,*ancdistconds);
+	delete ancdistconds;
 }
 
 void BioGeoTree_copper::update_default_model(RateModel * mod){
@@ -445,14 +451,14 @@ void BioGeoTree_copper::setFossilatNodeByMRCA(vector<string> nodeNames, int foss
 		}
 	}
 }
-void BioGeoTree_copper::setFossilatNodeByMRCA_id(int id, int fossilarea){
-	/*vector<vector<int> > * dists = rootratemodel->getDists();
+void BioGeoTree_copper::setFossilatNodeByMRCA_id(Node * id, int fossilarea){
+	vector<vector<int> > * dists = rootratemodel->getDists();
 	for(unsigned int i=0;i<dists->size();i++){
 		if(dists->at(i).at(fossilarea) == 0){
-			VectorNodeObject<vector<int> > * exd = ((VectorNodeObject<vector<int> > *) tree->getObject(id,en));
+			VectorNodeObject<vector<int> > * exd = ((VectorNodeObject<vector<int> > *) id->getObject(en));
 			exd->push_back(dists->at(i));
 		}
-	}*/
+	}
 }
 void BioGeoTree_copper::setFossilatBranchByMRCA(vector<string> nodeNames, int fossilarea, double age){
 	Node * mrca = tree->getMRCA(nodeNames);
@@ -465,12 +471,9 @@ void BioGeoTree_copper::setFossilatBranchByMRCA(vector<string> nodeNames, int fo
 		startage += tsegs->at(i).getDuration();
 	}
 }
-void BioGeoTree_copper::setFossilatBranchByMRCA_id(int id, int fossilarea, double age){
-	/*TreeTemplateTools * ttt = new TreeTemplateTools();
-	//VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(id)->getObject(seg));
-	//double startage = ttt->getHeight(*tree->getNode(id));
-	VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree_get_node_from_id[id]->getObject(seg));
-	double startage = ttt->getHeight(*tree_get_node_from_id[id]);
+void BioGeoTree_copper::setFossilatBranchByMRCA_id(Node * id, int fossilarea, double age){
+	VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) id->getObject(seg));
+	double startage = id->getHeight();
 
 	for(unsigned int i=0;i<tsegs->size();i++){
 		if(age > startage && age < (startage+tsegs->at(i).getDuration())){
@@ -478,7 +481,6 @@ void BioGeoTree_copper::setFossilatBranchByMRCA_id(int id, int fossilarea, doubl
 		}
 		startage += tsegs->at(i).getDuration();
 	}
-	delete ttt;*/
 }
 
 
@@ -494,12 +496,14 @@ void BioGeoTree_copper::prepare_ancstate_reverse(){
  * called from prepare_ancstate_reverse and that is all
  */
 void BioGeoTree_copper::reverse(Node & node){
+	rev = true;
 	VectorNodeObject<double> * revconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
 	if (&node == tree->getRoot()) {
 		for(unsigned int i=0;i<rootratemodel->getDists()->size();i++){
 			revconds->at(i) = 1.0;//prior
 		}
 		node.assocObject(revB,*revconds);
+		delete revconds;
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
@@ -556,11 +560,16 @@ void BioGeoTree_copper::reverse(Node & node){
 			}
 		}
 		node.assocObject(revB,*revconds);
+		delete revconds;
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
-	}//there should be no else
+	}else{//external so delete revconds
+		delete revconds;
+	}
 }
+
+
 
 /*
  * calculates the most likely split (not state) -- the traditional result for lagrange
@@ -628,7 +637,34 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
 		}
 		return LHOODS;
 	}
-	
 }
 
+
+
+
+BioGeoTree_copper::~BioGeoTree_copper(){
+	for(int i=0;i<tree->getExternalNodeCount();i++){
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg));
+		for(unsigned int j=0;j<tsegs->size();j++){
+			delete tsegs->at(j).distconds;
+			delete tsegs->at(j).ancdistconds;
+		}
+		delete tree->getExternalNode(i)->getObject(seg);
+		delete tree->getExternalNode(i)->getObject(en);
+	}
+	for(int i=0;i<tree->getInternalNodeCount();i++){
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getInternalNode(i)->getObject(seg));
+		for(unsigned int j=0;j<tsegs->size();j++){
+			delete tsegs->at(j).distconds;
+			delete tsegs->at(j).ancdistconds;
+		}
+		delete tree->getInternalNode(i)->getObject(seg);
+		delete tree->getInternalNode(i)->getObject(en);
+		if(rev == true){
+			delete tree->getInternalNode(i)->getObject(revB);
+		}
+	}
+	delete tree->getRoot()->getObject(dc);
+	delete tree->getRoot()->getObject(andc);
+}
 

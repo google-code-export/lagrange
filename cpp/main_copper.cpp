@@ -11,6 +11,7 @@
 #include <vector>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
 #include <sstream>
 #include <string>
 #include <string.h>
@@ -26,9 +27,8 @@ using namespace std;
 #include "BioGeoTreeTools_copper.h"
 #include "RateModel.h"
 #include "BioGeoTree_copper.h"
-#include "OptimizeBioGeo.h"
-#include "OptimizeBioGeoAllDispersal.h"
-#include "OptimizeBioGeoPowell.h"
+#include "OptimizeBioGeo_copper.h"
+#include "OptimizeBioGeoAllDispersal_copper.h"
 #include "InputReader_copper.h"
 #include "Utils.h"
 
@@ -73,7 +73,7 @@ int main(int argc, char* argv[]){
 		//estimating the dispersal mask
 		bool estimate_dispersal_mask = false;
 
-		BioGeoTreeTools tt;
+		BioGeoTreeTools_copper tt;
 
 		/*************
 		 * read the configuration file
@@ -230,7 +230,8 @@ int main(int argc, char* argv[]){
 		 */
 		InputReader ir;
 		cout << "reading tree..." << endl;
-		vector<TreeTemplate<Node> *> intrees= ir.readMultipleTreeFile(treefile);
+		vector<Tree *> intrees;
+		ir.readMultipleTreeFile(treefile,intrees);
 		cout << "reading data..." << endl;
 		map<string,vector<int> > data = ir.readStandardInputData(datafile);
 		cout << "checking data..." << endl;
@@ -315,19 +316,17 @@ int main(int argc, char* argv[]){
 		ofstream outTreeKeyFile;
 
 		for(unsigned int i =0;i<intrees.size();i++){
-			BioGeoTree bgt(intrees[i],periods);
+			BioGeoTree_copper bgt(intrees[i],periods);
 			/*
 			 * record the mrcas
 			 */
-			map<string,int> mrcanodeint;
+			map<string,Node *> mrcanodeint;
 			map<string,vector<string> >::iterator it;
 			for(it=mrcas.begin();it != mrcas.end();it++){
-				vector<int> nodeIds;
-				for(unsigned int k=0;k<(*it).second.size();k++){
-					nodeIds.push_back(intrees[i]->getNode((*it).second[k])->getId());
-				}
-				mrcanodeint[(*it).first] = tt.getLastCommonAncestor(*intrees[i],nodeIds);
-				cout << "Reading mrca: " << (*it).first << " " << mrcanodeint[(*it).first] << endl;
+                                //records node by number, should maybe just point to node
+				mrcanodeint[(*it).first] = intrees[i]->getMRCA((*it).second);
+                                //tt.getLastCommonAncestor(*intrees[i],nodeIds);
+				cout << "Reading mrca: " << (*it).first << endl;
 			}
 
 			/*
@@ -343,7 +342,8 @@ int main(int argc, char* argv[]){
 							isnot = false;
 					}
 					if(isnot == false){
-						bgt.set_excluded_dist(rm.getDists()->at(k),intrees[0]->getNode(mrcanodeint[(*fnit).first]));
+						bgt.set_excluded_dist(rm.getDists()->at(k),mrcanodeint[(*fnit).first]);
+                                                //bgt.set_excluded_dist(rm.getDists()->at(k),intrees[0]->getNode(mrcanodeint[(*fnit).first]));
 					}
 				}
 				cout << "fixing " << (*fnit).first << " = ";print_vector_int((*fnit).second);
@@ -360,6 +360,7 @@ int main(int argc, char* argv[]){
 			for(unsigned int k=0;k<fossiltype.size();k++){
 				if(fossiltype[k] == "n" || fossiltype[k] == "N"){
 					bgt.setFossilatNodeByMRCA_id(mrcanodeint[fossilmrca[k]],areanamemap[fossilarea[k]]);
+					//bgt.setFossilatNodeByMRCA_id(mrcanodeint[fossilmrca[k]],areanamemap[fossilarea[k]]);
 					cout << "Setting node fossil at mrca: " << fossilmrca[k] << " at area: " << fossilarea[k] << endl;
 				}else{
 					bgt.setFossilatBranchByMRCA_id(mrcanodeint[fossilmrca[k]],areanamemap[fossilarea[k]],fossilage[k]);
@@ -376,7 +377,6 @@ int main(int argc, char* argv[]){
 			 * optimize likelihood
 			 */
 			if(estimate_dispersal_mask == false){
-				if(sparse == false){
 					cout << "Optimizing (simplex) -ln likelihood." << endl;
 					OptimizeBioGeo opt(&bgt,&rm,marginal);
 					vector<double> disext  = opt.optimize_global_dispersal_extinction();
@@ -388,17 +388,6 @@ int main(int argc, char* argv[]){
 					bgt.set_store_p_matrices(true);
 					cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
 					bgt.set_store_p_matrices(false);
-				}else{
-					cout << "Optimizing (Powell) -ln likelihood." << endl;
-					OptimizeBioGeoPowell opt(&bgt,&rm,marginal);
-					vector<double> disext  = opt.optimize_global_dispersal_extinction();
-					cout << "dis: " << disext[0] << " ext: " << disext[1] << endl;
-					rm.setup_D(disext[0]);
-					rm.setup_E(disext[1]);
-					rm.setup_Q();
-					bgt.update_default_model(&rm);
-					cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
-				}
 			}else{//optimize all the dispersal matrix
 				cout << "Optimizing (simplex) -ln likelihood with all dispersal parameters free." << endl;
 				OptimizeBioGeoAllDispersal opt(&bgt,&rm,marginal);
@@ -450,55 +439,61 @@ int main(int argc, char* argv[]){
 				bgt.set_use_stored_matrices(true);
 				bgt.prepare_ancstate_reverse();
 				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
-					for(unsigned int j=0;j<intrees[i]->getNumberOfNodes();j++){
-						if(intrees[i]->getNode(j)->isLeaf()==false){
-							if(splits){
-								cout << "Ancestral splits for:\t" << intrees[i]->getNode(j)->getId() <<endl;
-								map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancsplit_reverse(*intrees[i]->getNode(j),marginal);
-								//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
-								tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev,&rm);
-								cout << endl;
-							}
-							if(states){
-								cout << "Ancestral states for:\t" << intrees[i]->getNode(j)->getId() <<endl;
-								vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(j),marginal);
-								tt.summarizeAncState(intrees[i]->getNode(j),rast,areanamemaprev,&rm);
-								cout << endl;
-							}
+					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
+						if(splits){
+							cout << "Ancestral splits for:\t" << intrees[i]->getInternalNode(j)->getNumber() <<endl;
+							map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancsplit_reverse(*intrees[i]->getInternalNode(j),marginal);
+							//bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
+							tt.summarizeSplits(intrees[i]->getInternalNode(j),ras,areanamemaprev,&rm);
+							cout << endl;
+						}
+						if(states){
+							cout << "Ancestral states for:\t" << intrees[i]->getInternalNode(j)->getNumber() <<endl;
+							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
+							tt.summarizeAncState(intrees[i]->getInternalNode(j),rast,areanamemaprev,&rm);
+							cout << endl;
 						}
 					}
 					/*
 					 * key file output
 					 */
 					outTreeKeyFile.open((treefile+".bgkey.tre").c_str(),ios::app );
-					TreeTemplateTools ttt;
-					outTreeKeyFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),true) << ";"<< endl;
+					//need to output numbers
+					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"number") << ";"<< endl;
 					outTreeKeyFile.close();
 				}else{
 					for(unsigned int j=0;j<ancstates.size();j++){
 						if(splits){
 							cout << "Ancestral splits for: " << ancstates[j] <<endl;
-							map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancsplit_reverse(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-							tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
+							map<vector<int>,vector<AncSplit> > ras = bgt.calculate_ancsplit_reverse(*mrcanodeint[ancstates[j]],marginal);
+							tt.summarizeSplits(mrcanodeint[ancstates[j]],ras,areanamemaprev,&rm);
 						}
 						if(states){
-							cout << "Ancestral splits for: " << ancstates[j] <<endl;
-							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
-							tt.summarizeAncState(intrees[i]->getNode(mrcanodeint[ancstates[j]]),rast,areanamemaprev,&rm);
+							cout << "Ancestral states for: " << ancstates[j] <<endl;
+							vector<double> rast = bgt.calculate_ancstate_reverse(*mrcanodeint[ancstates[j]],marginal);
+							tt.summarizeAncState(mrcanodeint[ancstates[j]],rast,areanamemaprev,&rm);
 						}
 					}
 				}
 				if(splits){
 					outTreeFile.open((treefile+".bgsplits.tre").c_str(),ios::app );
-					TreeTemplateTools ttt;
-					outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
+					//need to output object "split"
+					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"split") << ";"<< endl;
 					outTreeFile.close();
+					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
+						if (intrees[i]->getInternalNode(j)->getObject("split")!= NULL)
+							delete intrees[i]->getInternalNode(j)->getObject("split");
+					}
 				}
 				if(states){
-					TreeTemplateTools ttt;
 					outTreeFile.open((treefile+".bgstates.tre").c_str(),ios::app );
-					outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"state") << ";"<< endl;
+					//need to output object "state"
+					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"state") << ";"<< endl;
 					outTreeFile.close();
+					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
+						if (intrees[i]->getInternalNode(j)->getObject("state")!= NULL)
+							delete intrees[i]->getInternalNode(j)->getObject("state");
+					}
 				}
 				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 			}
@@ -508,9 +503,9 @@ int main(int argc, char* argv[]){
 			delete intrees[i];
 		}
 	}
-	Py_Initialize();
+	/*Py_Initialize();
 	PyRun_SimpleString("from time import time,ctime\n"
 			"print 'Today is',ctime(time())\n");
-	Py_Finalize();
+	Py_Finalize();*/
 	return 0;
 }

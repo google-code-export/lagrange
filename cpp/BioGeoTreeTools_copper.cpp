@@ -25,8 +25,7 @@ using namespace std;
 
 Tree * BioGeoTreeTools_copper::getTreeFromString(string treestring){
 	TreeReader tr;
-	Tree * tree = &tr.readTree(treestring);
-	return tree;
+	return tr.readTree(treestring);
 }
 
 vector<Node *> BioGeoTreeTools_copper::getAncestors(Tree & tree, Node & nodeId){

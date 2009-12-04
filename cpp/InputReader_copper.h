@@ -12,13 +12,14 @@
 #include <string>
 using namespace std;
 
+#include "tree.h"
 
 class InputReader{
 	public:
 	InputReader();
-		vector<TreeTemplate<Node> *> readMultipleTreeFile(string filename);
+		void readMultipleTreeFile(string filename,vector<Tree *>&);
 		map<string,vector<int> > readStandardInputData(string filename);
-		void checkData(map<string,vector<int> >,vector<TreeTemplate<Node> *>);
+		void checkData(map<string,vector<int> >,vector<Tree *>);
 		int nareas;
 		int nspecies;
 };

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <vector>
 #include <stdlib.h>
+#include <iostream>
 using namespace std;
 
 #include "InputReader_copper.h"
@@ -16,25 +17,26 @@ using namespace std;
 #include "Utils.h"
 #include "RateMatrixUtils.h"
 
+#include "tree_reader.h"
+#include "tree.h"
+#include "node.h"
+
 InputReader::InputReader(){
 }
 
-vector<TreeTemplate<Node> *> InputReader::readMultipleTreeFile(string filename){
-	BioGeoTreeTools * nr = new BioGeoTreeTools();
+void InputReader::readMultipleTreeFile(string filename, vector<Tree *> & ret){
+	TreeReader tr;
 	ifstream ifs( filename.c_str() );
 	string temp;
-	vector<TreeTemplate<Node> *> ret;
 	int count = 1;
 	while( getline( ifs, temp ) ){
 		if(temp.size() > 1){
-			TreeTemplate<Node> * intree = nr->getTreeFromString(temp);
-			cout << "Tree "<< count <<" has " << intree->getNumberOfLeaves() << " leaves." << endl;
+			Tree * intree = tr.readTree(temp);
+			cout << "Tree "<< count <<" has " << intree->getExternalNodeCount() << " leaves." << endl;
 			ret.push_back(intree);
 			count++;
 		}
 	}
-	delete nr;
-	return ret;
 }
 
 map<string,vector<int> > InputReader::readStandardInputData(string filename){
@@ -79,22 +81,21 @@ map<string,vector<int> > InputReader::readStandardInputData(string filename){
 	return data;
 }
 
-void InputReader::checkData(map<string,vector<int> > data,vector<TreeTemplate<Node> *> trees){
+void InputReader::checkData(map<string,vector<int> > data ,vector<Tree *> trees){
 	vector<string> dataspecies;
 	map<string,vector<int> >::const_iterator itr;
 	for(itr = data.begin(); itr != data.end(); ++itr){
 		dataspecies.push_back(itr->first);
 	}
 	for(unsigned int i=0;i < trees.size();i++){
-		vector<string> lnames = trees[0]->getLeavesNames();
-		for(unsigned int j=0;j<lnames.size();j++){
+		for(int j=0;j<trees[0]->getExternalNodeCount();j++){
 			bool test = false;
 			for (unsigned int k=0;k<dataspecies.size();k++){
-				if (lnames[j] == dataspecies[k])
+				if (trees[0]->getExternalNode(j)->getName() == dataspecies[k])
 					test = true;
 			}
 			if(test == false){
-				cout << "Error: " << lnames[j] << " not found in data file." << endl;
+				cout << "Error: " << trees[0]->getExternalNode(j)->getName() << " not found in data file." << endl;
 				exit(0);
 			}
 		}

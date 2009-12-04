@@ -32,6 +32,7 @@ private:
 	string andc;
 	//reverse bits
 	string revB;
+	bool rev;
 	//end reverse bits
 	vector<int> * columns;
 	vector<int> * whichcolumns;
@@ -68,9 +69,9 @@ public:
 	fossil data
  */
 	void setFossilatNodeByMRCA(vector<string> nodeNames, int fossilarea);
-	void setFossilatNodeByMRCA_id(int id, int fossilarea);
+	void setFossilatNodeByMRCA_id(Node * id, int fossilarea);
 	void setFossilatBranchByMRCA(vector<string> nodeNames, int fossilarea, double age);
-	void setFossilatBranchByMRCA_id(int id, int fossilarea, double age);
+	void setFossilatBranchByMRCA_id(Node * id, int fossilarea, double age);
 
 /*
 	for calculating forward and reverse
@@ -79,6 +80,8 @@ public:
 	void reverse(Node &);
 	map<vector<int>,vector<AncSplit> > calculate_ancsplit_reverse(Node & node,bool marg);
 	vector<double> calculate_ancstate_reverse(Node & node,bool marg);
+
+	~BioGeoTree_copper();
 
 /*
 	for timing things

@@ -6,9 +6,8 @@ CPP_SRCS += \
 ./BioGeoTree_copper.cpp \
 ./BioGeoTreeTools_copper.cpp \
 ./BranchSegment_copper.cpp \
-./OptimizeBioGeo.cpp \
-./OptimizeBioGeoAllDispersal.cpp \
-./OptimizeBioGeoPowell.cpp \
+./OptimizeBioGeo_copper.cpp \
+./OptimizeBioGeoAllDispersal_copper.cpp \
 ./RateMatrixUtils.cpp \
 ./RateModel.cpp \
 ./Utils.cpp \
@@ -24,9 +23,8 @@ OBJS += \
 ./BioGeoTree_copper.o \
 ./BioGeoTreeTools_copper.o \
 ./BranchSegment_copper.o \
-./OptimizeBioGeo.o \
-./OptimizeBioGeoAllDispersal.o \
-./OptimizeBioGeoPowell.o \
+./OptimizeBioGeo_copper.o \
+./OptimizeBioGeoAllDispersal_copper.o \
 ./RateMatrixUtils.o \
 ./RateModel.o \
 ./Utils.o \
@@ -44,7 +42,6 @@ CPP_DEPS += \
 ./BranchSegment_copper.d \
 ./OptimizeBioGeo.d \
 ./OptimizeBioGeoAllDispersal.d \
-./OptimizeBioGeoPowell.d \
 ./RateMatrixUtils.d \
 ./RateModel.d \
 ./Utils.d \
