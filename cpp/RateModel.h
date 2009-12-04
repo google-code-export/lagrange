@@ -53,7 +53,6 @@ public:
 	void setup_E(double e);
 	void set_Qdiag(int period);
 	void setup_Q();
-	vector<vector<double > > setup_P(int period, double t);
 	vector<vector<double > > setup_fortran_P(int period, double t, bool store_p_matrices);
 	vector<vector<double > > setup_sparse_full_P(int period, double t);
 	vector<double > setup_sparse_single_column_P(int period, double t, int column);
@@ -77,6 +76,9 @@ public:
 	 map<period,map<branch length,p matrix>>
 	 */
 	map<int,map<double, vector<vector<double> > > > stored_p_matrices;
+
+	//REQUIRES BOOST
+	//vector<vector<double > > setup_P(int period, double t);
 };
 
 #endif /* RATEMATRIX_H_ */

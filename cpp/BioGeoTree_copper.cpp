@@ -51,34 +51,24 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	 * initialize each node with segments
 	 */
 	cout << "initializing nodes..." << endl;
-	for(int i=0;i<tree->getExternalNodeCount();i++){
+	for(int i=0;i<tree->getNodeCount();i++){
 		VectorNodeObject<BranchSegment> * segs = new VectorNodeObject<BranchSegment>();
-		tree->getExternalNode(i)->assocObject(seg,*segs);
+		tree->getNode(i)->assocObject(seg,*segs);
 		delete segs;
 		VectorNodeObject<vector<int> > * ens = new VectorNodeObject<vector<int> >();
-		tree->getExternalNode(i)->assocObject(en,*ens);
+		tree->getNode(i)->assocObject(en,*ens);
 		delete ens;
 	}
-	for(int i=0;i<tree->getInternalNodeCount();i++){
-		VectorNodeObject<BranchSegment> * segs = new VectorNodeObject<BranchSegment>();
-		tree->getInternalNode(i)->assocObject(seg,*segs);
-		delete segs;
-		VectorNodeObject<vector<int> > * ens = new VectorNodeObject<vector<int> >();
-		tree->getInternalNode(i)->assocObject(en,*ens);
-		delete ens;
-	}
-
-
 	/*
 	 * initialize the actual branch segments for each node
 	 */
 	tree->setHeightFromTipToNodes();
 	cout << "initializing branch segments..." << endl;
-	for(int i=0;i<tree->getExternalNodeCount();i++){
-		if (tree->getExternalNode(i)->hasParent()){
+	for(int i=0;i<tree->getNodeCount();i++){
+		if (tree->getNode(i)->hasParent()){
 			vector<double> pers(periods);
-			double anc = tree->getExternalNode(i)->getParent()->getHeight();
-			double des = tree->getExternalNode(i)->getHeight();
+			double anc = tree->getNode(i)->getParent()->getHeight();
+			double des = tree->getNode(i)->getHeight();
 			//assert anc > des:q
 			double t = des;
 			if (pers.size() > 0){
@@ -93,7 +83,7 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 						double duration = min(s-t,anc-t);
 						if (duration > 0){
 							BranchSegment tseg = BranchSegment(duration,j);
-							((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg))->push_back(tseg);
+							((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg))->push_back(tseg);
 						}
 						//t += pers[j];
 						t += duration; // TODO: make sure that this is all working
@@ -103,42 +93,8 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 					}
 				}
 			}else{
-				BranchSegment tseg = BranchSegment(tree->getExternalNode(i)->getBL(),0);
-				((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg))->push_back(tseg);
-			}
-		}
-	}
-	for(int i=0;i<tree->getInternalNodeCount();i++){
-		if (tree->getInternalNode(i)->hasParent()){
-			vector<double> pers(periods);
-			double anc = tree->getInternalNode(i)->getParent()->getHeight();
-			double des = tree->getInternalNode(i)->getHeight();
-			//assert anc > des:q
-			double t = des;
-			if (pers.size() > 0){
-				for(unsigned int j=0;j<pers.size();j++){
-					double s = 0;
-					if(pers.size() == 1)
-						s = pers[0];
-					for (unsigned int k=0;k<j+1;k++){
-						s += pers[k];
-					}
-					if (t < s){
-						double duration = min(s-t,anc-t);
-						if (duration > 0){
-							BranchSegment tseg = BranchSegment(duration,j);
-							((VectorNodeObject<BranchSegment>*) tree->getInternalNode(i)->getObject(seg))->push_back(tseg);
-						}
-						//t += pers[j];
-						t += duration; // TODO: make sure that this is all working
-					}
-					if (t > anc || pers[j] > t){
-						break;
-					}
-				}
-			}else{
-				BranchSegment tseg = BranchSegment(tree->getInternalNode(i)->getBL(),0);
-				((VectorNodeObject<BranchSegment>*) tree->getInternalNode(i)->getObject(seg))->push_back(tseg);
+				BranchSegment tseg = BranchSegment(tree->getNode(i)->getBL(),0);
+				((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg))->push_back(tseg);
 			}
 		}
 	}
@@ -154,26 +110,16 @@ void BioGeoTree_copper::set_use_stored_matrices(bool i){
 
 void BioGeoTree_copper::set_default_model(RateModel * mod){
 	rootratemodel = mod;
-	for(int i=0;i<tree->getExternalNodeCount();i++){
-		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg));
-		for(unsigned int j=0;j<tsegs->size();j++){
-			tsegs->at(j).setModel(mod);
-			VectorNodeObject<double> * distconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
-			tsegs->at(j).distconds = distconds;
-			VectorNodeObject<double> * ancdistconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
-			tsegs->at(j).ancdistconds = ancdistconds;
+	for(int i=0;i<tree->getNodeCount();i++){
+			VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg));
+			for(unsigned int j=0;j<tsegs->size();j++){
+				tsegs->at(j).setModel(mod);
+				VectorNodeObject<double> * distconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
+				tsegs->at(j).distconds = distconds;
+				VectorNodeObject<double> * ancdistconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
+				tsegs->at(j).ancdistconds = ancdistconds;
+			}
 		}
-	}
-	for(int i=0;i<tree->getInternalNodeCount();i++){
-		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getInternalNode(i)->getObject(seg));
-		for(unsigned int j=0;j<tsegs->size();j++){
-			tsegs->at(j).setModel(mod);
-			VectorNodeObject<double> * distconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
-			tsegs->at(j).distconds = distconds;
-			VectorNodeObject<double> * ancdistconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
-			tsegs->at(j).ancdistconds = ancdistconds;
-		}
-	}
 	VectorNodeObject<double> * distconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);
 	tree->getRoot()->assocObject(dc,*distconds);
 	delete distconds;
@@ -184,14 +130,9 @@ void BioGeoTree_copper::set_default_model(RateModel * mod){
 
 void BioGeoTree_copper::update_default_model(RateModel * mod){
 	rootratemodel = mod;
-	for(int i=0;i<tree->getExternalNodeCount();i++){
-		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg));
-		for(unsigned int j=0;j<tsegs->size();j++){
-			tsegs->at(j).setModel(mod);
-		}
-	}
-	for(int i=0;i<tree->getInternalNodeCount();i++){
-		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getInternalNode(i)->getObject(seg));
+
+	for(int i=0;i<tree->getNodeCount();i++){
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg));
 		for(unsigned int j=0;j<tsegs->size();j++){
 			tsegs->at(j).setModel(mod);
 		}
@@ -643,25 +584,16 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
 
 
 BioGeoTree_copper::~BioGeoTree_copper(){
-	for(int i=0;i<tree->getExternalNodeCount();i++){
-		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg));
+	for(int i=0;i<tree->getNodeCount();i++){
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg));
 		for(unsigned int j=0;j<tsegs->size();j++){
 			delete tsegs->at(j).distconds;
 			delete tsegs->at(j).ancdistconds;
 		}
-		delete tree->getExternalNode(i)->getObject(seg);
-		delete tree->getExternalNode(i)->getObject(en);
-	}
-	for(int i=0;i<tree->getInternalNodeCount();i++){
-		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getInternalNode(i)->getObject(seg));
-		for(unsigned int j=0;j<tsegs->size();j++){
-			delete tsegs->at(j).distconds;
-			delete tsegs->at(j).ancdistconds;
-		}
-		delete tree->getInternalNode(i)->getObject(seg);
-		delete tree->getInternalNode(i)->getObject(en);
-		if(rev == true){
-			delete tree->getInternalNode(i)->getObject(revB);
+		delete tree->getNode(i)->getObject(seg);
+		delete tree->getNode(i)->getObject(en);
+		if(rev == true && tree->getNode(i)->isInternal()){
+			delete tree->getNode(i)->getObject(revB);
 		}
 	}
 	delete tree->getRoot()->getObject(dc);

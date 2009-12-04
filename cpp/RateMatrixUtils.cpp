@@ -21,58 +21,7 @@
 #include <algorithm>
 using namespace std;
 
-#include "expm.h"
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/lu.hpp>
-#include <boost/numeric/ublas/traits.hpp>
 
-vector< vector<double> > QMatrixToPmatrix(vector< vector<double> > & Q, double t){
-	using namespace boost::numeric::ublas;
-	matrix<double> H(Q.size(),Q.size());
-	for(unsigned int i=0; i<Q.size(); i++){
-		for (unsigned int j=0; j<Q.size(); j++){
-			H(i,j)=Q[i][j]*t;
-		}
-	}
-	matrix<double> U (Q.size(), Q.size());
-	U = expm_pad(H);
-	std::vector<std::vector<double> > P (Q.size(), std::vector<double>(Q.size()));
-	for(unsigned int i=0; i<Q.size(); i++){
-		for (unsigned int j=0; j<Q.size(); j++){
-			P[i][j] = U(i,j);
-		}
-	}
-	/*for(unsigned int i=0; i<P.size(); i++){
-		double sum = 0.0;
-		for (unsigned int j=0; j<P[i].size(); j++){
-			sum += P[i][j];
-		}
-		for (unsigned int j=0; j<P[i].size(); j++){
-			P[i][j] = (P[i][j]/sum);
-		}
-	}*/
-	return P;
-}
-
-void calcMatExp(int * ia,int * ja, double * a, int n){
-	using namespace boost::numeric::ublas;
-	matrix<double> H(n/2,n/2);
-	int count = 0;
-	for(unsigned int i=0; i<n/2; i++){
-		for (unsigned int j=0; j<n/2; j++){
-			H(i,j)=a[count];
-			count += 1;
-		}
-	}
-	matrix<double> U (n/2,n/2);
-	U = expm_pad(H);
-	for(unsigned int i=0; i<n/2; i++){
-		for (unsigned int j=0; j<n/2; j++){
-			cout << U(i,j) << " ";
-		}cout << endl;
-	}
-}
 
 double calculate_vector_double_sum(vector<double> & in){
 	double sum = 0;
@@ -342,3 +291,57 @@ void * sparse_column_pmatrix_pthread_go(void *threadarg){
 	return 0;
 }
 
+//REQUIRES BOOST AND IS SLOWER BUT TO ACTIVATE UNCOMMENT
+
+/*#include "expm.h"
+#include <boost/numeric/ublas/vector.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/lu.hpp>
+#include <boost/numeric/ublas/traits.hpp>
+
+vector< vector<double> > QMatrixToPmatrix(vector< vector<double> > & Q, double t){
+	using namespace boost::numeric::ublas;
+	matrix<double> H(Q.size(),Q.size());
+	for(unsigned int i=0; i<Q.size(); i++){
+		for (unsigned int j=0; j<Q.size(); j++){
+			H(i,j)=Q[i][j]*t;
+		}
+	}
+	matrix<double> U (Q.size(), Q.size());
+	U = expm_pad(H);
+	std::vector<std::vector<double> > P (Q.size(), std::vector<double>(Q.size()));
+	for(unsigned int i=0; i<Q.size(); i++){
+		for (unsigned int j=0; j<Q.size(); j++){
+			P[i][j] = U(i,j);
+		}
+	}
+	//for(unsigned int i=0; i<P.size(); i++){
+	//	double sum = 0.0;
+	//	for (unsigned int j=0; j<P[i].size(); j++){
+	//		sum += P[i][j];
+	//	}
+	//	for (unsigned int j=0; j<P[i].size(); j++){
+	//		P[i][j] = (P[i][j]/sum);
+	//	}
+	//}
+	return P;
+}
+
+void calcMatExp(int * ia,int * ja, double * a, int n){
+	using namespace boost::numeric::ublas;
+	matrix<double> H(n/2,n/2);
+	int count = 0;
+	for(unsigned int i=0; i<n/2; i++){
+		for (unsigned int j=0; j<n/2; j++){
+			H(i,j)=a[count];
+			count += 1;
+		}
+	}
+	matrix<double> U (n/2,n/2);
+	U = expm_pad(H);
+	for(unsigned int i=0; i<n/2; i++){
+		for (unsigned int j=0; j<n/2; j++){
+			cout << U(i,j) << " ";
+		}cout << endl;
+	}
+}*/

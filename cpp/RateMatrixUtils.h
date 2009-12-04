@@ -18,13 +18,6 @@
 using namespace std;
 
 /*
- * this constructs a P matrix using a Q matrix
- */
-
-vector< vector<double> > QMatrixToPmatrix(vector< vector<double> > & Q, double t);
-void calcMatExp(int * ia,int * ja, double * a, int n);
-
-/*
   most of these utilities calculate simple math on matrices and vectors
   and they should only be used if there is the chance that there will 
   be a null vector or matrix. otherwise, c++ numerics library should
@@ -98,5 +91,16 @@ struct sparse_thread_data{
 };
 
 void * sparse_column_pmatrix_pthread_go(void *threadarg);
+
+/*
+ * REQUIRES BOOST -- UNCOMMENT TO REACTIVATE
+ */
+/*
+ * this constructs a P matrix using a Q matrix
+ */
+
+//vector< vector<double> > QMatrixToPmatrix(vector< vector<double> > & Q, double t);
+//void calcMatExp(int * ia,int * ja, double * a, int n);
+
 
 #endif /* RATEMATRIXUTILS_H_ */

@@ -317,46 +317,6 @@ void RateModel::setup_Q(){
 	}
 }
 
-vector<vector<double > > RateModel::setup_P(int period, double t){
-	/*
-	return P, the matrix of dist-to-dist transition probabilities,
-	from the model's rate matrix (Q) over a time duration (t)
-	*/
-	vector<vector<double> > p = QMatrixToPmatrix(Q[period], t);
-
-	//filter out impossible dists
-	//vector<vector<int> > dis = enumerate_dists();
-	for (unsigned int i=0;i<dists.size();i++){
-		//if (calculate_vector_int_sum(&dists[i]) > 0){
-		if(accumulate(dists[i].begin(),dists[i].end(),0) > 0){
-			for(unsigned int j=0;j<dists[i].size();j++){
-				if(dists[i][j]==1){//present
-					double sum1 =calculate_vector_double_sum(Dmask[period][j]);
-					double sum2 = 0.0;
-					for(unsigned int k=0;k<Dmask[period].size();k++){
-						sum2 += Dmask[period][k][j];
-					}
-					if(sum1+sum2 == 0){
-						for(unsigned int k=0;k<p[period].size();k++){
-							p[period][k] = p[period][k]*0.0;
-						}
-						break;
-					}
-				}
-			}
-		}
-	}
-	if(VERBOSE){
-		cout << "p " << period << " "<< t << endl;
-		for (unsigned int i=0;i<p.size();i++){
-			for (unsigned int j=0;j<p[i].size();j++){
-				cout << p[i][j] << " ";
-			}
-			cout << endl;
-		}
-	}
-	return p;
-}
 
 
 extern"C" {
@@ -739,5 +699,49 @@ int RateModel::get_num_areas(){return nareas;}
 int RateModel::get_num_periods(){return periods.size();}
 
 /**/
+
+
+//REQUIRES BOOST AND IS SLOWER BUT TO ACTIVATE UNCOMMENT
+/*vector<vector<double > > RateModel::setup_P(int period, double t){
+	//
+	//return P, the matrix of dist-to-dist transition probabilities,
+	//from the model's rate matrix (Q) over a time duration (t)
+	//
+	vector<vector<double> > p = QMatrixToPmatrix(Q[period], t);
+
+	//filter out impossible dists
+	//vector<vector<int> > dis = enumerate_dists();
+	for (unsigned int i=0;i<dists.size();i++){
+		//if (calculate_vector_int_sum(&dists[i]) > 0){
+		if(accumulate(dists[i].begin(),dists[i].end(),0) > 0){
+			for(unsigned int j=0;j<dists[i].size();j++){
+				if(dists[i][j]==1){//present
+					double sum1 =calculate_vector_double_sum(Dmask[period][j]);
+					double sum2 = 0.0;
+					for(unsigned int k=0;k<Dmask[period].size();k++){
+						sum2 += Dmask[period][k][j];
+					}
+					if(sum1+sum2 == 0){
+						for(unsigned int k=0;k<p[period].size();k++){
+							p[period][k] = p[period][k]*0.0;
+						}
+						break;
+					}
+				}
+			}
+		}
+	}
+	if(VERBOSE){
+		cout << "p " << period << " "<< t << endl;
+		for (unsigned int i=0;i<p.size();i++){
+			for (unsigned int j=0;j<p[i].size();j++){
+				cout << p[i][j] << " ";
+			}
+			cout << endl;
+		}
+	}
+	return p;
+}*/
+
 
 

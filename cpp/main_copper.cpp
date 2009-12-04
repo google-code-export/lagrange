@@ -18,7 +18,7 @@
 #include <map>
 #include <math.h>
 #include <float.h>
-#include <gmp.h>
+//#include <gmp.h>
 
 
 using namespace std;
@@ -32,7 +32,7 @@ using namespace std;
 #include "InputReader_copper.h"
 #include "Utils.h"
 
-#include "expm.h"
+//#include "expm.h"
 
 
 int main(int argc, char* argv[]){
