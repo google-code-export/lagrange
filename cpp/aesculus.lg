@@ -10,12 +10,12 @@ areanames = EA ENA WNA EU
 #fixnode = ROOT 1000
 #excludedists = 1111
 #includedists = 1000,0100,0010,0001,1100,1010,1001,0110,0101,0011
-#includedists = 2
+includedists = 2
 ancstate = _all_
 #ancstate = hankensii
 #ancstate = ROOT
-#splits
-states
+splits
+#states
 #sparse
 #numthreads=2
-estimate_dispersal_mask
+#estimate_dispersal_mask

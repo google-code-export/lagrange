@@ -2,13 +2,12 @@ RM := rm -rf
 
 CPP_SRCS += \
 ./AncSplit.cpp \
-./InputReader.cpp \
-./BioGeoTree.cpp \
-./BioGeoTreeTools.cpp \
-./BranchSegment.cpp \
-./OptimizeBioGeo.cpp \
-./OptimizeBioGeoAllDispersal.cpp \
-./OptimizeBioGeoPowell.cpp \
+./InputReader_copper.cpp \
+./BioGeoTree_copper.cpp \
+./BioGeoTreeTools_copper.cpp \
+./BranchSegment_copper.cpp \
+./OptimizeBioGeo_copper.cpp \
+./OptimizeBioGeoAllDispersal_copper.cpp \
 ./RateMatrixUtils.cpp \
 ./RateModel.cpp \
 ./Utils.cpp \
@@ -16,17 +15,16 @@ CPP_SRCS += \
 ./tree.cpp \
 ./tree_reader.cpp \
 ./tree_utils.cpp \
-./main.cpp
+./main_copper.cpp
 
 OBJS += \
 ./AncSplit.o \
-./InputReader.o \
-./BioGeoTree.o \
-./BioGeoTreeTools.o \
-./BranchSegment.o \
-./OptimizeBioGeo.o \
-./OptimizeBioGeoAllDispersal.o \
-./OptimizeBioGeoPowell.o \
+./InputReader_copper.o \
+./BioGeoTree_copper.o \
+./BioGeoTreeTools_copper.o \
+./BranchSegment_copper.o \
+./OptimizeBioGeo_copper.o \
+./OptimizeBioGeoAllDispersal_copper.o \
 ./RateMatrixUtils.o \
 ./RateModel.o \
 ./Utils.o \
@@ -34,17 +32,16 @@ OBJS += \
 ./tree.o \
 ./tree_reader.o \
 ./tree_utils.o \
-./main.o
+./main_copper.o
 
 CPP_DEPS += \
 ./AncSplit.d \
-./InputReader.d \
-./BioGeoTree.d \
-./BioGeoTreeTools.d \
-./BranchSegment.d \
+./InputReader_copper.d \
+./BioGeoTree_copper.d \
+./BioGeoTreeTools_copper.d \
+./BranchSegment_copper.d \
 ./OptimizeBioGeo.d \
 ./OptimizeBioGeoAllDispersal.d \
-./OptimizeBioGeoPowell.d \
 ./RateMatrixUtils.d \
 ./RateModel.d \
 ./Utils.d \
@@ -52,10 +49,17 @@ CPP_DEPS += \
 ./tree.d \
 ./tree_reader.d \
 ./tree_utils.d \
-./main.d
+./main_copper.d
+
+#uncomment if debugging
+#DEBUG = -DDEBUG
+
+TARGET_NAME = lagrange_cpp
+#uncomment for bigtrees
+#BIGTREE = -DBIGTREE
+#TARGET_NAME = lagrange_cpp_bt
 
 C_OPT = -arch i386 -O3 -ftree-vectorize -ffast-math -Wall -g
-#C_OPT = -arch i386 -O3 -Wall -g
 
 #probably don't need unless messed with code
 BOOST_LIB = -I/Users/smitty/programming/LIBRARIES/boost_1_39_0
@@ -67,15 +71,18 @@ PYTHON_LIB = -I/System/Library/Frameworks/Python.framework/Headers/
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 #requires fortran, bio++ libraries, gsl, and pthread
 #LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
-
 LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread
 
+
+#######
+# FORTRAN BIT
+######
 FC	= /usr/local/bin/gfortran
 FFLAGS	= -O3
 .f.o:;  $(FC) $(FFLAGS) -c $<
@@ -96,15 +103,22 @@ FORT_OBJS += \
 ./lapack.o \
 ./my_matexp.o
 
-
 # All Target
 all: lagrange_cpp
+
+#output of 
+#>>> import distutils.sysconfig
+#>>> distutils.sysconfig.get_config_var('LINKFORSHARED')
+PYTHON_REQ = -u _PyMac_Error /System/Library/Frameworks/Python.framework/Versions/2.6/Python
+
+#link library locations
+LINK_LIB_DIRS = -L/usr/local/lib/ -L/usr/lib/
 
 # Tool invocations
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++ -L/usr/local/lib/ -L/usr/lib/ -u _PyMac_Error /System/Library/Frameworks/Python.framework/Versions/2.6/Python -arch i386 -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
+	g++ $(LINK_LIB_DIRS) $(PYTHON_REQ) -arch i386 -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

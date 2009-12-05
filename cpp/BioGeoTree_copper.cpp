@@ -144,8 +144,6 @@ void BioGeoTree_copper::set_tip_conditionals(map<string,vector<int> > distrib_da
 	for(int i=0;i<numofleaves;i++){
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getExternalNode(i)->getObject(seg));
 		RateModel * mod = tsegs->at(0).getModel();
-		//int ind1 = get_vector_int_index_from_multi_vector_int(
-		//		&distrib_data[tree->getLeaves().at(i)->getName()],mod->getDists());
 		int ind1 = get_vector_int_index_from_multi_vector_int(
 						&distrib_data[tree->getExternalNode(i)->getName()],mod->getDists());
 		tsegs->at(0).distconds->at(ind1) = 1.0;
