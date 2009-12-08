@@ -428,6 +428,7 @@ int main(int argc, char* argv[]){
 				}
 				cout << "D_mask" <<endl;
 				for (unsigned int i=0;i<D_mask.size();i++){
+					cout << periods.at(i) << endl;
 					cout << "\t";
 					for(unsigned int j=0;j<D_mask[i].size();j++){
 						cout << areanames[j] << "\t" ;
