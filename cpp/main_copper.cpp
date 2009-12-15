@@ -508,8 +508,9 @@ int main(int argc, char* argv[]){
 				}
 				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 			}
+		}
+		for(unsigned int i=0;i<intrees.size();i++){
 			delete intrees[i];
-
 		}
 	}
 	/*Py_Initialize();

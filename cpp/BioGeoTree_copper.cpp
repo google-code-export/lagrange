@@ -539,10 +539,11 @@ void BioGeoTree_copper::reverse(Node & node){
 		//calculate A i 
 		//sum over all alpha k of sister node of the parent times the priors of the speciations 
 		//(weights) times B of parent j
-		VectorNodeObject<double> * parrev = ((VectorNodeObject<double>*)node.getParent()->getObject(revB));
 #ifdef BIGTREE
+		VectorNodeObject<mpfr_class> * parrev = ((VectorNodeObject<mpfr_class>*)node.getParent()->getObject(revB));
 		VectorNodeObject<mpfr_class> sisdistconds;
 #else
+		VectorNodeObject<double> * parrev = ((VectorNodeObject<double>*)node.getParent()->getObject(revB));
 		VectorNodeObject<double> sisdistconds;
 #endif
 		if(&node.getParent()->getChild(0) != &node){
@@ -612,7 +613,11 @@ void BioGeoTree_copper::reverse(Node & node){
  */
 
 map<vector<int>,vector<AncSplit> > BioGeoTree_copper::calculate_ancsplit_reverse(Node & node,bool marg){
+#ifdef BIGTREE
+	VectorNodeObject<mpfr_class> * Bs = (VectorNodeObject<mpfr_class> *) node.getObject(revB);
+#else
 	VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(revB);
+#endif
 	map<vector<int>,vector<AncSplit> > ret;
 	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
 		vector<int> dist = rootratemodel->getDists()->at(j);
@@ -651,7 +656,11 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
 #endif
 	{
 	if (node.isExternal()==false){//is not a tip
+#ifdef BIGTREE
+		VectorNodeObject<mpfr_class> * Bs = (VectorNodeObject<mpfr_class> *) node.getObject(revB);
+#else
 		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(revB);
+#endif
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;
 		vector<int> rightdists;
@@ -686,9 +695,6 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
 				}
 			}
 		}
-		for(int i=0;i< dists->size();i++)
-			cout << LHOODS[i] <<" ";
-		cout << endl;
 		return LHOODS;
 	}
 }

@@ -59,10 +59,16 @@ TARGET_NAME = lagrange_cpp
 C_OPT = -O3 -ftree-vectorize -ffast-math -Wall -g
 
 #probably don't need unless messed with code
-BOOST_LIB = -I/Users/smitty/programming/LIBRARIES/boost_1_39_0
+#LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
+#BOOST_LIB = -I/Users/smitty/programming/LIBRARIES/boost_1_39_0
 
 #for reading web input files
 PYTHON_LIB = -I/System/Library/Frameworks/Python.framework/Headers/
+#output of 
+#>>> import distutils.sysconfig
+#>>> distutils.sysconfig.get_config_var('LINKFORSHARED')
+PYTHON_REQ = -u _PyMac_Error /System/Library/Frameworks/Python.framework/Versions/2.6/Python
+
 
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ./%.cpp
@@ -73,11 +79,10 @@ PYTHON_LIB = -I/System/Library/Frameworks/Python.framework/Headers/
 	@echo ' '
 
 #requires fortran, bio++ libraries, gsl, and pthread
-#LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
 LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread
 
 ###########
-# change to yes for bigtrees
+# change to yes for bigtrees -- loses about 3x speed
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
@@ -116,11 +121,6 @@ FORT_OBJS += \
 
 # All Target
 all: lagrange_cpp
-
-#output of 
-#>>> import distutils.sysconfig
-#>>> distutils.sysconfig.get_config_var('LINKFORSHARED')
-PYTHON_REQ = -u _PyMac_Error /System/Library/Frameworks/Python.framework/Versions/2.6/Python
 
 #link library locations
 LINK_LIB_DIRS = -L/usr/local/lib/ -L/usr/lib/ -L./gmpfrxx/
