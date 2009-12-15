@@ -81,7 +81,7 @@ LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
-BIG = no
+BIG = yes
 BIGTREE =
 ifeq  ($(strip $(BIG)),yes)
 	BIGTREE += -DBIGTREE
