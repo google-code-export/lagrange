@@ -51,21 +51,49 @@ CPP_DEPS += \
 ./tree_utils.d \
 ./main_copper.d
 
-C_OPT = -O3 -ftree-vectorize -ffast-math -Wall -g
-#C_OPT = -O3 -Wall -g
+#uncomment if debugging
+#DEBUG = -DDEBUG
 
+TARGET_NAME = lagrange_cpp
+
+C_OPT = -O3 -ftree-vectorize -ffast-math -Wall -g
+
+#for reading web input files
+PYTHON_LIB = -I/usr/include/python2.6/
+#output of 
+#>>> import distutils.sysconfig
+#>>> distutils.sysconfig.get_config_var('LINKFORSHARED')
+PYTHON_REQ = -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
 
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ -I/usr/include/python2.6/ $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
-#requires fortran, gsl, and pthread
+#requires fortran, gsl, and pthread -- and -ldl -lutil -lpython2.6 are for python
 LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 
+###########
+# change to yes for bigtrees -- loses about 3x speed
+# if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
+# need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
+#######
+BIG = yes
+BIGTREE =
+ifeq  ($(strip $(BIG)),yes)
+	BIGTREE += -DBIGTREE
+	TARGET_NAME = lagrange_cpp_bt
+	LIBS += -lgmp -lgmpxx -lmpfr -lgmpfrxx
+	
+endif
+
+
+#######
+# FORTRAN BIT
+######
 FC	= /usr/bin/gfortran
 FFLAGS	= -O3
 .f.o:;  $(FC) $(FFLAGS) -c $<
@@ -86,18 +114,20 @@ FORT_OBJS += \
 ./lapack.o \
 ./my_matexp.o
 
-
 # All Target
 all: lagrange_cpp
+
+#link library locations
+LINK_LIB_DIRS = -L/usr/lib/ -L/usr/local/lib/ -L./gmpfrxx/
 
 # Tool invocations
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
-	g++ -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions -L/usr/lib/ -L/usr/local/lib/ -o "lagrange_cpp" $(FORT_OBJS) $(OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
+	g++ $(LINK_LIB_DIRS) $(PYTHON_REQ) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
+	@echo 'Finished building target: $(TARGET_NAME)'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS) $(FORT_OBJS) $(C++_DEPS) $(EXECUTABLES) $(CC_DEPS) $(C_DEPS) $(CPP_DEPS) $(CXX_DEPS) $(C_UPPER_DEPS) lagrange_cpp
+	-$(RM) *.o *.d $(TARGET_NAME)
 	-@echo ' '
