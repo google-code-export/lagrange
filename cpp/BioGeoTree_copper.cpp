@@ -8,6 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <ctime>
+#include <cmath>
 #include <functional>
 #include <numeric>
 #include <iostream>
@@ -211,13 +212,13 @@ double BioGeoTree_copper::eval_likelihood(bool marginal){
 		delete whichcolumns;
 	}
 #ifdef BIGTREE
-	mpfr_class f = 	calculate_vector_mpfr_class_sum(*
-			(VectorNodeObject<mpfr_class>*) tree->getRoot()->getObject(dc));
+	mpfr_class f = 	(-log(calculate_vector_mpfr_class_sum(*
+			(VectorNodeObject<mpfr_class>*) tree->getRoot()->getObject(dc))));
 	double x = f.get_d();
 	return x;
 #else
-	return calculate_vector_double_sum(*
-			(VectorNodeObject<double>*) tree->getRoot()->getObject(dc));
+	return (-log(calculate_vector_double_sum(*
+			(VectorNodeObject<double>*) tree->getRoot()->getObject(dc))));
 #endif
 }
 

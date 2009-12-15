@@ -374,7 +374,7 @@ int main(int argc, char* argv[]){
 			 * initial likelihood calculation
 			 */
 			cout << "starting likelihood calculations" << endl;
-			cout << "initial -ln likelihood: " << -log(bgt.eval_likelihood(marginal)) <<endl;
+			cout << "initial -ln likelihood: " << bgt.eval_likelihood(marginal) <<endl;
 			/*
 			 * optimize likelihood
 			 */
@@ -432,7 +432,7 @@ int main(int argc, char* argv[]){
 				rm.setup_Q();
 				bgt.update_default_model(&rm);
 				bgt.set_store_p_matrices(true);
-				cout << "final -ln likelihood: "<< -log(bgt.eval_likelihood(marginal)) <<endl;
+				cout << "final -ln likelihood: "<< bgt.eval_likelihood(marginal) <<endl;
 				bgt.set_store_p_matrices(false);
 			}
 			/*

@@ -5,6 +5,6 @@ periods = 20 200
 areanames = WNA ENA EU EA
 logfile = logfile
 ancstate = _all_
-#states
+states
 #sparse
 estimate_dispersal_mask
