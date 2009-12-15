@@ -55,11 +55,8 @@ CPP_DEPS += \
 #DEBUG = -DDEBUG
 
 TARGET_NAME = lagrange_cpp
-#uncomment for bigtrees
-#BIGTREE = -DBIGTREE
-#TARGET_NAME = lagrange_cpp_bt
 
-C_OPT = -arch i386 -O3 -ftree-vectorize -ffast-math -Wall -g
+C_OPT = -O3 -ftree-vectorize -ffast-math -Wall -g
 
 #probably don't need unless messed with code
 BOOST_LIB = -I/Users/smitty/programming/LIBRARIES/boost_1_39_0
@@ -78,6 +75,20 @@ PYTHON_LIB = -I/System/Library/Frameworks/Python.framework/Headers/
 #requires fortran, bio++ libraries, gsl, and pthread
 #LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
 LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread
+
+###########
+# change to yes for bigtrees
+# if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
+# need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
+#######
+BIG = yes
+BIGTREE =
+ifeq  ($(strip $(BIG)),yes)
+	BIGTREE += -DBIGTREE
+	TARGET_NAME = lagrange_cpp_bt
+	LIBS += -lgmp -lgmpxx -lmpfr -lgmpfrxx
+	
+endif
 
 
 #######
@@ -112,17 +123,17 @@ all: lagrange_cpp
 PYTHON_REQ = -u _PyMac_Error /System/Library/Frameworks/Python.framework/Versions/2.6/Python
 
 #link library locations
-LINK_LIB_DIRS = -L/usr/local/lib/ -L/usr/lib/
+LINK_LIB_DIRS = -L/usr/local/lib/ -L/usr/lib/ -L./gmpfrxx/
 
 # Tool invocations
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: MacOS X C++ Linker'
-	g++ $(LINK_LIB_DIRS) $(PYTHON_REQ) -arch i386 -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
-	@echo 'Finished building target: $@'
+	g++ $(LINK_LIB_DIRS) $(PYTHON_REQ) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
+	@echo 'Finished building target: $(TARGET_NAME)'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS) $(FORT_OBJS) $(C++_DEPS) $(EXECUTABLES) $(CC_DEPS) $(C_DEPS) $(CPP_DEPS) $(CXX_DEPS) $(C_UPPER_DEPS) lagrange_cpp
+	-$(RM) *.o *.d lagrange_cpp
 	-@echo ' '

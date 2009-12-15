@@ -16,12 +16,15 @@
 #include <cmath>
 using namespace std;
 
-
 #include "tree.h"
 #include "tree_reader.h"
 #include "node.h"
 #include "vector_node_object.h"
 #include "string_node_object.h"
+
+#ifdef BIGTREE
+#include "gmpfrxx/gmpfrxx.h"
+#endif
 
 Tree * BioGeoTreeTools_copper::getTreeFromString(string treestring){
 	TreeReader tr;
@@ -39,14 +42,23 @@ vector<Node *> BioGeoTreeTools_copper::getAncestors(Tree & tree, Node & nodeId){
 }
 
 void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<AncSplit> > & ans,map<int,string> &areanamemaprev, RateModel * rm){
+#ifdef BIGTREE
+	mpfr_class best = 0;
+	mpfr_class sum = 0;
+#else
 	double best = 0;
 	double sum = 0;
+#endif
 	int areasize = (*ans.begin()).first.size();
 	map<int, vector<int> > * distmap = rm->get_int_dists_map(); 
 	vector<int> bestldist;
 	vector<int> bestrdist;
 	map<vector<int>,vector<AncSplit> >::iterator it;
+#ifdef BIGTREE
+	map<mpfr_class,string > printstring;
+#else
 	map<double,string > printstring;
+#endif
 	for(it=ans.begin();it!=ans.end();it++){
 		vector<int> dis = (*it).first;
 		vector<AncSplit> tans = (*it).second;
@@ -56,7 +68,7 @@ void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<
 				bestldist = (*distmap)[tans[i].ldescdistint];//tans[i].getLDescDist();
 				bestrdist = (*distmap)[tans[i].rdescdistint];//tans[i].getRDescDist();
 			}
-			//cout << tans[i].getLikelihood() << endl;
+			cout << -log(tans[i].getLikelihood()) << endl;
 			sum += tans[i].getLikelihood();
 		}
 	}
@@ -96,7 +108,11 @@ void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<
 			}
 		}
 	}
+#ifdef BIGTREE
+	map<mpfr_class,string >::iterator pit;
+#else
  	map<double,string >::iterator pit;
+#endif
 	for(pit=printstring.begin();pit != printstring.end();pit++){
 		cout << "\t" << (*pit).second << "\t" << (-(*pit).first)/sum << "\t(" << -log(-(*pit).first) << ")"<< endl;
 	}
@@ -126,13 +142,27 @@ void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<
 	//cout << -log(best) << " "<< best/sum << endl;
 }
 
-void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm){
+#ifdef BIGTREE
+void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<mpfr_class> & ans,map<int,string> &areanamemaprev, RateModel * rm)
+#else
+void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm)
+#endif
+{
+#ifdef BIGTREE
+	mpfr_class best = 0;
+	mpfr_class sum = 0;
+#else
 	double best = 0;
 	double sum = 0;
+#endif
 	int areasize = rm->get_num_areas();
 	map<int, vector<int> > * distmap = rm->get_int_dists_map(); 
 	vector<int> bestancdist;
+#ifdef BIGTREE
+	map<mpfr_class,string > printstring;
+#else
 	map<double,string > printstring;
+#endif
 	for(unsigned int i=0;i<ans.size();i++){
 		if (ans[i] > best){
 			best = ans[i];
@@ -156,7 +186,11 @@ void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<double> & ans,
 			printstring[-ans[i]] = tdisstring;
 		}
 	}
+#ifdef BIGTREE
+	map<mpfr_class,string >::iterator pit;
+#else
  	map<double,string >::iterator pit;
+#endif
 	for(pit=printstring.begin();pit != printstring.end();pit++){
 		cout << "\t" << (*pit).second << "\t" << (-(*pit).first)/sum << "\t(" << -log(-(*pit).first) << ")"<< endl;
 	}

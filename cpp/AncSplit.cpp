@@ -20,6 +20,10 @@
 #include <vector>
 using namespace std;
 
+#ifdef BIGTREE
+#include "gmpfrxx/gmpfrxx.h"
+#endif
+
 AncSplit::AncSplit(RateModel * mod,int dist,int ldesc,int rdesc,double we){
 	model = mod;
 	ancdistint = dist;
@@ -36,6 +40,16 @@ double AncSplit::getWeight(){
 	return weight;
 }
 
+
+#ifdef BIGTREE
+mpfr_class AncSplit::getLikelihood(){
+	return likelihood;
+}
+
+void AncSplit::setLikelihood(mpfr_class li){
+	likelihood = li;
+}
+#else
 double AncSplit::getLikelihood(){
 	return likelihood;
 }
@@ -43,3 +57,4 @@ double AncSplit::getLikelihood(){
 void AncSplit::setLikelihood(double li){
 	likelihood = li;
 }
+#endif

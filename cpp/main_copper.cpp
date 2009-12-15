@@ -33,7 +33,9 @@ using namespace std;
 #include "Utils.h"
 
 //#include "expm.h"
-
+#ifdef BIGTREE
+#include "gmpfrxx/gmpfrxx.h"
+#endif
 
 int main(int argc, char* argv[]){
 	if(argc != 2){
@@ -450,7 +452,11 @@ int main(int argc, char* argv[]){
 						}
 						if(states){
 							cout << "Ancestral states for:\t" << intrees[i]->getInternalNode(j)->getNumber() <<endl;
+#ifdef BIGTREE
+							vector<mpfr_class> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
+#else
 							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
+#endif
 							tt.summarizeAncState(intrees[i]->getInternalNode(j),rast,areanamemaprev,&rm);
 							cout << endl;
 						}
@@ -471,7 +477,11 @@ int main(int argc, char* argv[]){
 						}
 						if(states){
 							cout << "Ancestral states for: " << ancstates[j] <<endl;
+#ifdef BIGTREE
+							vector<mpfr_class> rast = bgt.calculate_ancstate_reverse(*mrcanodeint[ancstates[j]],marginal);
+#else
 							vector<double> rast = bgt.calculate_ancstate_reverse(*mrcanodeint[ancstates[j]],marginal);
+#endif
 							tt.summarizeAncState(mrcanodeint[ancstates[j]],rast,areanamemaprev,&rm);
 						}
 					}
@@ -498,10 +508,8 @@ int main(int argc, char* argv[]){
 				}
 				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 			}
-
-		}
-		for(unsigned int i=0;i<intrees.size();i++){
 			delete intrees[i];
+
 		}
 	}
 	/*Py_Initialize();

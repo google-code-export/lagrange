@@ -91,5 +91,5 @@ lagrange_cpp: $(OBJS) $(FORT_OBJS)
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS) $(FORT_OBJS) $(C++_DEPS) $(EXECUTABLES) $(CC_DEPS) $(C_DEPS) $(CPP_DEPS) $(CXX_DEPS) $(C_UPPER_DEPS) lagrange_cpp
+	-$(RM) *.o *.d lagrange_cpp
 	-@echo ' '

@@ -15,6 +15,10 @@ using namespace std;
 
 #include "vector_node_object.h"
 
+#ifdef BIGTREE
+#include "gmpfrxx/gmpfrxx.h"
+#endif
+
 class BranchSegment{
 	private:
 		double duration;
@@ -36,9 +40,15 @@ class BranchSegment{
 		RateModel * getModel();
 		vector<int> getFossilAreas();
 		void setFossilArea(int area);
+#ifdef BIGTREE
+		VectorNodeObject<mpfr_class> * distconds;
+		VectorNodeObject<mpfr_class> alphas;
+		VectorNodeObject<mpfr_class> * ancdistconds;//for ancestral state reconstructions
+#else
 		VectorNodeObject<double> * distconds;
 		VectorNodeObject<double> alphas;
 		VectorNodeObject<double> * ancdistconds;//for ancestral state reconstructions
+#endif
 };
 
 #endif /* BRANCHSEGMENT_H_ */

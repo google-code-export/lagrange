@@ -21,6 +21,10 @@ using namespace std;
 #include "node.h"
 #include "vector_node_object.h"
 
+#ifdef BIGTREE
+#include "gmpfrxx/gmpfrxx.h"
+#endif
+
 class BioGeoTree_copper{
 private:
 	Tree * tree;
@@ -61,7 +65,11 @@ public:
 	double eval_likelihood(bool marg);
 	void set_excluded_dist(vector<int> ind,Node * node);
 	void set_tip_conditionals(map<string,vector<int> > distrib_data);
+#ifdef BIGTREE
+	VectorNodeObject<mpfr_class> conditionals(Node & node, bool marg, bool sparse);
+#else
 	VectorNodeObject<double> conditionals(Node & node, bool marg, bool sparse);
+#endif
 	//void ancdist_conditional_lh(bpp::Node & node, bool marg);
 	void ancdist_conditional_lh(Node & node, bool marg);
 
@@ -79,8 +87,11 @@ public:
 	void prepare_ancstate_reverse();
 	void reverse(Node &);
 	map<vector<int>,vector<AncSplit> > calculate_ancsplit_reverse(Node & node,bool marg);
+#ifdef BIGTREE
+	vector<mpfr_class> calculate_ancstate_reverse(Node & node,bool marg);
+#else
 	vector<double> calculate_ancstate_reverse(Node & node,bool marg);
-
+#endif
 	~BioGeoTree_copper();
 
 /*
