@@ -65,6 +65,8 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	 */
 	cout << "initializing nodes..." << endl;
 	for(int i=0;i<tree->getNodeCount();i++){
+		if(tree->getNode(i)->getBL()<0.000001)
+			tree->getNode(i)->setBL(0.000001);
 		VectorNodeObject<BranchSegment> * segs = new VectorNodeObject<BranchSegment>();
 		tree->getNode(i)->assocObject(seg,*segs);
 		delete segs;

@@ -87,7 +87,7 @@ void InputReader::checkData(map<string,vector<int> > data ,vector<Tree *> trees)
 	for(itr = data.begin(); itr != data.end(); ++itr){
 		dataspecies.push_back(itr->first);
 	}
-	for(unsigned int i=0;i < trees.size();i++){
+	//for(unsigned int i=0;i < trees.size();i++){
 		for(int j=0;j<trees[0]->getExternalNodeCount();j++){
 			bool test = false;
 			for (unsigned int k=0;k<dataspecies.size();k++){
@@ -99,5 +99,5 @@ void InputReader::checkData(map<string,vector<int> > data ,vector<Tree *> trees)
 				exit(0);
 			}
 		}
-	}
+	//}
 }
