@@ -489,7 +489,7 @@ int main(int argc, char* argv[]){
 				if(splits){
 					outTreeFile.open((treefile+".bgsplits.tre").c_str(),ios::app );
 					//need to output object "split"
-					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"split") << ";"<< endl;
+					outTreeFile << intrees[i]->getRoot()->getNewick(true,"split") << ";"<< endl;
 					outTreeFile.close();
 					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
 						if (intrees[i]->getInternalNode(j)->getObject("split")!= NULL)
@@ -499,7 +499,7 @@ int main(int argc, char* argv[]){
 				if(states){
 					outTreeFile.open((treefile+".bgstates.tre").c_str(),ios::app );
 					//need to output object "state"
-					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"state") << ";"<< endl;
+					outTreeFile << intrees[i]->getRoot()->getNewick(true,"state") << ";"<< endl;
 					outTreeFile.close();
 					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
 						if (intrees[i]->getInternalNode(j)->getObject("state")!= NULL)

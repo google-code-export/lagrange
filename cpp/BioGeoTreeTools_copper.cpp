@@ -45,20 +45,17 @@ void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<
 #ifdef BIGTREE
 	mpfr_class best = 0;
 	mpfr_class sum = 0;
+	map<mpfr_class,string > printstring;
 #else
 	double best = 0;
 	double sum = 0;
+	map<double,string > printstring;
 #endif
 	int areasize = (*ans.begin()).first.size();
 	map<int, vector<int> > * distmap = rm->get_int_dists_map(); 
 	vector<int> bestldist;
 	vector<int> bestrdist;
 	map<vector<int>,vector<AncSplit> >::iterator it;
-#ifdef BIGTREE
-	map<mpfr_class,string > printstring;
-#else
-	map<double,string > printstring;
-#endif
 	for(it=ans.begin();it!=ans.end();it++){
 		vector<int> dis = (*it).first;
 		vector<AncSplit> tans = (*it).second;
@@ -68,7 +65,7 @@ void BioGeoTreeTools_copper::summarizeSplits(Node * node,map<vector<int>,vector<
 				bestldist = (*distmap)[tans[i].ldescdistint];//tans[i].getLDescDist();
 				bestrdist = (*distmap)[tans[i].rdescdistint];//tans[i].getRDescDist();
 			}
-			cout << -log(tans[i].getLikelihood()) << endl;
+			//cout << -log(tans[i].getLikelihood()) << endl;
 			sum += tans[i].getLikelihood();
 		}
 	}
@@ -151,18 +148,15 @@ void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<double> & ans,
 #ifdef BIGTREE
 	mpfr_class best = 0;
 	mpfr_class sum = 0;
+	map<mpfr_class,string > printstring;
 #else
 	double best = 0;
 	double sum = 0;
+	map<double,string > printstring;
 #endif
 	int areasize = rm->get_num_areas();
 	map<int, vector<int> > * distmap = rm->get_int_dists_map(); 
 	vector<int> bestancdist;
-#ifdef BIGTREE
-	map<mpfr_class,string > printstring;
-#else
-	map<double,string > printstring;
-#endif
 	for(unsigned int i=0;i<ans.size();i++){
 		if (ans[i] > best){
 			best = ans[i];

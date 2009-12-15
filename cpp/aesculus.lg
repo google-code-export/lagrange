@@ -14,8 +14,8 @@ includedists = 2
 ancstate = _all_
 #ancstate = hankensii
 #ancstate = ROOT
-#splits
-states
+splits
+#states
 #sparse
 #numthreads=2
 estimate_dispersal_mask
