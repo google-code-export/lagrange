@@ -1,7 +1,7 @@
 treefile = test.tre
 datafile = test.data
 #ratematrix = aesculus.rm
-periods = 0.03,0.08,0.12,0.13,1.
+periods = 0.03,1
 #calctype = m
 #areanames = EA ENA WNA EU
 #logfile = logfile

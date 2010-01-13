@@ -31,6 +31,7 @@ using namespace std;
 #include "OptimizeBioGeoAllDispersal_copper.h"
 #include "InputReader_copper.h"
 #include "Utils.h"
+#include "BayesianBioGeo.h"
 
 //#include "expm.h"
 #ifdef BIGTREE
@@ -508,7 +509,14 @@ int main(int argc, char* argv[]){
 				}
 				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
 			}
+		
+			/*
+			 * BAYESIAN TEST
+			 */
+			BayesianBioGeo bay(&bgt,&rm,marginal,100000);
+			bay.run_global_dispersal_extinction();
 		}
+		
 		for(unsigned int i=0;i<intrees.size();i++){
 			delete intrees[i];
 		}
