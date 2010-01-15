@@ -703,8 +703,6 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
 }
 
 
-
-
 BioGeoTree_copper::~BioGeoTree_copper(){
 	for(int i=0;i<tree->getNodeCount();i++){
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg));
