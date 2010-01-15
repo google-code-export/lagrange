@@ -4,6 +4,7 @@ CPP_SRCS += \
 ./AncSplit.cpp \
 ./InputReader_copper.cpp \
 ./BayesianBioGeo.cpp \
+./BayesianBioGeoAllDispersal.cpp \
 ./BioGeoTree_copper.cpp \
 ./BioGeoTreeTools_copper.cpp \
 ./BranchSegment_copper.cpp \
@@ -22,6 +23,7 @@ OBJS += \
 ./AncSplit.o \
 ./InputReader_copper.o \
 ./BayesianBioGeo.o \
+./BayesianBioGeoAllDispersal.o \
 ./BioGeoTree_copper.o \
 ./BioGeoTreeTools_copper.o \
 ./BranchSegment_copper.o \
@@ -40,6 +42,7 @@ CPP_DEPS += \
 ./AncSplit.d \
 ./InputReader_copper.d \
 ./BayesianBioGeo.d \
+./BayesianBioGeoAllDispersal.d \
 ./BioGeoTree_copper.d \
 ./BioGeoTreeTools_copper.d \
 ./BranchSegment_copper.d \

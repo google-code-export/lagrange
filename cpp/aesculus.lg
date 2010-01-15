@@ -18,4 +18,4 @@ areanames = EA ENA WNA EU
 #states
 #sparse
 #numthreads=2
-#estimate_dispersal_mask
+estimate_dispersal_mask

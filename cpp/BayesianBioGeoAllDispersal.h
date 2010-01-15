@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef BAYESIANBIOGEO_H_
-#define BAYESIANBIOGEO_H_
+#ifndef BAYESIANBIOGEOALLDISPERSAL_H_
+#define BAYESIANBIOGEOALLDISPERSAL_H_
 
 #include <vector>
 using namespace std;
@@ -19,7 +19,7 @@ using namespace std;
 #include "BioGeoTree_copper.h"
 #include "RateModel.h"
 
-class BayesianBioGeo{
+class BayesianBioGeoAllDispersal{
 private:
 	BioGeoTree_copper * tree;
 	RateModel * rm;
@@ -27,6 +27,7 @@ private:
 	bool marginal;
 	vector<double> params;
 	vector<double> prevparams;
+	vector< vector< vector<double> > > D_mask;
 	const gsl_rng_type * T;
 	gsl_rng * r;
 	double calculate_pdf(double value);
@@ -34,7 +35,7 @@ private:
 	double calculate_sliding_log(double value, double sliding, double * hastings);
 	
 public:
-	BayesianBioGeo(BioGeoTree_copper * intree,RateModel * inrm, bool marg, int gen);
+	BayesianBioGeoAllDispersal(BioGeoTree_copper * intree,RateModel * inrm, bool marg, int gen);
 	void run_global_dispersal_extinction();
 	
 	
