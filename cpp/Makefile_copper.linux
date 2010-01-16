@@ -3,6 +3,8 @@ RM := rm -rf
 CPP_SRCS += \
 ./AncSplit.cpp \
 ./InputReader_copper.cpp \
+./BayesianBioGeoAllDispersal.cpp \
+./BayesianBioGeo.cpp \
 ./BioGeoTree_copper.cpp \
 ./BioGeoTreeTools_copper.cpp \
 ./BranchSegment_copper.cpp \
@@ -20,6 +22,8 @@ CPP_SRCS += \
 OBJS += \
 ./AncSplit.o \
 ./InputReader_copper.o \
+./BayesianBioGeoAllDispersal.o \
+./BayesianBioGeo.o \
 ./BioGeoTree_copper.o \
 ./BioGeoTreeTools_copper.o \
 ./BranchSegment_copper.o \
@@ -37,6 +41,8 @@ OBJS += \
 CPP_DEPS += \
 ./AncSplit.d \
 ./InputReader_copper.d \
+./BayesianBioGeoAllDispersal.d \
+./BayesianBioGeo.d \
 ./BioGeoTree_copper.d \
 ./BioGeoTreeTools_copper.d \
 ./BranchSegment_copper.d \
@@ -81,7 +87,7 @@ LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
-BIG = yes
+BIG = no 
 BIGTREE =
 ifeq  ($(strip $(BIG)),yes)
 	BIGTREE += -DBIGTREE
