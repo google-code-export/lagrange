@@ -1,7 +1,7 @@
 treefile = test.tre
 datafile = test.data
 #ratematrix = aesculus.rm
-periods = 0.03,1
+#periods = 0.03,1
 #calctype = m
 areanames = 1 2 3
 #logfile = logfile
@@ -12,10 +12,10 @@ areanames = 1 2 3
 #includedists = 1000,0100,0010,0001,1100,1010,1001,0110,0101,0011
 #includedists = 3
 #mrca = ONEUP a d
-ancstate = _all_
+#ancstate = _all_
 #ancstate = hankensii
 #ancstate = ONEUP
 #report = split
 #sparse
 #numthreads = 2
-estimate_dispersal_mask
+#estimate_dispersal_mask

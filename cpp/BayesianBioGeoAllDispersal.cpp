@@ -59,7 +59,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	vector<double> sliding(nparams);
 	vector<double> trials(nparams);
 	vector<double> success(nparams);
-	for(unsigned int i=0;i<sliding.size();i++){sliding[i] = 0.05;}
+	for(unsigned int i=0;i<sliding.size();i++){sliding[i] = 0.5;}
 	//sliding[0] = 0.005;sliding[1] = 0.005;
 	for(unsigned int i=0;i<trials.size();i++){trials[i] = 0;}
 	for(unsigned int i=0;i<success.size();i++){success[i] = 0;}
@@ -72,6 +72,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	params = vector<double>(nparams);
 	prevparams = vector<double>(nparams);
 	for(unsigned int i=0;i<params.size();i++){params[i] = 0.01;}
+	params[0] = 1;params[1] = 0.0005;
 	rm->setup_D(0.1);
 	rm->setup_E(0.1);
 	rm->setup_Q();
@@ -161,7 +162,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 }
 
 double BayesianBioGeoAllDispersal::calculate_pdf(double value){
-	return gsl_ran_flat_pdf (value, 0,100.);
+	return gsl_ran_flat_pdf (value, 0,1.);
 }
 
 double BayesianBioGeoAllDispersal::calculate_sliding(double value, double sliding){

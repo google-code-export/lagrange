@@ -51,7 +51,7 @@ void BayesianBioGeo::run_global_dispersal_extinction(){
 	vector<double> sliding(2);
 	vector<double> trials(2);
 	vector<double> success(2);
-	sliding[0] = 0.005;sliding[1] = 0.005;
+	sliding[0] = 0.5;sliding[1] = 0.5;
 	for(unsigned int i=0;i<trials.size();i++){trials[i] = 0;}
 	for(unsigned int i=0;i<success.size();i++){success[i] = 0;}
 	
@@ -62,12 +62,15 @@ void BayesianBioGeo::run_global_dispersal_extinction(){
 
 	params = vector<double>(2);
 	prevparams = vector<double>(2);
-	for(unsigned int i=0;i<params.size();i++){params[i] = 1.0;}
+	for(unsigned int i=0;i<params.size();i++){params[i] = 0.1;}
 	rm->setup_D(0.1);
 	rm->setup_E(0.1);
 	rm->setup_Q();
 	tree->update_default_model(rm);
 	prevlike = -tree->eval_likelihood(marginal);
+	prevprior = 1;
+	for(unsigned int i=0;i<params.size();i++){prevprior *= calculate_pdf(params[i]);}
+	cout << "intial like: " << prevlike << endl;
 	int iter = 0;
 	while(iter < gens){
 		double dispersal=params[0];
@@ -89,29 +92,30 @@ void BayesianBioGeo::run_global_dispersal_extinction(){
 		double testr = gsl_ran_flat(r,0,1);
 		double test = MIN(1,hastings * (curprior/prevprior) * (exp(curlike-prevlike)));
 		
-		if (iter > 1000)
+		if (iter > 100)
 			trials[rot] += 1;
-		//cout << "- "<< prevlike << " " <<  curlike << " " << test << " " << testr << endl;
+		//cout << "- "<< prevlike << " " <<  curlike  << " " << hastings << " " << test << " " << testr;
+		//cout << " " << rot << " " << dispersal << " " << extinction << endl;
 		if (testr < test){
 			prevprior = curprior;
 			prevlike = curlike;
 			prevpost = curpost;
-			prevparams = params;
-			if (iter > 1000)
+			prevparams[rot] = params[rot];
+			if (iter > 100)
 				success[rot] += 1;
 		}
 		/*
 		 * pick next params
 		 */
-		params[rot] = calculate_sliding(prevparams[rot],sliding[rot]);
-		//params[rot] = calculate_sliding_log(prevparams[rot],sliding[rot], &hastings);
-		if(iter%10 == 0){
+		//params[rot] = calculate_sliding(prevparams[rot],sliding[rot]);
+		params[rot] = calculate_sliding_log(prevparams[rot],sliding[rot], &hastings);
+		if(iter%5 == 0){
 			rot += 1;
 		}
 		if (rot == 2){
 			rot = 0;
 		}
-		if(iter%10 == 0 && iter > 1000){
+		if(iter%100 == 0 && iter > 100){
 			cout << iter << " " << prevlike;
 			for(unsigned int i=0;i<params.size();i++){cout << " " << prevparams[i];}
 			for(unsigned int i=0;i<params.size();i++){cout << " " << success[i]/trials[i];}
@@ -130,9 +134,8 @@ double BayesianBioGeo::calculate_pdf(double value){
 }
 
 double BayesianBioGeo::calculate_sliding(double value, double sliding){
-	//return abs(gsl_ran_flat(r,value - (w/2),value + (w/2)));
+	//return abs(gsl_ran_flat(r,value - (sliding/2),value + (sliding/2)));
 	return abs(value + gsl_ran_gaussian(r,sliding));
-	//gsl_gaus
 	//cauchy
 }
 

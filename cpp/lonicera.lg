@@ -1,10 +1,10 @@
 treefile = lonicera.single.tre
 datafile = lonicera.data
 calctype = m
-periods = 20 200
+#periods = 20 200
 areanames = WNA ENA EU EA
 logfile = logfile
-ancstate = _all_
+#ancstate = _all_
 states
 #sparse
-#estimate_dispersal_mask
+estimate_dispersal_mask

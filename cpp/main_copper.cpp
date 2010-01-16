@@ -443,9 +443,9 @@ int main(int argc, char* argv[]){
 			/*
 			 * BAYESIAN TEST
 			 */
-			cout << setprecision(2);
+			cout << setprecision(4);
 			bgt.set_store_p_matrices(false);
-			BayesianBioGeoAllDispersal bay(&bgt,&rm,marginal,1000000);
+			BayesianBioGeoAllDispersal bay(&bgt,&rm,marginal,100000);
 			bay.run_global_dispersal_extinction();
 			/*/
 
