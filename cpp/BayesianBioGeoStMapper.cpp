@@ -161,12 +161,13 @@ void BayesianBioGeoStMapper::run_mappings(){
 		bool result = mapping(treelen,totlen);
 		if(result == true)
 			cout << "success" << endl;
-		//break;
+		break;
 		if (result == true){
 			sims += 1;
 			for (int i=0;i<tree->getNodeCount();i++){
 				VectorNodeObject<int>* newstates = ((VectorNodeObject<int>*) tree->getNode(i)->getObject(sts));
 				VectorNodeObject<double>* newpoints = ((VectorNodeObject<double>*) tree->getNode(i)->getObject(pts));
+
 				for (unsigned int j=0;j<newstates->size();j++){
 					cout << tree->getNode(i)->getName() << " "<< j<< " "<< newstates->at(j) << " " << newpoints->at(j) << endl;
 				}
@@ -210,7 +211,7 @@ bool BayesianBioGeoStMapper::mapping(double treelen, double totlen){
 */
 
 	sample_ancstates();
-	//cout << "TESTING2" << endl;
+	cout << "TESTING2" << endl;
 	/*
     result = simulate_on_nodes(nodes, ancs, Q, states)
 
@@ -220,9 +221,9 @@ bool BayesianBioGeoStMapper::mapping(double treelen, double totlen){
     return result
  */
 	bool result = simulate_on_nodes();
-	//if(result == true)
-	//	cout << "success" << endl;
-	//cout << "TESTING3" << endl;
+	if(result == true)
+		cout << "success" << endl;
+	cout << "TESTING3" << endl;
 
 	for (int i =0;i<tree->getNodeCount();i++){
 		tree->getNode(i)->setBL(origlens[tree->getNode(i)]);
@@ -302,7 +303,7 @@ void BayesianBioGeoStMapper::sample_ancstates(){
 		/*
 		 * need to deal with the splits
 		 */
-		//cout << "---" <<endl;
+		cout << "---" <<endl;
 		for(unsigned int j=0;j<usedistconds.size();j++){
 			v += usedistconds[j];
 			if (rv < v){
@@ -342,7 +343,7 @@ void BayesianBioGeoStMapper::sample_ancstates(){
 							}
 						}
 					}
-					//cout << "sample: "<< splsd << " " <<  j << " lft: " << leftdists[splsd] << " rt: " << rightdists[splsd]<<endl;
+					cout << "sample: "<< tnode->getName() << " " << splsd << " " <<  j << " lft: " << leftdists[splsd] << " rt: " << rightdists[splsd]<<endl;
 					startstate_node_map[&tnode->getChild(0)] = leftdists[splsd];//instead of parent
 					startstate_node_map[&tnode->getChild(1)] = rightdists[splsd];//instead of parent
 				}
@@ -350,10 +351,10 @@ void BayesianBioGeoStMapper::sample_ancstates(){
 			}
 		}
 
-		//cout << rv << endl;
-		//print_vector_double(usedistconds);
-		//cout << "ancest:" << tnode->getName() <<  " parspl:"<<startstate_node_map[tnode] <<  " anc:"<<endstate_node_map[tnode]<<endl;
-		//cout << "---" <<endl;
+		cout << rv << endl;
+		print_vector_double(usedistconds);
+		cout << "ancest:" << tnode->getName() <<  " parspl:"<<startstate_node_map[tnode] <<  " anc:"<<endstate_node_map[tnode]<<endl;
+		cout << "---" <<endl;
 	}
 }
 
@@ -398,7 +399,7 @@ bool BayesianBioGeoStMapper::simulate_on_nodes(){
 			//int sj = startstate_node_map[tree->getNode(i)];
 			int si = startstate_node_map[tree->getNode(i)];
 			int sj = endstate_node_map[tree->getNode(i)];
-			//cout << "simonnodes: " << tree->getNode(i)->getName() << " parspl:" << si << " anc:" << sj << endl;
+			cout << "simonnodes: " << tree->getNode(i)->getName() << " start:" << si << " end:" << sj << endl;
 			VectorNodeObject<int>* newstates = ((VectorNodeObject<int>*) tree->getNode(i)->getObject(sts));
 			VectorNodeObject<double>* newpoints = ((VectorNodeObject<double>*) tree->getNode(i)->getObject(pts));
 			res = simulate_on_branch(si,sj,tree->getNode(i)->getBL(),newstates,newpoints);
@@ -442,6 +443,7 @@ bool BayesianBioGeoStMapper::simulate_on_branch(int starting_state, int end_stat
         history.append((newstate, newpoint))
         si = newstate; point = newpoint
 	 */
+	cout << starting_state << " " << end_state<< endl;
 	if (starting_state != end_state){
 		double lambd = -(rm->get_Q()[0][osi][osi]);
 		double uni = gsl_ran_flat(r,0.0,1.0);
@@ -451,6 +453,7 @@ bool BayesianBioGeoStMapper::simulate_on_branch(int starting_state, int end_stat
 		newstates->push_back(newstate);newpoints->push_back(newpoint);
 		osi = newstate; point = newpoint;
 	}
+	cout << "osi: " << osi << endl;
 	/*
     while 1:
         lambd = -(Q[si,si])
@@ -469,11 +472,13 @@ bool BayesianBioGeoStMapper::simulate_on_branch(int starting_state, int end_stat
 	while(keepgoing){
 		double lambd = -(rm->get_Q()[0][osi][osi]);
 		double rv = gsl_ran_exponential (r, lambd);
+		cout << rv << endl;
 		double newpoint = point + rv;
 		if(newpoint <= brlen){
 			int newstate =draw_new_state(osi);
 			newstates->push_back(newstate);newpoints->push_back(newpoint);
 			osi = newstate; point = newpoint;
+			cout << "newstate: " << newstate << " newpoint: " << newpoint <<endl;
 		}else{
 			newstates->push_back(osi);newpoints->push_back(brlen);
 			keepgoing = false;
@@ -498,6 +503,7 @@ bool BayesianBioGeoStMapper::simulate_on_branch(int starting_state, int end_stat
  * return the state number
  */
 int BayesianBioGeoStMapper::draw_new_state(int starting_state){
+	//cout << " - " << starting_state << endl;
 	/*
     Given a rate matrix Q, a starting state si, and an ordered
     sequence of states, eg (0, 1), draw a new state sj with
@@ -508,12 +514,17 @@ int BayesianBioGeoStMapper::draw_new_state(int starting_state){
 	//qij_probs = [ (x, -(Qrow[x]/qii)) for x in states if x != si ]
 	double qii = rm->get_Q()[0][starting_state][starting_state];
 	std::map <int, double> qij_probs;
-	for (unsigned int i=0;i<rm->getDists()->size();i++){
-		int distint = rm->get_dists_int_map()->at(rm->getDists()->at(i));
+	double sum = 0;
+	for (unsigned int i=1;i<rm->getDists()->size();i++){
+		//int distint = rm->get_dists_int_map()->at(rm->getDists()->at(i));
+		int distint = i;
+		cout << "distint: " << distint << endl;
 		if(starting_state != distint){
-			qij_probs[distint] = rm->get_Q()[0][starting_state][distint]/qii;
+			qij_probs[distint] = -rm->get_Q()[0][starting_state][distint]/qii;
+			sum += -rm->get_Q()[0][starting_state][distint]/qii;
 		}
 	}
+	cout << "sum:" << sum << endl;
 	//uni = uniform(0.0, 1.0)
 	//val = 0.0
 	int state;
@@ -526,10 +537,12 @@ int BayesianBioGeoStMapper::draw_new_state(int starting_state){
 	//        return sj
 	for (it=qij_probs.begin() ; it != qij_probs.end(); it++ ){
 		val += (*it).second;
-		if (uni < val){
+		cout << "its:" << (*it).second << " " << (*it).first << endl;
+ 		if (uni < val){
 			state = (*it).first;
 			return state;
 		}
 	}
+	cout << "state: " << state << endl;
 	return state;
 }
