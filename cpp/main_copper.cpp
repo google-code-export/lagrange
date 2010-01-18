@@ -32,8 +32,7 @@ using namespace std;
 #include "OptimizeBioGeoAllDispersal_copper.h"
 #include "InputReader_copper.h"
 #include "Utils.h"
-#include "BayesianBioGeo.h"
-#include "BayesianBioGeoAllDispersal.h"
+#include "BayesianBioGeoStMapper.h"
 
 //#include "expm.h"
 #ifdef BIGTREE
@@ -379,6 +378,7 @@ int main(int argc, char* argv[]){
 			cout << "starting likelihood calculations" << endl;
 			cout << "initial -ln likelihood: " << bgt.eval_likelihood(marginal) <<endl;
 
+
 			/*
 			 * optimize likelihood
 			 */
@@ -440,14 +440,12 @@ int main(int argc, char* argv[]){
 				bgt.set_store_p_matrices(false);
 			}
 
+
 			/*
-			 * BAYESIAN TEST
+			 * testing STMAPPER
 			 */
-			cout << setprecision(4);
-			bgt.set_store_p_matrices(false);
-			BayesianBioGeoAllDispersal bay(&bgt,&rm,marginal,100000);
-			bay.run_global_dispersal_extinction();
-			/*/
+			BayesianBioGeoStMapper stmap(&bgt,intrees[i],&rm,marginal,1);
+			stmap.run_mappings();
 
 			/*
 			 * ancestral splits calculation

@@ -77,6 +77,11 @@ public:
 	 */
 	map<int,map<double, vector<vector<double> > > > stored_p_matrices;
 
+	/*
+	 * get things from stmap
+	 */
+	vector< vector< vector<double> > > & get_Q();
+
 	//REQUIRES BOOST
 	//vector<vector<double > > setup_P(int period, double t);
 };

@@ -698,6 +698,10 @@ int RateModel::get_num_areas(){return nareas;}
 
 int RateModel::get_num_periods(){return periods.size();}
 
+vector< vector< vector<double> > > & RateModel::get_Q(){
+	return Q;
+}
+
 /**/
 
 
