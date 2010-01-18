@@ -444,8 +444,8 @@ int main(int argc, char* argv[]){
 			/*
 			 * testing STMAPPER
 			 */
-			BayesianBioGeoStMapper stmap(&bgt,intrees[i],&rm,marginal,1);
-			stmap.run_mappings();
+			//BayesianBioGeoStMapper stmap(&bgt,intrees[i],&rm,marginal,1);
+			//stmap.run_mappings();
 
 			/*
 			 * ancestral splits calculation

@@ -5,6 +5,7 @@ CPP_SRCS += \
 ./InputReader_copper.cpp \
 ./BayesianBioGeo.cpp \
 ./BayesianBioGeoAllDispersal.cpp \
+./BayesianBioGeoStMapper.cpp \
 ./BioGeoTree_copper.cpp \
 ./BioGeoTreeTools_copper.cpp \
 ./BranchSegment_copper.cpp \
@@ -24,6 +25,7 @@ OBJS += \
 ./InputReader_copper.o \
 ./BayesianBioGeo.o \
 ./BayesianBioGeoAllDispersal.o \
+./BayesianBioGeoStMapper.o \
 ./BioGeoTree_copper.o \
 ./BioGeoTreeTools_copper.o \
 ./BranchSegment_copper.o \
@@ -43,6 +45,7 @@ CPP_DEPS += \
 ./InputReader_copper.d \
 ./BayesianBioGeo.d \
 ./BayesianBioGeoAllDispersal.d \
+./BayesianBioGeoStMapper.d \
 ./BioGeoTree_copper.d \
 ./BioGeoTreeTools_copper.d \
 ./BranchSegment_copper.d \

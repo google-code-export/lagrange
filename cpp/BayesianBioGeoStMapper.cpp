@@ -151,7 +151,7 @@ void BayesianBioGeoStMapper::run_mappings(){
 	for (int i =0;i<tree->getNodeCount();i++){sum += (tree->getNode(i)->getBL());}
 	double totlen = sum;
 	int sims = 0;
-	int sims_per_tree = 1;
+	int sims_per_tree = 2;
 	while (sims < sims_per_tree){
 		//cout << sims << endl;
 		double treelen = 1.0;//treelen_prior_func();
@@ -161,7 +161,7 @@ void BayesianBioGeoStMapper::run_mappings(){
 		bool result = mapping(treelen,totlen);
 		if(result == true)
 			cout << "success" << endl;
-		break;
+		sims+=1;
 		if (result == true){
 			sims += 1;
 			for (int i=0;i<tree->getNodeCount();i++){
@@ -536,8 +536,8 @@ int BayesianBioGeoStMapper::draw_new_state(int starting_state){
 	//    if uni < val:
 	//        return sj
 	for (it=qij_probs.begin() ; it != qij_probs.end(); it++ ){
-		val += (*it).second;
-		cout << "its:" << (*it).second << " " << (*it).first << endl;
+		val += (*it).second/sum;
+		cout << "its:" << (*it).second/sum << " " << (*it).first << endl;
  		if (uni < val){
 			state = (*it).first;
 			return state;
