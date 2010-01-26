@@ -47,7 +47,7 @@ BayesianBioGeoAllDispersal::BayesianBioGeoAllDispersal(BioGeoTree_copper * intre
 
 void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	double prevlike = 0;
-	double prevprior = 0;
+	double prevprior = 1;
 	double prevpost = 0;
 	double curlike = 0;
 	double curpost = 0;
@@ -59,12 +59,12 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	vector<double> sliding(nparams);
 	vector<double> trials(nparams);
 	vector<double> success(nparams);
-	for(unsigned int i=0;i<sliding.size();i++){sliding[i] = 0.5;}
+	for(unsigned int i=0;i<sliding.size();i++){sliding[i] = 0.001;}
 	//sliding[0] = 0.005;sliding[1] = 0.005;
 	for(unsigned int i=0;i<trials.size();i++){trials[i] = 0;}
 	for(unsigned int i=0;i<success.size();i++){success[i] = 0;}
 	
-	int rot = 0;
+	int rot = 2;
 	double hastings = 1;
 	
 	ofstream outfile ("test.txt");
@@ -72,7 +72,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	params = vector<double>(nparams);
 	prevparams = vector<double>(nparams);
 	for(unsigned int i=0;i<params.size();i++){params[i] = 0.01;}
-	params[0] = 1;params[1] = 0.0005;
+	params[0] = 1.50069;params[1] = 5.28047e-07;
 	rm->setup_D(0.1);
 	rm->setup_E(0.1);
 	rm->setup_Q();
@@ -85,7 +85,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 		int count = 2;
 		for (unsigned int i=0;i<D_mask.size();i++){
 			for (unsigned int j=0;j<D_mask[i].size();j++){
-				D_mask[i][j][j] = 1.0;
+				D_mask[i][j][j] = 0.0;
 				for (unsigned int k=0;k<D_mask[i][j].size();k++){
 					if(k!=j){
 						D_mask[i][j][k] = params[count];
@@ -107,7 +107,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 		 * calcprior
 		 */
 		curprior = 1;
-		for(unsigned int i=0;i<params.size();i++){curprior *= calculate_pdf(params[i]);}
+		//for(unsigned int i=0;i<params.size();i++){curprior *= calculate_pdf(params[i]);}
 		
 		/*
 		 * check to keep
@@ -117,7 +117,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 		
 		if (iter > 1000)
 			trials[rot] += 1;
-		//cout << "- "<< prevlike << " " <<  curlike << " " << test << " " << testr << endl;
+		cout << "- "<< prevlike << " " <<  curlike << " " << (curprior) << " "<< test << " " << testr << endl;
 		if (testr < test){
 			prevprior = curprior;
 			prevlike = curlike;
@@ -129,15 +129,15 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 		/*
 		 * pick next params
 		 */
-		//params[rot] = calculate_sliding(prevparams[rot],sliding[rot]);
-		params[rot] = calculate_sliding_log(prevparams[rot],sliding[rot], &hastings);
+		params[rot] = calculate_sliding(prevparams[rot],sliding[rot]);
+		//params[rot] = calculate_sliding_log(prevparams[rot],sliding[rot], &hastings);
 		if(iter%10 == 0){
 			rot += 1;
 		}
 		if (rot == params.size()){
-			rot = 0;
+			rot = 2;
 		}
-		if(iter%10 == 0 && iter > 1){
+		if(iter%100 == 0 && iter > 1){
 			cout << iter << " " << prevlike;
 			for(unsigned int i=0;i<2;i++){cout << " " << prevparams[i];}
 			cout << endl;
@@ -162,7 +162,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 }
 
 double BayesianBioGeoAllDispersal::calculate_pdf(double value){
-	return gsl_ran_flat_pdf (value, 0,1.);
+	return gsl_ran_flat_pdf (value, 0,100.);
 }
 
 double BayesianBioGeoAllDispersal::calculate_sliding(double value, double sliding){

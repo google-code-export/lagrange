@@ -3,7 +3,7 @@ datafile = test.data
 #ratematrix = aesculus.rm
 #periods = 0.03,1
 #calctype = m
-areanames = 1 2 3
+areanames = 1 2
 #logfile = logfile
 
 
@@ -19,4 +19,4 @@ states
 #splits
 #sparse
 #numthreads = 2
-#estimate_dispersal_mask
+estimate_dispersal_mask

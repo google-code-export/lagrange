@@ -19,8 +19,6 @@
 #include <math.h>
 #include <float.h>
 #include <iomanip>
-//#include <gmp.h>
-
 
 using namespace std;
 
@@ -32,9 +30,8 @@ using namespace std;
 #include "OptimizeBioGeoAllDispersal_copper.h"
 #include "InputReader_copper.h"
 #include "Utils.h"
-#include "BayesianBioGeoStMapper.h"
+#include "BayesianBioGeoAllDispersal.h"
 
-//#include "expm.h"
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
 #endif
@@ -442,10 +439,10 @@ int main(int argc, char* argv[]){
 
 
 			/*
-			 * testing STMAPPER
+			 * testing BAYESIAN
 			 */
-			//BayesianBioGeoStMapper stmap(&bgt,intrees[i],&rm,marginal,1);
-			//stmap.run_mappings();
+			BayesianBioGeoAllDispersal bayes(&bgt,&rm,marginal,100000);
+			bayes.run_global_dispersal_extinction();
 
 			/*
 			 * ancestral splits calculation
