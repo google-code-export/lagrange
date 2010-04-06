@@ -30,7 +30,7 @@ using namespace std;
 #include "OptimizeBioGeoAllDispersal_copper.h"
 #include "InputReader_copper.h"
 #include "Utils.h"
-//#include "BayesianBioGeoAllDispersal.h"
+#include "BayesianBioGeo.h"
 
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
@@ -441,8 +441,8 @@ int main(int argc, char* argv[]){
 			/*
 			 * testing BAYESIAN
 			 */
-			//BayesianBioGeoAllDispersal bayes(&bgt,&rm,marginal,100000);
-			//bayes.run_global_dispersal_extinction();
+			BayesianBioGeo bayes(&bgt,&rm,marginal,10000);
+			bayes.run_global_dispersal_extinction();
 
 			/*
 			 * ancestral splits calculation

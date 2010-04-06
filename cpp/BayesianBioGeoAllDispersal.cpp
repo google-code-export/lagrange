@@ -64,7 +64,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	for(unsigned int i=0;i<trials.size();i++){trials[i] = 0;}
 	for(unsigned int i=0;i<success.size();i++){success[i] = 0;}
 	
-	int rot = 2;
+	int rot = 1;
 	double hastings = 1;
 	
 	ofstream outfile ("test.txt");
@@ -72,7 +72,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 	params = vector<double>(nparams);
 	prevparams = vector<double>(nparams);
 	for(unsigned int i=0;i<params.size();i++){params[i] = 0.01;}
-	params[0] = 1.50069;params[1] = 5.28047e-07;
+	params[0] = 1.;params[1] = 5.28047e-07;
 	rm->setup_D(0.1);
 	rm->setup_E(0.1);
 	rm->setup_Q();
@@ -117,7 +117,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 		
 		if (iter > 1000)
 			trials[rot] += 1;
-		cout << "- "<< prevlike << " " <<  curlike << " " << (curprior) << " "<< test << " " << testr << endl;
+//		cout << "- "<< prevlike << " " <<  curlike << " " << (curprior) << " "<< test << " " << testr << endl;
 		if (testr < test){
 			prevprior = curprior;
 			prevlike = curlike;
@@ -135,7 +135,7 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 			rot += 1;
 		}
 		if (rot == params.size()){
-			rot = 2;
+			rot = 1;
 		}
 		if(iter%100 == 0 && iter > 1){
 			cout << iter << " " << prevlike;
@@ -144,14 +144,14 @@ void BayesianBioGeoAllDispersal::run_global_dispersal_extinction(){
 			for (unsigned int i=0;i<D_mask.size();i++){
 				for (unsigned int j=0;j<D_mask[i].size();j++){
 					for (unsigned int k=0;k<D_mask[i][j].size();k++){
-							cout << D_mask[i][j][k] << " ";
+//							cout << D_mask[i][j][k] << " ";
 					}
-					cout << endl;
+//					cout << endl;
 				}
-				cout << endl;
+//				cout << endl;
 			}
-			//for(unsigned int i=0;i<params.size();i++){cout << " " << success[i]/trials[i];}
-			cout << endl;
+//			for(unsigned int i=0;i<params.size();i++){cout << " " << success[i]/trials[i];}
+//			cout << endl;
 			outfile << iter << "\t" << prevlike;
 			for(unsigned int i=0;i<params.size();i++){outfile << "\t" << prevparams[i];}
 			outfile << endl;
