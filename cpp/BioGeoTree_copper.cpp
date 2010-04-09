@@ -512,7 +512,7 @@ void BioGeoTree_copper::setFossilatBranchByMRCA_id(Node * id, int fossilarea, do
 
 
 /************************************************************
- forward and reverse stuff
+ forward and reverse stuff for ancestral states
  ************************************************************/
 //add joint
 void BioGeoTree_copper::prepare_ancstate_reverse(){
