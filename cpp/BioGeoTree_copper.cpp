@@ -609,8 +609,6 @@ void BioGeoTree_copper::reverse(Node & node){
 	}
 }
 
-
-
 /*
  * calculates the most likely split (not state) -- the traditional result for lagrange
  */
@@ -702,7 +700,29 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
 	}
 }
 
+/**********************************************************
+ * forward and reverse stuff for stochastic mapping
+ **********************************************************/
 
+void BioGeoTree_copper::prepare_stochmap_reverse(){
+	//calculate and store local expectation matrix for each branch length
+
+	//same but for the time spent
+
+}
+
+/*
+ * called from prepare_stochmap_reverse and that is all
+ */
+void BioGeoTree_copper::reverse_stochmap(Node & node){
+
+}
+
+
+
+/**********************************************************
+ * trash collection
+ **********************************************************/
 BioGeoTree_copper::~BioGeoTree_copper(){
 	for(int i=0;i<tree->getNodeCount();i++){
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg));

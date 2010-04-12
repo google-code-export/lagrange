@@ -34,10 +34,6 @@ private:
 	string dc;
 	string en;
 	string andc;
-	//reverse bits
-	string revB;
-	bool rev;
-	//end reverse bits
 	vector<int> * columns;
 	vector<int> * whichcolumns;
 	RateModel * rootratemodel;
@@ -45,6 +41,17 @@ private:
 	bool store_p_matrices;
 	bool use_stored_matrices;
 	double scale;
+
+	//reverse bits
+	string revB;
+	bool rev;
+	//end reverse bits
+
+	//stochastic mapping bits
+	string rev_exp_number;
+	string rev_exp_time;
+
+	//end mapping bits
 
 	/*
 	 * benchmark variables
@@ -93,6 +100,13 @@ public:
 	vector<double> calculate_ancstate_reverse(Node & node,bool marg);
 #endif
 	~BioGeoTree_copper();
+
+/*
+ * for calculating forward and reverse for expected values (stochastic mapping)
+ */
+	void prepare_stochmap_reverse();
+	void reverse_stochmap(Node &);
+
 
 /*
 	for timing things
