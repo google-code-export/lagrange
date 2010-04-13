@@ -16,6 +16,9 @@
 #include <string>
 using namespace std;
 
+#include "armadillo"
+using namespace arma;
+
 class RateModel{
 private:
 	bool globalext;
@@ -81,6 +84,8 @@ public:
 	 * get things from stmap
 	 */
 	vector< vector< vector<double> > > & get_Q();
+	//this should be used for getting the eigenvectors and eigenvalues
+	void get_eigenvec_eigenval_from_Q(mat * eigenvalues, mat * eigenvectors, int period);
 
 	//REQUIRES BOOST
 	//vector<vector<double > > setup_P(int period, double t);

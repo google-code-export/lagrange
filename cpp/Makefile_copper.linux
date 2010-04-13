@@ -83,7 +83,8 @@ PYTHON_REQ = -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
 	@echo ' '
 
 #requires fortran, gsl, and pthread -- and -ldl -lutil -lpython2.6 are for python
-LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
+#if llapack lblas fail, try larmadillo
+LIBS := -llapack -lblas -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 
 ###########
 # change to yes for bigtrees -- loses about 3x speed

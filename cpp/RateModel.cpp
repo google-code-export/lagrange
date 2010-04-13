@@ -24,6 +24,9 @@
 #include <math.h>
 using namespace std;
 
+#include "armadillo"
+using namespace arma;
+
 RateModel::RateModel(int na, bool ge, vector<double> pers, bool sp){
 	nareas = na;
 	globalext = ge;
@@ -700,6 +703,30 @@ int RateModel::get_num_periods(){return periods.size();}
 
 vector< vector< vector<double> > > & RateModel::get_Q(){
 	return Q;
+}
+/*
+ * this should be used to caluculate the eigenvalues and eigenvectors
+ * as U * Q * U-1 -- eigen decomposition
+ */
+void RateModel::get_eigenvec_eigenval_from_Q(mat * eigval, mat * eigvec, int period){
+	mat tQ(Q[period].size(),Q[period].size()); tQ.fill(0);
+	for(unsigned int i=0;i<Q[period].size();i++){
+		for(unsigned int j=0;j<Q[period].size();j++){
+			tQ(i,j) = Q[period][i][j];
+		}
+	}
+	cx_colvec eigva;
+	cx_mat eigve;
+	eig_gen(eigva,eigve,tQ);
+	for(unsigned int i=0;i<Q[period].size();i++){
+		for(unsigned int j=0;j<Q[period].size();j++){
+			if(i==j)
+				eigval->at(i,j) = abs(eigva(i));
+			else
+				eigval->at(i,j) = 0;
+			eigvec->at(i,j) = abs(eigve(i,j));
+		}
+	}
 }
 
 /**/
