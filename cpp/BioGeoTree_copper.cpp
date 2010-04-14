@@ -14,10 +14,8 @@
 #include <iostream>
 using namespace std;
 
-#include <Eigen/Core>
-#include <Eigen/LU>
-USING_PART_OF_NAMESPACE_EIGEN
-
+#include <armadillo>
+using namespace arma;
 
 #include "BioGeoTree_copper.h"
 #include "BioGeoTreeTools_copper.h"
@@ -714,33 +712,34 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 	//need to figure out how to identify which transition to count
 
 	//initially calculate the eigen_decom
-	vector<MatrixXd> eigvec_allperiods;
-	vector<MatrixXd> eigval_allperiods;
+	vector<mat> eigvec_allperiods;
+	vector<mat> eigval_allperiods;
 
 	for(unsigned int i=0;i<periods.size();i++){
-		MatrixXd eigvec(ndists,ndists);eigvec.fill(0);
-		MatrixXd eigval(ndists,ndists);eigval.fill(0);
+		mat eigvec(ndists,ndists);eigvec.fill(0);
+		mat eigval(ndists,ndists);eigval.fill(0);
 		rootratemodel->get_eigenvec_eigenval_from_Q(&eigval, &eigvec,i);
 		eigvec_allperiods.push_back(eigvec); eigval_allperiods.push_back(eigval);
-		cout << eigvec << endl;
-		exit(0);
 	}
 
+	//calculate and store local expectation matrix for each branch length
 	map<int, map<double,vector<vector<double> > > >::iterator it1;
 	for(it1 = rootratemodel->stored_p_matrices.begin();it1 != rootratemodel->stored_p_matrices.end();it1++){
 		map<double,vector<vector<double> > >::iterator it2;
 		for(it2 = it1->second.begin();it2 != it1->second.end();it2++){
 			double t = it2->first;
-			MatrixXd Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[it1->first][from][to];
-			MatrixXd summed(ndists,ndists);summed.fill(0);
+			mat Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[it1->first][from][to];
+			mat W(ndists,ndists);W.fill(0);W(from,from) = 1;
+			mat summed(ndists,ndists);summed.fill(0);
+			mat summedR(ndists,ndists);summedR.fill(0);
 			for(int i=0;i<ndists;i++){
-				MatrixXd Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
-				MatrixXd Si(ndists,ndists);
-				Si = eigvec_allperiods[it1->first] * Ei * eigvec_allperiods[it1->first].inverse();
+				mat Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
+				mat Si(ndists,ndists);
+				Si = eigvec_allperiods[it1->first] * Ei * inv(eigvec_allperiods[it1->first]);
 				for(int j=0;j<ndists;j++){
-					MatrixXd Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
-					MatrixXd Sj(ndists,ndists);
-					Sj = eigvec_allperiods[it1->first] * Ej * eigvec_allperiods[it1->first].inverse();
+					mat Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
+					mat Sj(ndists,ndists);
+					Sj = eigvec_allperiods[it1->first] * Ej * inv(eigvec_allperiods[it1->first]);
 					double Iijt = 0;
 					if(eigval_allperiods[it1->first](i,i) == eigval_allperiods[it1->first](j,j))
 						Iijt = t*exp(eigval_allperiods[it1->first](i,i)*t);
@@ -748,16 +747,13 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 						Iijt = (exp(eigval_allperiods[it1->first](i,i)*t)-exp(eigval_allperiods[it1->first](j,j)*t))
 						/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
 					summed += (Si * Ql * Sj * Iijt);
+					summedR += (Si * W * Sj * Iijt);
 				}
 			}
-			stored_E_matrices[it1->first][it2->first] = summed;
-			//cout << summed << endl;
-			exit(0);
-		}
+			stored_EN_matrices[it1->first][it2->first] = summed;
+			stored_ER_matrices[it1->first][it2->first] = summedR;
+			}
 	}
-
-	//calculate and store local expectation matrix for each branch length
-
 	//same but for the time spent
 
 }

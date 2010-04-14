@@ -73,19 +73,18 @@ PYTHON_LIB = -I/usr/include/python2.6/
 #>>> import distutils.sysconfig
 #>>> distutils.sysconfig.get_config_var('LINKFORSHARED')
 PYTHON_REQ = -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
-INCLUDES := -I/usr/include/eigen2/
 
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(INCLUDES) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
 #requires fortran, gsl, and pthread -- and -ldl -lutil -lpython2.6 are for python
 #if llapack lblas fail, try larmadillo
-LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
+LIBS := -llapack -lblas -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 
 ###########
 # change to yes for bigtrees -- loses about 3x speed

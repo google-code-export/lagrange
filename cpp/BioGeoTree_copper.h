@@ -21,8 +21,8 @@ using namespace std;
 #include "node.h"
 #include "vector_node_object.h"
 
-#include <Eigen/Core>
-USING_PART_OF_NAMESPACE_EIGEN
+#include <armadillo>
+using namespace arma;
 
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
@@ -54,7 +54,8 @@ private:
 	string rev_exp_number;
 	string rev_exp_time;
 	//map of period int and then branch length double
-	map<int,map<double, MatrixXd > > stored_E_matrices;
+	map<int,map<double, mat > > stored_EN_matrices;
+	map<int,map<double, mat > > stored_ER_matrices;
 	//end mapping bits
 
 	/*
