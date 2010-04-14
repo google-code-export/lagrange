@@ -449,7 +449,17 @@ int main(int argc, char* argv[]){
 			 */
 			if(ancstates.size() > 0){
 				bgt.set_use_stored_matrices(true);
+
+				/*
+				 * stochastic mapping addition
+				 */
+				bgt.prepare_stochmap_reverse(1,5);
+				/*
+				 * end stochastic mapping
+				 */
 				bgt.prepare_ancstate_reverse();
+
+
 				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
 					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
 						if(splits){
@@ -465,6 +475,16 @@ int main(int argc, char* argv[]){
 							vector<mpfr_class> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
 #else
 							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
+							/*
+							 * stochastic mapping addition
+							 */
+							vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
+							for(int j=0;j<rsm.size();j++){
+								cout << rsm[j]/rast[j] << " ";
+							}cout << endl;
+							/*
+							 * end stochastic mapping
+							 */
 #endif
 							tt.summarizeAncState(intrees[i]->getInternalNode(j),rast,areanamemaprev,&rm);
 							cout << endl;
@@ -477,10 +497,6 @@ int main(int argc, char* argv[]){
 					//need to output numbers
 					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"number") << ";"<< endl;
 					outTreeKeyFile.close();
-					/*
-					 * stochastic mapping addition
-					 */
-					bgt.prepare_stochmap_reverse(15,14);
 				}else{
 					for(unsigned int j=0;j<ancstates.size();j++){
 						if(splits){

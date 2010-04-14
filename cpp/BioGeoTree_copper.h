@@ -53,6 +53,7 @@ private:
 	//stochastic mapping bits
 	string rev_exp_number;
 	string rev_exp_time;
+	bool stochastic;
 	//map of period int and then branch length double
 	map<int,map<double, mat > > stored_EN_matrices;
 	map<int,map<double, mat > > stored_ER_matrices;
@@ -110,7 +111,7 @@ public:
  * for calculating forward and reverse for expected values (stochastic mapping)
  */
 	void prepare_stochmap_reverse(int, int);
-	void reverse_stochmap(Node &);
+	vector<double> reverse_stochmap(Node &);
 
 
 /*

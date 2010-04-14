@@ -52,12 +52,20 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	en = "excluded_dists";
 	andc = "anc_dist_conditionals";
 	/*
-        reverse bit
+     * reverse bit
 	 */
 	revB  = "revB";
 	/*
-	end of the reverse bits
-	*/
+	 * end of the reverse bits
+	 */
+	/*
+	 * stochastic mapping bit
+	 */
+	rev_exp_number = "rev_exp_number";
+	rev_exp_time = "rev_exp_time";
+	/*
+	 * end stochastic mapping bit
+	 */
 	store_p_matrices = false;
 	use_stored_matrices = false;
 	tree = tr;
@@ -531,13 +539,29 @@ void BioGeoTree_copper::reverse(Node & node){
 	VectorNodeObject<mpfr_class> * revconds = new VectorNodeObject<mpfr_class> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
 #else
 	VectorNodeObject<double> * revconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
+	VectorNodeObject<double> * revconds_exp_time;
+	VectorNodeObject<double> * revconds_exp_number;
+	if(stochastic == true){
+		revconds_exp_time = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
+		revconds_exp_number = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
+	}
 #endif
 	if (&node == tree->getRoot()) {
 		for(unsigned int i=0;i<rootratemodel->getDists()->size();i++){
 			revconds->at(i) = 1.0;//prior
+			if(stochastic == true){//TODO:check these
+				revconds_exp_time->at(i) = 1.0;
+				revconds_exp_number->at(i) = 1.0;
+			}
 		}
 		node.assocObject(revB,*revconds);
 		delete revconds;
+		if(stochastic == true){
+			node.assocObject(rev_exp_time, *revconds_exp_time);
+			node.assocObject(rev_exp_number, *revconds_exp_number);
+			delete revconds_exp_time;
+			delete revconds_exp_number;
+		}
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
@@ -592,23 +616,44 @@ void BioGeoTree_copper::reverse(Node & node){
 		for(unsigned int k=0;k<tsegs->size();k++){
 			RateModel * rm = tsegs->at(k).getModel();
 			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
+			mat * EN;
+			mat * ER;
+			if(stochastic == true){
+				EN = &stored_EN_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
+				ER = &stored_ER_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
+			}
 			for(unsigned int j=0;j < dists->size();j++){
 				if(accumulate(dists->at(j).begin(), dists->at(j).end(), 0) > 0){
 					for (unsigned int i = 0; i < dists->size(); i++) {
 						if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
 							revconds->at(j) += tempA[i]*((*p)[i][j]);
+							if(stochastic == true){
+								revconds_exp_time->at(j) += tempA[i]*((*ER)(i,j));
+								revconds_exp_number->at(j) += tempA[i]*((*EN)(i,j));
+							}
 						}
 					}
 				}
 			}
 		}
+
 		node.assocObject(revB,*revconds);
 		delete revconds;
+		if(stochastic == true){
+			node.assocObject(rev_exp_time, *revconds_exp_time);
+			node.assocObject(rev_exp_number, *revconds_exp_number);
+			delete revconds_exp_time;
+			delete revconds_exp_number;
+		}
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
 	}else{//external so delete revconds
 		delete revconds;
+		if(stochastic == true){
+			delete revconds_exp_time;
+			delete revconds_exp_number;
+		}
 	}
 }
 
@@ -708,6 +753,7 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
  **********************************************************/
 
 void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
+	stochastic = true;
 	int ndists = rootratemodel->getDists()->size();
 	//need to figure out how to identify which transition to count
 
@@ -759,10 +805,41 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 }
 
 /*
- * called from prepare_stochmap_reverse and that is all
+ * called directly after prepare_stochmap_reverse and that is all
  */
-void BioGeoTree_copper::reverse_stochmap(Node & node){
-
+vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
+	if (node.isExternal()==false){//is not a tip
+		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		vector<int> leftdists;
+		vector<int> rightdists;
+		double weight;
+		Node * c1 = &node.getChild(0);
+		Node * c2 = &node.getChild(1);
+		VectorNodeObject<BranchSegment>* tsegs1 = ((VectorNodeObject<BranchSegment>*) c1->getObject(seg));
+		VectorNodeObject<BranchSegment>* tsegs2 = ((VectorNodeObject<BranchSegment>*) c2->getObject(seg));
+		VectorNodeObject<double> v1  =tsegs1->at(0).alphas;
+		VectorNodeObject<double> v2 = tsegs2->at(0).alphas;
+		VectorNodeObject<double> LHOODS (dists->size(),0);
+		for (unsigned int i = 0; i < dists->size(); i++) {
+			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+				VectorNodeObject<vector<int> >* exdist =
+				((VectorNodeObject<vector<int> >*) node.getObject(en));
+				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+				if (cou == 0) {
+					iter_ancsplits_just_int(rootratemodel, dists->at(i),
+											leftdists, rightdists, weight);
+					for (unsigned int j=0;j<leftdists.size();j++){
+						int ind1 = leftdists[j];
+						int ind2 = rightdists[j];
+						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
+					}
+					LHOODS[i] *= Bs->at(i);
+				}
+			}
+		}
+		return LHOODS;
+	}
 }
 
 
