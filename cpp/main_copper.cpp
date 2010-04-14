@@ -441,8 +441,8 @@ int main(int argc, char* argv[]){
 			/*
 			 * testing BAYESIAN
 			 */
-			BayesianBioGeo bayes(&bgt,&rm,marginal,10000);
-			bayes.run_global_dispersal_extinction();
+			//BayesianBioGeo bayes(&bgt,&rm,marginal,10000);
+			//bayes.run_global_dispersal_extinction();
 
 			/*
 			 * ancestral splits calculation
@@ -477,6 +477,10 @@ int main(int argc, char* argv[]){
 					//need to output numbers
 					outTreeKeyFile << intrees[i]->getRoot()->getNewick(true,"number") << ";"<< endl;
 					outTreeKeyFile.close();
+					/*
+					 * stochastic mapping addition
+					 */
+					bgt.prepare_stochmap_reverse(15,14);
 				}else{
 					for(unsigned int j=0;j<ancstates.size();j++){
 						if(splits){

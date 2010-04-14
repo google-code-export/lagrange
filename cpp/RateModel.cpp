@@ -24,8 +24,12 @@
 #include <math.h>
 using namespace std;
 
-#include "armadillo"
-using namespace arma;
+#include <Eigen/Core>
+#include <Eigen/QR>
+#include <Eigen/LU>
+
+
+
 
 RateModel::RateModel(int na, bool ge, vector<double> pers, bool sp){
 	nareas = na;
@@ -708,25 +712,29 @@ vector< vector< vector<double> > > & RateModel::get_Q(){
  * this should be used to caluculate the eigenvalues and eigenvectors
  * as U * Q * U-1 -- eigen decomposition
  */
-void RateModel::get_eigenvec_eigenval_from_Q(mat * eigval, mat * eigvec, int period){
-	mat tQ(Q[period].size(),Q[period].size()); tQ.fill(0);
+void RateModel::get_eigenvec_eigenval_from_Q(Eigen::MatrixXd * eigval, Eigen::MatrixXd * eigvec, int period){
+	Eigen::MatrixXd tQ(int(Q[period].size()),int(Q[period].size())); tQ.fill(0);
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
 			tQ(i,j) = Q[period][i][j];
+			cout << Q[0][i][j] << " ";
 		}
+		cout << endl;
 	}
-	cx_colvec eigva;
-	cx_mat eigve;
-	eig_gen(eigva,eigve,tQ);
+	cout << endl;
+	Eigen::EigenSolver<MatrixXd> ei0(tQ);
+	Eigen::VectorXcd eigva = ei0.eigenvalues();
+	Eigen::MatrixXcd eigve = ei0.eigenvectors();
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
 			if(i==j)
-				eigval->at(i,j) = abs(eigva(i));
+				(*eigval)(i,j) = abs(eigva(i));
 			else
-				eigval->at(i,j) = 0;
-			eigvec->at(i,j) = abs(eigve(i,j));
+				(*eigval)(i,j) = 0;
+			(*eigvec)(i,j) = abs(eigve(i,j));
 		}
 	}
+
 }
 
 /**/

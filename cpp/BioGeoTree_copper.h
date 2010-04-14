@@ -21,6 +21,9 @@ using namespace std;
 #include "node.h"
 #include "vector_node_object.h"
 
+#include <Eigen/Core>
+USING_PART_OF_NAMESPACE_EIGEN
+
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
 #endif
@@ -50,7 +53,8 @@ private:
 	//stochastic mapping bits
 	string rev_exp_number;
 	string rev_exp_time;
-
+	//map of period int and then branch length double
+	map<int,map<double, MatrixXd > > stored_E_matrices;
 	//end mapping bits
 
 	/*
@@ -104,7 +108,7 @@ public:
 /*
  * for calculating forward and reverse for expected values (stochastic mapping)
  */
-	void prepare_stochmap_reverse();
+	void prepare_stochmap_reverse(int, int);
 	void reverse_stochmap(Node &);
 
 
