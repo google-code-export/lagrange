@@ -3,9 +3,6 @@ RM := rm -rf
 CPP_SRCS += \
 ./AncSplit.cpp \
 ./InputReader_copper.cpp \
-./BayesianBioGeo.cpp \
-./BayesianBioGeoAllDispersal.cpp \
-./BayesianBioGeoStMapper.cpp \
 ./BioGeoTree_copper.cpp \
 ./BioGeoTreeTools_copper.cpp \
 ./BranchSegment_copper.cpp \
@@ -18,14 +15,14 @@ CPP_SRCS += \
 ./tree.cpp \
 ./tree_reader.cpp \
 ./tree_utils.cpp \
-./main_copper.cpp
+./main_copper.cpp \
+#./BayesianBioGeo.cpp \
+#./BayesianBioGeoAllDispersal.cpp \
+#./BayesianBioGeoStMapper.cpp
 
 OBJS += \
 ./AncSplit.o \
 ./InputReader_copper.o \
-./BayesianBioGeo.o \
-./BayesianBioGeoAllDispersal.o \
-./BayesianBioGeoStMapper.o \
 ./BioGeoTree_copper.o \
 ./BioGeoTreeTools_copper.o \
 ./BranchSegment_copper.o \
@@ -38,14 +35,14 @@ OBJS += \
 ./tree.o \
 ./tree_reader.o \
 ./tree_utils.o \
-./main_copper.o
+./main_copper.o \
+#./BayesianBioGeo.o \
+#./BayesianBioGeoAllDispersal.o \
+#./BayesianBioGeoStMapper.o
 
 CPP_DEPS += \
 ./AncSplit.d \
 ./InputReader_copper.d \
-./BayesianBioGeo.d \
-./BayesianBioGeoAllDispersal.d \
-./BayesianBioGeoStMapper.d \
 ./BioGeoTree_copper.d \
 ./BioGeoTreeTools_copper.d \
 ./BranchSegment_copper.d \
@@ -58,7 +55,10 @@ CPP_DEPS += \
 ./tree.d \
 ./tree_reader.d \
 ./tree_utils.d \
-./main_copper.d
+./main_copper.d \
+#./BayesianBioGeo.d \
+#./BayesianBioGeoAllDispersal.d \
+#./BayesianBioGeoStMapper.d
 
 #uncomment if debugging
 #DEBUG = -DDEBUG
@@ -95,7 +95,7 @@ LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
-BIG = no
+BIG = yes
 BIGTREE =
 ifeq  ($(strip $(BIG)),yes)
 	BIGTREE += -DBIGTREE
