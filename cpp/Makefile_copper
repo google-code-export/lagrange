@@ -88,7 +88,7 @@ PYTHON_REQ = -u _PyMac_Error /System/Library/Frameworks/Python.framework/Version
 	@echo ' '
 
 #requires fortran, bio++ libraries, gsl, and pthread
-LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread
+LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread -framework Accelerate
 
 ###########
 # change to yes for bigtrees -- loses about 3x speed

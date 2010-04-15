@@ -438,7 +438,7 @@ vector<vector<double > > RateModel::setup_sparse_full_P(int period, double t){
 	int ideg = 6;
 	double tol = 1;
 	int iflag = 0;
-	int lwsp = n*(m+1)+n+pow((m+2),2)+4*pow((m+2),2)+ideg+1;
+	int lwsp = n*(m+1)+n+pow((m+2.),2)+4*pow((m+2.),2)+ideg+1;
 	double * wsp = new double[lwsp];
 	int liwsp = m+2;
 	int * iwsp = new int [liwsp];
@@ -521,7 +521,7 @@ vector<double >  RateModel::setup_sparse_single_column_P(int period, double t, i
 	int ideg = 6;
 	double tol = 1;
 	int iflag = 0;
-	int lwsp = n*(m+1)+n+pow((m+2),2)+4*pow((m+2),2)+ideg+1;
+	int lwsp = n*(m+1)+n+pow((m+2.),2)+4*pow((m+2.),2)+ideg+1;
 	double * wsp = new double[lwsp];
 	int liwsp = m+2;
 	int * iwsp = new int [liwsp];
