@@ -24,6 +24,9 @@ using namespace std;
 #include <armadillo>
 using namespace arma;
 
+//octave usage
+#include <octave/oct.h>
+
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
 #endif
@@ -55,8 +58,8 @@ private:
 	string rev_exp_time;
 	bool stochastic;
 	//map of period int and then branch length double
-	map<int,map<double, mat > > stored_EN_matrices;
-	map<int,map<double, mat > > stored_ER_matrices;
+	map<int,map<double, Matrix > > stored_EN_matrices;
+	map<int,map<double, Matrix > > stored_ER_matrices;
 	//end mapping bits
 
 	/*

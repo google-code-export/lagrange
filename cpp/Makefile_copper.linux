@@ -60,30 +60,24 @@ CPP_DEPS += \
 ./tree_utils.d \
 ./main_copper.d
 
-#uncomment if debugging
-#DEBUG = -DDEBUG
+# uncomment if debugging
+# DEBUG = -DDEBUG
 
 TARGET_NAME = lagrange_cpp
 
 C_OPT = -O3 -ftree-vectorize -ffast-math -Wall -g
 
-#for reading web input files
+# for reading web input files
 PYTHON_LIB = -I/usr/include/python2.6/
-#output of 
-#>>> import distutils.sysconfig
-#>>> distutils.sysconfig.get_config_var('LINKFORSHARED')
+# output of 
+# >>> import distutils.sysconfig
+# >>> distutils.sysconfig.get_config_var('LINKFORSHARED')
 PYTHON_REQ = -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
 
-# Each subdirectory must supply rules for building sources it contributes
-%.o: ./%.cpp
-	@echo 'Building file: $<'
-	@echo 'Invoking: GCC C++ Compiler'
-	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
-	@echo 'Finished building: $<'
-	@echo ' '
+INCLUDES = -I/usr/include/octave-3.0.5/octave/
 
-#requires fortran, gsl, and pthread -- and -ldl -lutil -lpython2.6 are for python
-#if llapack lblas fail, try larmadillo
+# requires fortran, gsl, and pthread -- and -ldl -lutil -lpython2.6 are for python
+# if llapack lblas fail, try larmadillo
 LIBS := -llapack -lblas -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
 
 ###########
@@ -124,18 +118,34 @@ FORT_OBJS += \
 ./lapack.o \
 ./my_matexp.o
 
-# All Target
-all: lagrange_cpp
 
-#link library locations
+# Each subdirectory must supply rules for building sources it contributes
+%.o: ./%.cpp
+	@echo 'Building file: $<'
+	@echo 'Invoking: GCC C++ Compiler'
+	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(INCLUDES) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	@echo 'Finished building: $<'
+	@echo ' '
+
+# link library locations
 LINK_LIB_DIRS = -L/usr/lib/ -L/usr/local/lib/ -L./gmpfrxx/
 
 # Tool invocations
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
-	g++ $(LINK_LIB_DIRS) $(PYTHON_REQ) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
+	g++ --link-stand-alone $(LINK_LIB_DIRS) $(PYTHON_REQ) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $(TARGET_NAME)'
 	@echo ' '
+
+octlag: $(OBJS) $(FORT_OBJS)
+	@echo 'Building target: $@'
+	mkoctfile --link-stand-alone $(LINK_LIB_DIRS) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
+	@echo 'Finished building target: $(TARGET_NAME)'
+	@echo ' '
+ 
+
+# All Target
+all: lagrange_cpp
 
 # Other Targets
 clean:

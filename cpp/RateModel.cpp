@@ -27,6 +27,8 @@ using namespace std;
 #include <armadillo>
 using namespace arma;
 
+//octave usage
+#include <octave/oct.h>
 
 
 RateModel::RateModel(int na, bool ge, vector<double> pers, bool sp){
@@ -712,6 +714,10 @@ inline int signof(double d)
    return d >= 0 ? 1 : -1;
 }
 
+inline double roundto(double in){
+	return floor(in*(1000)+0.5)/(1000);
+}
+
 /*
  * this should be used to caluculate the eigenvalues and eigenvectors
  * as U * Q * U-1 -- eigen decomposition
@@ -721,11 +727,11 @@ void RateModel::get_eigenvec_eigenval_from_Q(mat * eigval, mat * eigvec, int per
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
 			tQ(i,j) = Q[period][i][j];
-//			cout << Q[0][i][j] << " ";
+			//cout << Q[0][i][j] << " ";
 		}
-//		cout << endl;
+		//cout << endl;
 	}
-//	cout << endl;
+	//cout << endl;
 	cx_colvec eigva;
 	cx_mat eigve;
 	eig_gen(eigva,eigve,tQ);
@@ -733,14 +739,39 @@ void RateModel::get_eigenvec_eigenval_from_Q(mat * eigval, mat * eigvec, int per
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
 			if(i==j)
-				(*eigval)(i,j) = abs(eigva(i)) * signof(real(eigva(i)));
+				(*eigval)(i,j) = real(eigva(i));
 			else
 				(*eigval)(i,j) = 0;
-			(*eigvec)(i,j) = abs(eigve(i,j)) * signof(real(eigve(i,j)));
+			(*eigvec)(i,j) = real(eigve(i,j));
 		}
 	}
 
+	//cout << tQ - ((*eigvec) * (*eigval) * inv(*eigvec)) <<endl;
 }
+
+void RateModel::get_eigenvec_eigenval_from_Q_octave(Matrix * eigval, Matrix * eigvec, int period){
+	ComplexMatrix tQ = ComplexMatrix(int(Q[period].size()),int(Q[period].size()));
+	for(unsigned int i=0;i<Q[period].size();i++){
+		for(unsigned int j=0;j<Q[period].size();j++){
+			tQ(i,j) = Q[period][i][j];
+			//cout << Q[0][i][j] << " ";
+		}
+		//cout << endl;
+	}
+	//cout << endl;
+	EIG eig = EIG(tQ);
+	for(unsigned int i=0;i<Q[period].size();i++){
+		for(unsigned int j=0;j<Q[period].size();j++){
+			if(i==j)
+				(*eigval)(i,j) = real(eig.eigenvalues()(i));
+			else
+				(*eigval)(i,j) = 0;
+			(*eigvec)(i,j) = real(eig.eigenvectors()(i,j));
+		}
+	}
+//	cout << t2 - ((*eigvec) * (*eigval) * inv(*eigvec)) <<endl;
+}
+
 
 /**/
 

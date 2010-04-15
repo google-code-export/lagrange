@@ -28,6 +28,9 @@ using namespace arma;
 #include "node.h"
 #include "vector_node_object.h"
 
+//octave usage
+#include <octave/oct.h>
+
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
 #endif
@@ -617,8 +620,8 @@ void BioGeoTree_copper::reverse(Node & node){
 		for(unsigned int k=0;k<tsegs->size();k++){
 			RateModel * rm = tsegs->at(k).getModel();
 			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
-			mat * EN;
-			mat * ER;
+			Matrix * EN;
+			Matrix * ER;
 			if(stochastic == true){
 				EN = &stored_EN_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
 				ER = &stored_ER_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
@@ -759,13 +762,13 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 	//need to figure out how to identify which transition to count
 
 	//initially calculate the eigen_decom
-	vector<mat> eigvec_allperiods;
-	vector<mat> eigval_allperiods;
+	vector<Matrix> eigvec_allperiods;
+	vector<Matrix> eigval_allperiods;
 
 	for(unsigned int i=0;i<periods.size();i++){
-		mat eigvec(ndists,ndists);eigvec.fill(0);
-		mat eigval(ndists,ndists);eigval.fill(0);
-		rootratemodel->get_eigenvec_eigenval_from_Q(&eigval, &eigvec,i);
+		Matrix eigvec(ndists,ndists);eigvec.fill(0);
+		Matrix eigval(ndists,ndists);eigval.fill(0);
+		rootratemodel->get_eigenvec_eigenval_from_Q_octave(&eigval, &eigvec,i);
 		eigvec_allperiods.push_back(eigvec); eigval_allperiods.push_back(eigval);
 	}
 
@@ -775,31 +778,45 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 		map<double,vector<vector<double> > >::iterator it2;
 		for(it2 = it1->second.begin();it2 != it1->second.end();it2++){
 			double t = it2->first;
-			mat Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[it1->first][from][to];
-			mat W(ndists,ndists);W.fill(0);W(from,from) = 1;
-			mat summed(ndists,ndists);summed.fill(0);
-			mat summedR(ndists,ndists);summedR.fill(0);
+			Matrix Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[it1->first][from][to];
+			Matrix W(ndists,ndists);W.fill(0);W(from,from) = 1;
+			Matrix summed(ndists,ndists);summed.fill(0);
+			Matrix summedR(ndists,ndists);summedR.fill(0);
 			for(int i=0;i<ndists;i++){
-				mat Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
-				mat Si(ndists,ndists);
-				Si = eigvec_allperiods[it1->first] * Ei * inv(eigvec_allperiods[it1->first]);
+				Matrix Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
+				Matrix Si(ndists,ndists);
+				Si = eigvec_allperiods[it1->first] * Ei * (eigvec_allperiods[it1->first]).inverse();
 				for(int j=0;j<ndists;j++){
-					mat Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
-					mat Sj(ndists,ndists);
-					Sj = eigvec_allperiods[it1->first] * Ej * inv(eigvec_allperiods[it1->first]);
+					Matrix Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
+					Matrix Sj(ndists,ndists);
+					Sj = eigvec_allperiods[it1->first] * Ej * (eigvec_allperiods[it1->first]).inverse();
 					double Iijt = 0;
-					if(eigval_allperiods[it1->first](i,i) == eigval_allperiods[it1->first](j,j))
+					if(eigval_allperiods[it1->first](i,i) == eigval_allperiods[it1->first](j,j)){
 						Iijt = t*exp(eigval_allperiods[it1->first](i,i)*t);
-					else
+					}else{
 						Iijt = (exp(eigval_allperiods[it1->first](i,i)*t)-exp(eigval_allperiods[it1->first](j,j)*t))
 						/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
+					}
 					summed += (Si * Ql * Sj * Iijt);
 					summedR += (Si * W * Sj * Iijt);
-					//cout << Si << endl;
+				}
+				if (i == 4){
+					cout << summed << endl;
+					exit (0);
 				}
 			}
-			stored_EN_matrices[it1->first][it2->first] = summed;
-			stored_ER_matrices[it1->first][it2->first] = summedR;
+//			for(int i=0;i<summed.rows();i++){
+//				for(int j=0;j<summed.cols();j++){
+//					if(summed(i,j)<0){
+//						cout <<  summed(i,j) <<endl;;
+//					}
+//				}
+//			}
+			cout << t << endl;
+			cout << summed <<endl;
+			exit(0);
+			stored_EN_matrices[it1->first][it2->first] = (summed);
+			stored_ER_matrices[it1->first][it2->first] = (summedR);
 			}
 	}
 	//exit(0);
