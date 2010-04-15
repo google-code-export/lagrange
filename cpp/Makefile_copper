@@ -69,7 +69,7 @@ C_OPT = -O3 -ftree-vectorize -ffast-math -Wall -g
 
 #probably don't need unless messed with code
 #LIBS := -lgfortran -lbpp-popgen -lbpp-phyl -lbpp-seq -lbpp-numcalc -lbpp-utils -lgsl -lgslcblas -lm -lpthread
-#BOOST_LIB = -I/Users/smitty/programming/LIBRARIES/boost_1_39_0
+BOOST_LIB = -I/Users/smitty/programming/LIBRARIES/boost_1_39_0
 
 #for reading web input files
 PYTHON_LIB = -I/System/Library/Frameworks/Python.framework/Headers/
@@ -83,7 +83,7 @@ PYTHON_REQ = -u _PyMac_Error /System/Library/Frameworks/Python.framework/Version
 %.o: ./%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: GCC C++ Compiler'
-	g++ $(DEBUG) $(BIGTREE) $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
+	g++ $(DEBUG) $(BIGTREE) $(BOOST_LIB) $(PYTHON_LIB) $(C_OPT) -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o"$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
@@ -95,7 +95,7 @@ LIBS := -lgfortran -lgsl -lgslcblas -lm -lpthread
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
-BIG = yes
+BIG = no
 BIGTREE =
 ifeq  ($(strip $(BIG)),yes)
 	BIGTREE += -DBIGTREE
