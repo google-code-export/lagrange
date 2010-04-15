@@ -204,3 +204,21 @@ void BioGeoTreeTools_copper::summarizeAncState(Node * node,vector<double> & ans,
 	//cout << -log(best) << " "<< best/sum << endl;	
 }
 
+string BioGeoTreeTools_copper::get_string_from_dist_int(int dist,map<int,string> &areanamemaprev, RateModel * rm){
+	map<int, vector<int> > * distmap = rm->get_int_dists_map();
+	vector<int> bestancdist = (*distmap)[dist];
+
+	StringNodeObject disstring ="";
+	int  count = 0;
+	for(unsigned int m=0;m<bestancdist.size();m++){
+		if(bestancdist[m] == 1){
+			disstring += areanamemaprev[m];
+			count += 1;
+			//if(count < calculate_vector_int_sum(&bestldist))
+			if(count < accumulate(bestancdist.begin(),bestancdist.end(),0))
+				disstring += "_";
+		}
+	}
+	return disstring;
+}
+

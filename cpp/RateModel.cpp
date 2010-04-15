@@ -706,6 +706,12 @@ int RateModel::get_num_periods(){return periods.size();}
 vector< vector< vector<double> > > & RateModel::get_Q(){
 	return Q;
 }
+
+inline int signof(double d)
+{
+   return d >= 0 ? 1 : -1;
+}
+
 /*
  * this should be used to caluculate the eigenvalues and eigenvectors
  * as U * Q * U-1 -- eigen decomposition
@@ -723,13 +729,14 @@ void RateModel::get_eigenvec_eigenval_from_Q(mat * eigval, mat * eigvec, int per
 	cx_colvec eigva;
 	cx_mat eigve;
 	eig_gen(eigva,eigve,tQ);
+
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
 			if(i==j)
-				(*eigval)(i,j) = real(eigva(i));
+				(*eigval)(i,j) = abs(eigva(i)) * signof(real(eigva(i)));
 			else
 				(*eigval)(i,j) = 0;
-			(*eigvec)(i,j) = real(eigve(i,j));
+			(*eigvec)(i,j) = abs(eigve(i,j)) * signof(real(eigve(i,j)));
 		}
 	}
 

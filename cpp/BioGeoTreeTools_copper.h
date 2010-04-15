@@ -32,6 +32,7 @@ public :
 #else
 	void summarizeAncState(Node * node,vector<double> & ans,map<int,string> &areanamemaprev, RateModel * rm);
 #endif
+	string get_string_from_dist_int(int dist,map<int,string> &areanamemaprev, RateModel * rm);
 };
 
 #endif /* PHYLOTREE_H_ */

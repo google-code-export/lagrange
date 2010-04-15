@@ -63,6 +63,7 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	 */
 	rev_exp_number = "rev_exp_number";
 	rev_exp_time = "rev_exp_time";
+	stochastic = false;
 	/*
 	 * end stochastic mapping bit
 	 */
@@ -550,8 +551,8 @@ void BioGeoTree_copper::reverse(Node & node){
 		for(unsigned int i=0;i<rootratemodel->getDists()->size();i++){
 			revconds->at(i) = 1.0;//prior
 			if(stochastic == true){//TODO:check these
-				revconds_exp_time->at(i) = 1.0;
-				revconds_exp_number->at(i) = 1.0;
+				revconds_exp_time->at(i) = 0.0;
+				revconds_exp_number->at(i) = 0.0;
 			}
 		}
 		node.assocObject(revB,*revconds);
@@ -794,14 +795,14 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 						/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
 					summed += (Si * Ql * Sj * Iijt);
 					summedR += (Si * W * Sj * Iijt);
+					//cout << Si << endl;
 				}
 			}
 			stored_EN_matrices[it1->first][it2->first] = summed;
 			stored_ER_matrices[it1->first][it2->first] = summedR;
 			}
 	}
-	//same but for the time spent
-
+	//exit(0);
 }
 
 /*
@@ -809,7 +810,7 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
  */
 vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 	if (node.isExternal()==false){//is not a tip
-		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
+		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;
 		vector<int> rightdists;

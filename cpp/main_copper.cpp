@@ -379,6 +379,7 @@ int main(int argc, char* argv[]){
 			/*
 			 * optimize likelihood
 			 */
+			double nlnlike = 0;
 			if(estimate_dispersal_mask == false){
 					cout << "Optimizing (simplex) -ln likelihood." << endl;
 					OptimizeBioGeo opt(&bgt,&rm,marginal);
@@ -433,7 +434,8 @@ int main(int argc, char* argv[]){
 				rm.setup_Q();
 				bgt.update_default_model(&rm);
 				bgt.set_store_p_matrices(true);
-				cout << "final -ln likelihood: "<< bgt.eval_likelihood(marginal) <<endl;
+				nlnlike = bgt.eval_likelihood(marginal);
+				cout << "final -ln likelihood: "<< nlnlike <<endl;
 				bgt.set_store_p_matrices(false);
 			}
 
@@ -453,7 +455,8 @@ int main(int argc, char* argv[]){
 				/*
 				 * stochastic mapping addition
 				 */
-				bgt.prepare_stochmap_reverse(1,5);
+				//cout << tt.get_string_from_dist_int(2,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
+				//bgt.prepare_stochmap_reverse(2,5);
 				/*
 				 * end stochastic mapping
 				 */
@@ -478,10 +481,8 @@ int main(int argc, char* argv[]){
 							/*
 							 * stochastic mapping addition
 							 */
-							vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
-							for(int j=0;j<rsm.size();j++){
-								cout << rsm[j]/rast[j] << " ";
-							}cout << endl;
+							//vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
+							//	cout << calculate_vector_double_sum(rsm)/calculate_vector_double_sum(rast) << endl;//exp(nlnlike)	<< endl;
 							/*
 							 * end stochastic mapping
 							 */
