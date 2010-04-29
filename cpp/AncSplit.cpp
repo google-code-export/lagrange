@@ -24,13 +24,9 @@ using namespace std;
 #include "gmpfrxx/gmpfrxx.h"
 #endif
 
-AncSplit::AncSplit(RateModel * mod,int dist,int ldesc,int rdesc,double we){
-	model = mod;
-	ancdistint = dist;
-	ldescdistint = ldesc;
-	rdescdistint = rdesc;
-	weight = we;
-}
+
+AncSplit::AncSplit(RateModel * mod,int dist,int ldesc,int rdesc,double we):model(mod),weight(we),
+		ancdistint(dist),ldescdistint(ldesc),rdescdistint(rdesc){}
 
 RateModel * AncSplit::getModel(){
 	return model;

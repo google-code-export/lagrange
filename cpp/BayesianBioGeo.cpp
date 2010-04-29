@@ -30,11 +30,8 @@ namespace {
 	{return b < a ? (b) : double(a);}
 }
 
-BayesianBioGeo::BayesianBioGeo(BioGeoTree_copper * intree,RateModel * inrm, bool marg, int gen){
-	gens = gen;
-	marginal = marg;
-	tree = intree;
-	rm = inrm;
+BayesianBioGeo::BayesianBioGeo(BioGeoTree_copper * intree,RateModel * inrm, bool marg, int gen):
+	tree(intree),rm(inrm), gens(gen), marginal(marg){
 	gsl_rng_env_setup();
 	T = gsl_rng_default;
 	r = gsl_rng_alloc (T);

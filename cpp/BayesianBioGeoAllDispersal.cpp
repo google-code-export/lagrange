@@ -30,11 +30,8 @@ namespace {
 	{return b < a ? (b) : double(a);}
 }
 
-BayesianBioGeoAllDispersal::BayesianBioGeoAllDispersal(BioGeoTree_copper * intree,RateModel * inrm, bool marg, int gen){
-	gens = gen;
-	marginal = marg;
-	tree = intree;
-	rm = inrm;
+BayesianBioGeoAllDispersal::BayesianBioGeoAllDispersal(BioGeoTree_copper * intree,RateModel * inrm, bool marg, int gen):
+	tree(intree),rm(inrm),gens(gen),marginal(marg){
 	int nareas = rm->get_num_areas();
 	nareas = rm->get_num_areas();
 	vector<double> cols(nareas, 1);

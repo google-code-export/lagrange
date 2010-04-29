@@ -31,13 +31,8 @@ using namespace arma;
 #include <octave/oct.h>
 
 
-RateModel::RateModel(int na, bool ge, vector<double> pers, bool sp){
-	nareas = na;
-	globalext = ge;
-	periods = pers;
-	sparse = sp;
-	numthreads = 0;
-}
+RateModel::RateModel(int na, bool ge, vector<double> pers, bool sp):
+	globalext(ge),nareas(na),numthreads(0),periods(pers),sparse(sp){}
 
 void RateModel::set_nthreads(int nthreads){
 	numthreads = nthreads;

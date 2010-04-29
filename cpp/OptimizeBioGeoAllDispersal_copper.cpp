@@ -17,12 +17,8 @@ using namespace std;
 #include <gsl/gsl_multimin.h>
 #include <gsl/gsl_vector.h>
 
-OptimizeBioGeoAllDispersal::OptimizeBioGeoAllDispersal(BioGeoTree_copper * intree,RateModel * inrm, bool marg){
-	tree = intree;
-	rm = inrm;
-	maxiterations = 10000;
-	stoppingprecision=0.001;
-	marginal = marg;
+OptimizeBioGeoAllDispersal::OptimizeBioGeoAllDispersal(BioGeoTree_copper * intree,RateModel * inrm, bool marg):
+	tree(intree),rm(inrm),maxiterations(10000),stoppingprecision(0.001),marginal(marg){
 	nareas = rm->get_num_areas();
 	vector<double> cols(nareas, 1);
 	vector< vector<double> > rows(nareas, cols);

@@ -17,13 +17,8 @@ using namespace std;
 #include <gsl/gsl_multimin.h>
 #include <gsl/gsl_vector.h>
 
-OptimizeBioGeo::OptimizeBioGeo(BioGeoTree_copper * intree,RateModel * inrm, bool marg){
-	tree = intree;
-	rm = inrm;
-	maxiterations = 100;
-	stoppingprecision=0.0001;
-	marginal = marg;
-}
+OptimizeBioGeo::OptimizeBioGeo(BioGeoTree_copper * intree,RateModel * inrm, bool marg):
+	tree(intree), rm(inrm), maxiterations(100),stoppingprecision(0.0001),marginal(marg){}
 
 double OptimizeBioGeo::GetLikelihoodWithOptimizedDispersalExtinction(const gsl_vector * variables)
 {

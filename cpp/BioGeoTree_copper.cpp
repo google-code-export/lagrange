@@ -48,6 +48,10 @@ namespace {
 }
 #endif
 
+/*
+ * sloppy beginning but best for now because of the complicated bits
+ */
+
 BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	seg = "segments";
 	age = "age";
