@@ -797,12 +797,12 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 						Iijt = (exp(eigval_allperiods[it1->first](i,i)*t)-exp(eigval_allperiods[it1->first](j,j)*t))
 						/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
 					}
-					summed += (Si * Ql * Sj * Iijt);
-					summedR += (Si * W * Sj * Iijt);
+					summed += (Si  * Sj * Ql * Iijt);
+					summedR += (Si * Sj * W * Iijt);
 				}
 				if (i == 4){
-					cout << summed << endl;
-					exit (0);
+					//cout << summed << endl;
+					//exit (0);
 				}
 			}
 //			for(int i=0;i<summed.rows();i++){
@@ -812,9 +812,9 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 //					}
 //				}
 //			}
-			cout << t << endl;
-			cout << summed <<endl;
-			exit(0);
+			//cout << t << endl;
+			//cout << summed <<endl;
+			//exit(0);
 			stored_EN_matrices[it1->first][it2->first] = (summed);
 			stored_ER_matrices[it1->first][it2->first] = (summedR);
 			}

@@ -455,8 +455,8 @@ int main(int argc, char* argv[]){
 				/*
 				 * stochastic mapping addition
 				 */
-				cout << tt.get_string_from_dist_int(1,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
-				bgt.prepare_stochmap_reverse(1,5);
+				cout << tt.get_string_from_dist_int(4,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
+				bgt.prepare_stochmap_reverse(4,5);
 				/*
 				 * end stochastic mapping
 				 */
