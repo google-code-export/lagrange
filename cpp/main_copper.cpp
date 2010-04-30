@@ -482,7 +482,7 @@ int main(int argc, char* argv[]){
 							 * stochastic mapping addition
 							 */
 							vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
-							cout << calculate_vector_double_sum(rsm)/calculate_vector_double_sum(rast) << endl;
+							cout << calculate_vector_double_sum(rsm) << " " << calculate_vector_double_sum(rast) << endl;
 							/*
 							 * end stochastic mapping
 							 */
