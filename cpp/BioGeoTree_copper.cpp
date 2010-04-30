@@ -573,7 +573,8 @@ void BioGeoTree_copper::reverse(Node & node){
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
-	}else if(node.isExternal() == false){
+	}else{
+	//else if(node.isExternal() == false){
 		//calculate A i 
 		//sum over all alpha k of sister node of the parent times the priors of the speciations 
 		//(weights) times B of parent j
@@ -656,12 +657,15 @@ void BioGeoTree_copper::reverse(Node & node){
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
-	}else{//external so delete revconds
+	}/*else{//external so delete revconds
 		delete revconds;
 		if(stochastic == true){
 			delete revconds_exp_time;
 			delete revconds_exp_number;
 		}
+	}*/
+	if(node.isExternal() == true){
+	//	delete revconds;
 	}
 }
 
@@ -860,6 +864,49 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 				}
 			}
 		}
+		return LHOODS;
+	}else{
+		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
+		VectorNodeObject<double> * Bas = (VectorNodeObject<double> *) node.getObject(revB);
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
+//		vector<int> leftdists;
+//		vector<int> rightdists;
+//		double weight;
+//		Node * c1 = &node.getChild(0);
+//		Node * c2 = &node.getChild(1);
+//		VectorNodeObject<BranchSegment>* tsegs1 = ((VectorNodeObject<BranchSegment>*) c1->getObject(seg));
+//		VectorNodeObject<BranchSegment>* tsegs2 = ((VectorNodeObject<BranchSegment>*) c2->getObject(seg));
+//		VectorNodeObject<double> v1  =tsegs1->at(0).alphas;
+//		VectorNodeObject<double> v2 = tsegs2->at(0).alphas;
+		VectorNodeObject<double> LHOODS (dists->size(),0);
+		VectorNodeObject<double> LHOODS2 (dists->size(),0);
+		cout << node.getName() << ": ";
+		for (unsigned int i = 0; i < dists->size(); i++) {
+			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+				VectorNodeObject<vector<int> >* exdist =
+						((VectorNodeObject<vector<int> >*) node.getObject(en));
+				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+				if (cou == 0) {
+//					iter_ancsplits_just_int(rootratemodel, dists->at(i),
+//							leftdists, rightdists, weight);
+					for (unsigned int j=0;j<dists->size();j++){
+//						int ind1 = leftdists[j];
+//						int ind2 = rightdists[j];
+//						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
+						LHOODS[i] += (tsegs->at(0).distconds->at(j) * (1./dists->size()));
+						LHOODS2[i] += (tsegs->at(0).distconds->at(j) * (1./dists->size()));
+					}
+					LHOODS[i] *= Bs->at(i);
+					LHOODS2[i] *= Bas->at(i);
+					//LHOODS[i] = Bs->at(i)/Bas->at(i);
+					//LHOODS[i] *= tsegs->at(0).distconds->at(i);
+					//cout << Bs->at(i) << "(" << Bas->at(i) << ")" <<" ";
+				}
+			}
+		}
+		cout << endl;
+		LHOODS[0] = calculate_vector_double_sum(LHOODS)/calculate_vector_double_sum(LHOODS2);
 		return LHOODS;
 	}
 }

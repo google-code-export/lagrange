@@ -1,4 +1,4 @@
-#LyX 1.6.4 created this file. For more info see http://www.lyx.org/
+#LyX 1.6.5 created this file. For more info see http://www.lyx.org/
 \lyxformat 345
 \begin_document
 \begin_header
@@ -39,6 +39,7 @@
 \paperpagestyle default
 \tracking_changes false
 \output_changes false
+\author "" 
 \author "" 
 \end_header
 
@@ -123,6 +124,40 @@ The C++ version of Lagrange makes use of quite a few libraries to simplify
 A more extensive discussion of the Makefile options is also below.
 \end_layout
 
+\begin_layout Standard
+The libraries used in Lagrange++ include:
+\end_layout
+
+\begin_layout Itemize
+GNu Scientific Library (GSL) -- optimization
+\end_layout
+
+\begin_layout Itemize
+armadillo -- linear algebra
+\end_layout
+
+\begin_layout Itemize
+octave -- linear algebra
+\end_layout
+
+\begin_layout Itemize
+gmp -- optional, for calulating exceptionally large trees
+\end_layout
+
+\begin_layout Itemize
+mpfr -- optional, for calculating exceptionally large trees
+\end_layout
+
+\begin_layout Itemize
+gmpfrxx -- optional, for calculating exceptionally large trees
+\end_layout
+
+\begin_layout Standard
+You will also have to be able to compile with a fortran compiler (I have
+ been using gfortran).
+ 
+\end_layout
+
 \begin_layout Section
 Linux
 \end_layout
@@ -141,7 +176,9 @@ MacOSX
 \end_layout
 
 \begin_layout Standard
-Different versions of Mac use
+When available, a binary version of Lagrange is made available for Mac users
+ to bypass the need to compile it from source.
+ 
 \end_layout
 
 \begin_layout Section
@@ -720,27 +757,106 @@ mrca = name species1 species2
 \begin_layout Itemize
 
 \family typewriter
-fixnode = ROOT 1000 
-\end_layout
-
-\begin_layout Itemize
-
-\family typewriter
-excludedists = 1111
+fixnode = mrcaname distribution 
 \family default
+--
+\family typewriter
  
+\family default
+example:
+\family typewriter
+ fixnode = ROOT 1000
+\family default
+ -- this is used, with a mrca definition as above in order to fix the ancestral
+ distribution of a node.
 \end_layout
 
 \begin_layout Itemize
 
 \family typewriter
-includedists = 1000,0100,0010,0001,1100,1010,1001,0110,0101,0011 
+excludedists = distributions 
+\family default
+--
+\family typewriter
+ 
+\family default
+example:
+\family typewriter
+ excludedists = 1111
+\family default
+ -- this is used to exclude a set of distributions from the model.
+ More than one model may be seperated by commas.
 \end_layout
 
 \begin_layout Itemize
 
 \family typewriter
-includedists = 2 
+includedists = distributions 
+\family default
+--
+\family typewriter
+ 
+\family default
+example:
+\family typewriter
+ includedists = 1000,0100,0010,0001,1100,1010,1001,0110,0101,0011
+\family default
+ -- this is used as the opposite of above, where you only want to include
+ a certain list of distributions from the model.
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+includedists = number 
+\family default
+-- example: 
+\family typewriter
+includedists = 2
+\family default
+ -- when the above option is followed by a number, it will only include
+ distributions that include that number of areas or less.
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+ancstates = nodes 
+\family default
+-- example: 
+\family typewriter
+ancstates = ROOT
+\family default
+ -- this designates that you want ancestral states to be calculated for
+ a node.
+ To do this for all nodes, simply use 
+\family typewriter
+ancstates = _all_.
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+states|splits 
+\family default
+-- example: 
+\family typewriter
+states
+\family default
+ -- this designates what you want reported for ancestral calculations, either
+ states or splits.
+ Splits will give the particular speciation split with the highest likelihood,
+ while states will give the most likely range or state.
+\end_layout
+
+\begin_layout Itemize
+
+\family typewriter
+estimate_dispersal_mask
+\family default
+ -- this designates that you want the entire dispersal mask to be estimated
+ (every dispersal rate).
+ 
 \end_layout
 
 \begin_layout Section
