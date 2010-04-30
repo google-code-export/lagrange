@@ -455,8 +455,8 @@ int main(int argc, char* argv[]){
 				/*
 				 * stochastic mapping addition
 				 */
-				cout << tt.get_string_from_dist_int(4,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
-				bgt.prepare_stochmap_reverse(4,5);
+				cout << tt.get_string_from_dist_int(1,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(2,areanamemaprev,&rm) << endl;
+				bgt.prepare_stochmap_reverse(1,2);
 				/*
 				 * end stochastic mapping
 				 */
@@ -496,7 +496,7 @@ int main(int argc, char* argv[]){
 					 */
 					for(int j =0;j<intrees[i]->getExternalNodeCount();j++){
 						vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getExternalNode(j));
-						cout << calculate_vector_double_sum(rsm)<< endl;
+						cout << rsm[0]<< endl;
 					}
 					/*
 					 * end stochastic mapping tips

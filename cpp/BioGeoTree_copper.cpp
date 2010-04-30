@@ -894,11 +894,11 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 //						int ind1 = leftdists[j];
 //						int ind2 = rightdists[j];
 //						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
-						LHOODS[i] += (tsegs->at(0).distconds->at(j) * (1./dists->size()));
-						LHOODS2[i] += (tsegs->at(0).distconds->at(j) * (1./dists->size()));
+						LHOODS[i] += (tsegs->at(0).distconds->at(j) );//* (1./dists->size()));
+						LHOODS2[i] += (tsegs->at(0).distconds->at(j) );// * (1./dists->size()));
 					}
-					LHOODS[i] *= Bs->at(i);
-					LHOODS2[i] *= Bas->at(i);
+					LHOODS[i] = Bs->at(i);
+					LHOODS2[i] = Bas->at(i);
 					//LHOODS[i] = Bs->at(i)/Bas->at(i);
 					//LHOODS[i] *= tsegs->at(0).distconds->at(i);
 					//cout << Bs->at(i) << "(" << Bas->at(i) << ")" <<" ";
