@@ -557,7 +557,7 @@ void BioGeoTree_copper::reverse(Node & node){
 	if (&node == tree->getRoot()) {
 		for(unsigned int i=0;i<rootratemodel->getDists()->size();i++){
 			revconds->at(i) = 1.0;//prior
-			if(stochastic == true){//TODO:check these
+			if(stochastic == true){
 				revconds_exp_time->at(i) = 0.0;
 				revconds_exp_number->at(i) = 0.0;
 			}
@@ -840,7 +840,7 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
  */
 vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 	if (node.isExternal()==false){//is not a tip
-		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
+		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;
 		vector<int> rightdists;
@@ -885,7 +885,6 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 //		VectorNodeObject<double> v1  =tsegs1->at(0).alphas;
 //		VectorNodeObject<double> v2 = tsegs2->at(0).alphas;
 		VectorNodeObject<double> LHOODS (dists->size(),0);
-		VectorNodeObject<double> LHOODS2 (dists->size(),0);
 		cout << node.getName() << ": ";
 		for (unsigned int i = 0; i < dists->size(); i++) {
 			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
@@ -899,11 +898,10 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 //						int ind1 = leftdists[j];
 //						int ind2 = rightdists[j];
 //						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
-						LHOODS[i] += (tsegs->at(0).distconds->at(j) );//* (1./dists->size()));
-						LHOODS2[i] += (tsegs->at(0).distconds->at(j) );// * (1./dists->size()));
+						//LHOODS[i] += (tsegs->at(0).distconds->at(j) )* (1./dists->size());
 					}
-					LHOODS[i] = Bs->at(i);
-					LHOODS2[i] = Bas->at(i);
+					//LHOODS[i] *= Bs->at(i);
+					LHOODS[i] = Bs->at(i) * (tsegs->at(0).distconds->at(i) );
 					//LHOODS[i] = Bs->at(i)/Bas->at(i);
 					//LHOODS[i] *= tsegs->at(0).distconds->at(i);
 					//cout << Bs->at(i) << "(" << Bas->at(i) << ")" <<" ";
@@ -911,7 +909,7 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 			}
 		}
 		cout << endl;
-		LHOODS[0] = calculate_vector_double_sum(LHOODS)/calculate_vector_double_sum(LHOODS2);
+
 		return LHOODS;
 	}
 }

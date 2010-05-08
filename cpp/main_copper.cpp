@@ -455,13 +455,13 @@ int main(int argc, char* argv[]){
 				/*
 				 * stochastic mapping addition
 				 */
-				cout << tt.get_string_from_dist_int(1,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
-				bgt.prepare_stochmap_reverse(1,5);
+				cout << tt.get_string_from_dist_int(5,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(7,areanamemaprev,&rm) << endl;
+				bgt.prepare_stochmap_reverse(5,7);
 				/*
 				 * end stochastic mapping
 				 */
 				bgt.prepare_ancstate_reverse();
-
+				double totlike = 0; // calculate_vector_double_sum(rast) , should be the same for every node
 
 				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
 					for(int j=0;j<intrees[i]->getInternalNodeCount();j++){
@@ -478,11 +478,12 @@ int main(int argc, char* argv[]){
 							vector<mpfr_class> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
 #else
 							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
+							totlike = calculate_vector_double_sum(rast);
 							/*
 							 * stochastic mapping addition
 							 */
 							vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
-							cout << calculate_vector_double_sum(rsm) / calculate_vector_double_sum(rast) << endl;
+							cout << calculate_vector_double_sum(rsm) / totlike << endl;
 							/*
 							 * end stochastic mapping
 							 */
@@ -496,7 +497,7 @@ int main(int argc, char* argv[]){
 					 */
 					for(int j =0;j<intrees[i]->getExternalNodeCount();j++){
 						vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getExternalNode(j));
-						cout << rsm[0]<< endl;
+						cout << calculate_vector_double_sum(rsm) / totlike << endl;
 					}
 					/*
 					 * end stochastic mapping tips
