@@ -107,7 +107,7 @@ FFLAGS	= -O3
 # Each subdirectory must supply rules for building sources it contributes
 %.o: ./%.f
 	@echo 'Building file: $<'
-	@echo 'Invoking: g77 Fortran Compiler'
+	@echo 'Invoking: gfortran Fortran Compiler'
 	$(FC) $(FFLAGS) -c $<
 	@echo 'Finished building: $<'
 	@echo ' '

@@ -795,18 +795,23 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
 				Matrix Si(ndists,ndists);
 				Si = eigvec_allperiods[it1->first] * Ei * (eigvec_allperiods[it1->first]).inverse();
 				for(int j=0;j<ndists;j++){
+					double dij = (eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j)) * t;
 					Matrix Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
 					Matrix Sj(ndists,ndists);
 					Sj = eigvec_allperiods[it1->first] * Ej * (eigvec_allperiods[it1->first]).inverse();
 					double Iijt = 0;
-					if(eigval_allperiods[it1->first](i,i) == eigval_allperiods[it1->first](j,j)){
-						Iijt = t*exp(eigval_allperiods[it1->first](i,i)*t);
+					if (abs(dij) > 10){
+						Iijt = (exp(eigval_allperiods[it1->first](i,i)*t)-exp(eigval_allperiods[it1->first](j,j)*t))/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
+					}else if(abs(dij) < 10e-20){
+						Iijt = t*exp(eigval_allperiods[it1->first](j,j)*t)*(1+dij/2+pow(dij,2)/6+pow(dij,3)/24);
 					}else{
-						Iijt = (exp(eigval_allperiods[it1->first](i,i)*t)-exp(eigval_allperiods[it1->first](j,j)*t))
-						/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
+						if(eigval_allperiods[it1->first](i,i) == eigval_allperiods[it1->first](j,j)){
+							Iijt = t*exp(eigval_allperiods[it1->first](j,j)*t)*expm1(dij)/dij;
+						}else
+							Iijt = -t*exp(eigval_allperiods[it1->first](i,i)*t)*expm1(-dij)/dij;
 					}
-					summed += (Si  * Sj * Ql * Iijt);
-					summedR += (Si * Sj * W * Iijt);
+					summed += (Si  * Ql * Sj * Iijt);
+					summedR += (Si * W * Sj * Iijt);
 				}
 				if (i == 4){
 					//cout << summed << endl;
@@ -835,7 +840,7 @@ void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
  */
 vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 	if (node.isExternal()==false){//is not a tip
-		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
+		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;
 		vector<int> rightdists;
