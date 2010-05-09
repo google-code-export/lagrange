@@ -455,8 +455,8 @@ int main(int argc, char* argv[]){
 				/*
 				 * stochastic mapping addition
 				 */
-				cout << tt.get_string_from_dist_int(5,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(7,areanamemaprev,&rm) << endl;
-				bgt.prepare_stochmap_reverse(5,7);
+				cout << tt.get_string_from_dist_int(1,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
+				bgt.prepare_stochmap_reverse_all_nodes(1,5);
 				/*
 				 * end stochastic mapping
 				 */
@@ -478,25 +478,32 @@ int main(int argc, char* argv[]){
 							vector<mpfr_class> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
 #else
 							vector<double> rast = bgt.calculate_ancstate_reverse(*intrees[i]->getInternalNode(j),marginal);
+#endif
 							totlike = calculate_vector_double_sum(rast);
+							tt.summarizeAncState(intrees[i]->getInternalNode(j),rast,areanamemaprev,&rm);
+							cout << endl;
 							/*
 							 * stochastic mapping addition
 							 */
-							vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
-							cout << calculate_vector_double_sum(rsm) / totlike << endl;
+							if(intrees[i]->getInternalNode(j) != intrees[i]->getRoot()){
+#ifdef BIGTREE
+								vector<mpfr_class> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
+#else
+								vector<double> rsm = bgt.calculate_reverse_stochmap(*intrees[i]->getInternalNode(j));
+#endif
+								cout << calculate_vector_double_sum(rsm) / totlike << endl;
+							}
 							/*
 							 * end stochastic mapping
 							 */
-#endif
-							tt.summarizeAncState(intrees[i]->getInternalNode(j),rast,areanamemaprev,&rm);
-							cout << endl;
+
 						}
 					}
 					/*
 					 * stochastic mapping tips
 					 */
 					for(int j =0;j<intrees[i]->getExternalNodeCount();j++){
-						vector<double> rsm = bgt.reverse_stochmap(*intrees[i]->getExternalNode(j));
+						vector<double> rsm = bgt.calculate_reverse_stochmap(*intrees[i]->getExternalNode(j));
 						cout << calculate_vector_double_sum(rsm) / totlike << endl;
 					}
 					/*

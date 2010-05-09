@@ -604,12 +604,10 @@ void BioGeoTree_copper::reverse(Node & node){
 #endif
 		for (unsigned int i = 0; i < dists->size(); i++) {
 			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
-				VectorNodeObject<vector<int> >* exdist =
-						((VectorNodeObject<vector<int> >*) node.getObject(en));
+				VectorNodeObject<vector<int> >* exdist = ((VectorNodeObject<vector<int> >*) node.getObject(en));
 				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
 				if (cou == 0) {
-					iter_ancsplits_just_int(rootratemodel, dists->at(i),
-							leftdists, rightdists, weight);
+					iter_ancsplits_just_int(rootratemodel, dists->at(i), leftdists, rightdists, weight);
 					//root has i, curnode has left, sister of cur has right
 					for (unsigned int j = 0; j < leftdists.size(); j++) {
 						int ind1 = leftdists[j];
@@ -622,27 +620,39 @@ void BioGeoTree_copper::reverse(Node & node){
 
 		//now calculate node B
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
-		for(unsigned int k=0;k<tsegs->size();k++){
-			RateModel * rm = tsegs->at(k).getModel();
-			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
-			Matrix * EN;
-			Matrix * ER;
+		vector<double> tempmoveA(tempA);
+		vector<double> tempmoveAer(tempA);
+		vector<double> tempmoveAen(tempA);
+		//for(unsigned int ts=0;ts<tsegs->size();ts++){
+		for(int ts = tsegs->size()-1;ts != -1;ts--){
+			for(unsigned int j=0;j<dists->size();j++){revconds->at(j) = 0;}
+			RateModel * rm = tsegs->at(ts).getModel();
+			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
+			mat * EN = NULL;
+			mat * ER = NULL;
 			if(stochastic == true){
-				EN = &stored_EN_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
-				ER = &stored_ER_matrices[tsegs->at(k).getPeriod()][tsegs->at(k).getDuration()];
+				for(unsigned int j=0;j<dists->size();j++){revconds_exp_time->at(j) = 0;}
+				for(unsigned int j=0;j<dists->size();j++){revconds_exp_number->at(j) = 0;}
+				EN = &stored_EN_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
+				ER = &stored_ER_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
 			}
 			for(unsigned int j=0;j < dists->size();j++){
 				if(accumulate(dists->at(j).begin(), dists->at(j).end(), 0) > 0){
 					for (unsigned int i = 0; i < dists->size(); i++) {
 						if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
-							revconds->at(j) += tempA[i]*((*p)[i][j]);
+							revconds->at(j) += tempmoveA[i]*((*p)[i][j]);//tempA needs to change each time
 							if(stochastic == true){
-								revconds_exp_time->at(j) += tempA[i]*((*ER)(i,j));
-								revconds_exp_number->at(j) += tempA[i]*((*EN)(i,j));
+								revconds_exp_time->at(j) += tempmoveAer[i]*(((*ER)(i,j)));
+								revconds_exp_number->at(j) += tempmoveAen[i]*((*EN)(i,j));
 							}
 						}
 					}
 				}
+			}
+			for(unsigned int j=0;j<dists->size();j++){tempmoveA[j] = revconds->at(j);}
+			if(stochastic == true){
+				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] = revconds_exp_time->at(j);}
+				for(unsigned int j=0;j<dists->size();j++){tempmoveAen[j] = revconds_exp_number->at(j);}
 			}
 		}
 
@@ -657,15 +667,6 @@ void BioGeoTree_copper::reverse(Node & node){
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
-	}/*else{//external so delete revconds
-		delete revconds;
-		if(stochastic == true){
-			delete revconds_exp_time;
-			delete revconds_exp_number;
-		}
-	}*/
-	if(node.isExternal() == true){
-	//	delete revconds;
 	}
 }
 
@@ -764,81 +765,57 @@ vector<double> BioGeoTree_copper::calculate_ancstate_reverse(Node & node,bool ma
  * forward and reverse stuff for stochastic mapping
  **********************************************************/
 
-void BioGeoTree_copper::prepare_stochmap_reverse(int from , int to){
+void BioGeoTree_copper::prepare_stochmap_reverse_all_nodes(int from , int to){
 	stochastic = true;
 	int ndists = rootratemodel->getDists()->size();
-	//need to figure out how to identify which transition to count
-
-	//initially calculate the eigen_decom
-	vector<Matrix> eigvec_allperiods;
-	vector<Matrix> eigval_allperiods;
-
-	for(unsigned int i=0;i<periods.size();i++){
-		Matrix eigvec(ndists,ndists);eigvec.fill(0);
-		Matrix eigval(ndists,ndists);eigval.fill(0);
-		rootratemodel->get_eigenvec_eigenval_from_Q_octave(&eigval, &eigvec,i);
-		eigvec_allperiods.push_back(eigvec); eigval_allperiods.push_back(eigval);
-	}
 
 	//calculate and store local expectation matrix for each branch length
-	map<int, map<double,vector<vector<double> > > >::iterator it1;
-	for(it1 = rootratemodel->stored_p_matrices.begin();it1 != rootratemodel->stored_p_matrices.end();it1++){
-		map<double,vector<vector<double> > >::iterator it2;
-		for(it2 = it1->second.begin();it2 != it1->second.end();it2++){
-			double t = it2->first;
-			Matrix Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[it1->first][from][to];
-			Matrix W(ndists,ndists);W.fill(0);W(from,from) = 1;
-			Matrix summed(ndists,ndists);summed.fill(0);
-			Matrix summedR(ndists,ndists);summedR.fill(0);
+	for(int k = 0; k < tree->getNodeCount(); k++){
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(k)->getObject(seg));
+		for (unsigned int l = 0;l<tsegs->size();l++){
+			int per = (*tsegs)[l].getPeriod();
+			double dur = (*tsegs)[l].getDuration();
+			mat eigvec(ndists,ndists);eigvec.fill(0);
+			mat eigval(ndists,ndists);eigval.fill(0);
+			rootratemodel->get_eigenvec_eigenval_from_Q(&eigval, &eigvec,per);
+			mat Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[per][from][to];
+			mat W(ndists,ndists);W.fill(0);W(from,from) = 1;
+			mat summed(ndists,ndists);summed.fill(0);
+			mat summedR(ndists,ndists);summedR.fill(0);
 			for(int i=0;i<ndists;i++){
-				Matrix Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
-				Matrix Si(ndists,ndists);
-				Si = eigvec_allperiods[it1->first] * Ei * (eigvec_allperiods[it1->first]).inverse();
+				mat Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
+				mat Si(ndists,ndists);
+				Si = eigvec * Ei * inv(eigvec);
 				for(int j=0;j<ndists;j++){
-					double dij = (eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j)) * t;
-					Matrix Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
-					Matrix Sj(ndists,ndists);
-					Sj = eigvec_allperiods[it1->first] * Ej * (eigvec_allperiods[it1->first]).inverse();
+					double dij = (eigval(i,i)-eigval(j,j)) * dur;
+					mat Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
+					mat Sj(ndists,ndists);
+					Sj = eigvec * Ej * inv(eigvec);
 					double Iijt = 0;
 					if (abs(dij) > 10){
-						Iijt = (exp(eigval_allperiods[it1->first](i,i)*t)-exp(eigval_allperiods[it1->first](j,j)*t))/(eigval_allperiods[it1->first](i,i)-eigval_allperiods[it1->first](j,j));
+						Iijt = (exp(eigval(i,i)*dur)-exp(eigval(j,j)*dur))/(eigval(i,i)-eigval(j,j));
 					}else if(abs(dij) < 10e-20){
-						Iijt = t*exp(eigval_allperiods[it1->first](j,j)*t)*(1+dij/2+pow(dij,2)/6+pow(dij,3)/24);
+						Iijt = dur*exp(eigval(j,j)*dur)*(1+dij/2+pow(dij,2)/6+pow(dij,3)/24);
 					}else{
-						if(eigval_allperiods[it1->first](i,i) == eigval_allperiods[it1->first](j,j)){
-							Iijt = t*exp(eigval_allperiods[it1->first](j,j)*t)*expm1(dij)/dij;
+						if(eigval(i,i) == eigval(j,j)){
+							Iijt = dur*exp(eigval(j,j)*dur)*expm1(dij)/dij;
 						}else
-							Iijt = -t*exp(eigval_allperiods[it1->first](i,i)*t)*expm1(-dij)/dij;
+							Iijt = -dur*exp(eigval(i,i)*dur)*expm1(-dij)/dij;
 					}
 					summed += (Si  * Ql * Sj * Iijt);
 					summedR += (Si * W * Sj * Iijt);
 				}
-				if (i == 4){
-					//cout << summed << endl;
-					//exit (0);
-				}
 			}
-//			for(int i=0;i<summed.rows();i++){
-//				for(int j=0;j<summed.cols();j++){
-//					if(summed(i,j)<0){
-//						cout <<  summed(i,j) <<endl;;
-//					}
-//				}
-//			}
-			//cout << t << endl;
-			//cout << summed <<endl;
-			//exit(0);
-			stored_EN_matrices[it1->first][it2->first] = (summed);
-			stored_ER_matrices[it1->first][it2->first] = (summedR);
-			}
+			stored_EN_matrices[per][dur] = (summed);
+			stored_ER_matrices[per][dur] = (summedR);
+		}
 	}
-	//exit(0);
 }
 
 /*
- * called directly after prepare_stochmap_reverse and that is all
+ * called directly after reverse_stochastic
  */
-vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
+vector<double> BioGeoTree_copper::calculate_reverse_stochmap(Node & node){
 	if (node.isExternal()==false){//is not a tip
 		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
 		vector<vector<int> > * dists = rootratemodel->getDists();
@@ -872,18 +849,8 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 		return LHOODS;
 	}else{
 		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
-		VectorNodeObject<double> * Bas = (VectorNodeObject<double> *) node.getObject(revB);
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
-//		vector<int> leftdists;
-//		vector<int> rightdists;
-//		double weight;
-//		Node * c1 = &node.getChild(0);
-//		Node * c2 = &node.getChild(1);
-//		VectorNodeObject<BranchSegment>* tsegs1 = ((VectorNodeObject<BranchSegment>*) c1->getObject(seg));
-//		VectorNodeObject<BranchSegment>* tsegs2 = ((VectorNodeObject<BranchSegment>*) c2->getObject(seg));
-//		VectorNodeObject<double> v1  =tsegs1->at(0).alphas;
-//		VectorNodeObject<double> v2 = tsegs2->at(0).alphas;
 		VectorNodeObject<double> LHOODS (dists->size(),0);
 		cout << node.getName() << ": ";
 		for (unsigned int i = 0; i < dists->size(); i++) {
@@ -892,24 +859,11 @@ vector<double> BioGeoTree_copper::reverse_stochmap(Node & node){
 						((VectorNodeObject<vector<int> >*) node.getObject(en));
 				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
 				if (cou == 0) {
-//					iter_ancsplits_just_int(rootratemodel, dists->at(i),
-//							leftdists, rightdists, weight);
-					for (unsigned int j=0;j<dists->size();j++){
-//						int ind1 = leftdists[j];
-//						int ind2 = rightdists[j];
-//						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
-						//LHOODS[i] += (tsegs->at(0).distconds->at(j) )* (1./dists->size());
-					}
-					//LHOODS[i] *= Bs->at(i);
 					LHOODS[i] = Bs->at(i) * (tsegs->at(0).distconds->at(i) );
-					//LHOODS[i] = Bs->at(i)/Bas->at(i);
-					//LHOODS[i] *= tsegs->at(0).distconds->at(i);
-					//cout << Bs->at(i) << "(" << Bas->at(i) << ")" <<" ";
 				}
 			}
 		}
 		cout << endl;
-
 		return LHOODS;
 	}
 }
