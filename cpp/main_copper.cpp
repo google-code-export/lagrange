@@ -31,6 +31,7 @@ using namespace std;
 #include "InputReader_copper.h"
 #include "Utils.h"
 #include "BayesianBioGeo.h"
+#include "vector_node_object.h"
 
 #ifdef BIGTREE
 #include "gmpfrxx/gmpfrxx.h"
@@ -70,6 +71,12 @@ int main(int argc, char* argv[]){
 		bool states = false;
 		int numthreads = 0;
 		bool sparse = false;
+
+		/*
+		 * for stochastic mapping
+		 */
+		vector<vector<vector<int> > > stochastic_number_from_tos;
+		vector<vector<int> > stochastic_time_dists;
 
 		//estimating the dispersal mask
 		bool estimate_dispersal_mask = false;
@@ -218,6 +225,51 @@ int main(int argc, char* argv[]){
 						estimate_dispersal_mask = true;
 					}else if(!strcmp(tokens[0].c_str(),  "numthreads")){
 						numthreads = atoi(tokens[1].c_str());
+					}else if(!strcmp(tokens[0].c_str(), "stochastic_time")){
+						states = true; // requires ancestral states
+						if(ancstates.size() > 0)
+							ancstates[0] = "_all_";
+						else
+							ancstates.push_back("_all_");
+						vector<string> searchtokens;
+						Tokenize(tokens[1], searchtokens, ", 	");
+						for(unsigned int j=0;j<searchtokens.size();j++){
+							TrimSpaces(searchtokens[j]);
+						}
+						for(unsigned int j=0;j<searchtokens.size();j++){
+							vector<int> dist;
+							for(unsigned int k=0;k<searchtokens[j].size();k++){
+								char c = (searchtokens[j].c_str())[k];
+								dist.push_back(atoi(&c));
+							}
+							stochastic_time_dists.push_back(dist);
+						}
+					}else if(!strcmp(tokens[0].c_str(), "stochastic_number")){
+						states = true; // requires ancestral states
+						if(ancstates.size() > 0)
+							ancstates[0] = "_all_";
+						else
+							ancstates.push_back("_all_");
+						vector<string> searchtokens;
+						Tokenize(tokens[1], searchtokens, ", 	");
+						for(unsigned int j=0;j<searchtokens.size();j++){
+							TrimSpaces(searchtokens[j]);
+						}
+						if(searchtokens.size() != 2){
+							cout << "ERROR: distributions for stochastic_number need to be in the form from_to" << endl;
+						}else{
+							vector<vector<int> > dists;
+							vector<int> dist0;
+							for(unsigned int k=0;k<searchtokens[0].size();k++){
+								char c = (searchtokens[0].c_str())[k];
+								dist0.push_back(atoi(&c));
+							}vector<int> dist1;
+							for(unsigned int k=0;k<searchtokens[1].size();k++){
+								char c = (searchtokens[1].c_str())[k];
+								dist1.push_back(atoi(&c));
+							}dists.push_back(dist0);dists.push_back(dist1);
+							stochastic_number_from_tos.push_back(dists);
+						}
 					}
 				}
 			}
@@ -309,13 +361,21 @@ int main(int argc, char* argv[]){
 		rm.setup_E(0.01);
 		rm.setup_Q();
 
-
 		/*
 		 * outfile for tree reconstructed states
 		 */
 		ofstream outTreeFile;
 		ofstream outTreeKeyFile;
 
+		/*
+		 * outfile for stochastic expectations
+		 */
+		ofstream outStochTimeFile;
+		ofstream outStochNumberFile;
+
+		/*
+		 * start calculating on all trees
+		 */
 		for(unsigned int i =0;i<intrees.size();i++){
 			BioGeoTree_copper bgt(intrees[i],periods);
 			/*
@@ -452,14 +512,6 @@ int main(int argc, char* argv[]){
 			if(ancstates.size() > 0){
 				bgt.set_use_stored_matrices(true);
 
-				/*
-				 * stochastic mapping addition
-				 */
-				cout << tt.get_string_from_dist_int(1,areanamemaprev,&rm)<< " -> " << tt.get_string_from_dist_int(5,areanamemaprev,&rm) << endl;
-				bgt.prepare_stochmap_reverse_all_nodes(1,5);
-				/*
-				 * end stochastic mapping
-				 */
 				bgt.prepare_ancstate_reverse();
 				double totlike = 0; // calculate_vector_double_sum(rast) , should be the same for every node
 
@@ -482,33 +534,9 @@ int main(int argc, char* argv[]){
 							totlike = calculate_vector_double_sum(rast);
 							tt.summarizeAncState(intrees[i]->getInternalNode(j),rast,areanamemaprev,&rm);
 							cout << endl;
-							/*
-							 * stochastic mapping addition
-							 */
-							if(intrees[i]->getInternalNode(j) != intrees[i]->getRoot()){
-#ifdef BIGTREE
-								vector<mpfr_class> rsm = bgt.reverse_stochmap(*intrees[i]->getInternalNode(j));
-#else
-								vector<double> rsm = bgt.calculate_reverse_stochmap(*intrees[i]->getInternalNode(j));
-#endif
-								cout << calculate_vector_double_sum(rsm) / totlike << endl;
-							}
-							/*
-							 * end stochastic mapping
-							 */
 
 						}
 					}
-					/*
-					 * stochastic mapping tips
-					 */
-					for(int j =0;j<intrees[i]->getExternalNodeCount();j++){
-						vector<double> rsm = bgt.calculate_reverse_stochmap(*intrees[i]->getExternalNode(j));
-						cout << calculate_vector_double_sum(rsm) / totlike << endl;
-					}
-					/*
-					 * end stochastic mapping tips
-					 */
 					/*
 					 * key file output
 					 */
@@ -555,9 +583,78 @@ int main(int argc, char* argv[]){
 					}
 				}
 				//cout << bgt.ti/CLOCKS_PER_SEC << " secs for anc" << endl;
+				/*
+				 * stochastic mapping calculations
+				 * REQUIRES that ancestral calculation be done
+				 */
+				if(stochastic_time_dists.size() > 0){
+					cout << "calculating stochastic mapping time spent" << endl;
+					for(unsigned int k=0;k<stochastic_time_dists.size();k++){
+						cout << tt.get_string_from_dist_int((*rm.get_dists_int_map())[stochastic_time_dists[k]],areanamemaprev,&rm)<< endl;
+						bgt.prepare_stochmap_reverse_all_nodes((*rm.get_dists_int_map())[stochastic_time_dists[k]],
+								(*rm.get_dists_int_map())[stochastic_time_dists[k]]);
+						bgt.prepare_ancstate_reverse();
+						outStochTimeFile.open((treefile+".bgstochtime.tre").c_str(),ios::app );
+						for(int j=0;j<intrees[i]->getNodeCount();j++){
+							if(intrees[i]->getNode(j) != intrees[i]->getRoot()){
+#ifdef BIGTREE
+								vector<mpfr_class> rsm = bgt.reverse_stochmap(*intrees[i]->getNode(j));
+#else
+								vector<double> rsm = bgt.calculate_reverse_stochmap(*intrees[i]->getNode(j),true);
+#endif
+								//cout << calculate_vector_double_sum(rsm) / totlike << endl;
+								VectorNodeObject<double> stres(1);
+								stres[0] = calculate_vector_double_sum(rsm) / totlike;
+								intrees[i]->getNode(j)->assocObject("stoch", stres);
+							}
+						}
+						//need to output object "stoch"
+						outStochTimeFile << intrees[i]->getRoot()->getNewickOBL("stoch") <<
+								tt.get_string_from_dist_int((*rm.get_dists_int_map())[stochastic_time_dists[k]],areanamemaprev,&rm) << ";"<< endl;
+						outStochTimeFile.close();
+						for(int j=0;j<intrees[i]->getNodeCount();j++){
+							if (intrees[i]->getNode(j)->getObject("stoch")!= NULL)
+								delete intrees[i]->getNode(j)->getObject("stoch");
+						}
+					}
+				}
+				if(stochastic_number_from_tos.size() > 0){
+					cout << "calculating stochastic mapping number of transitions" << endl;
+					for(unsigned int k=0;k<stochastic_number_from_tos.size();k++){
+						cout << tt.get_string_from_dist_int((*rm.get_dists_int_map())[stochastic_number_from_tos[k][0]],areanamemaprev,&rm)<< " -> "
+								<< tt.get_string_from_dist_int((*rm.get_dists_int_map())[stochastic_number_from_tos[k][1]],areanamemaprev,&rm) << endl;
+						bgt.prepare_stochmap_reverse_all_nodes((*rm.get_dists_int_map())[stochastic_number_from_tos[k][0]],
+								(*rm.get_dists_int_map())[stochastic_number_from_tos[k][1]]);
+						bgt.prepare_ancstate_reverse();
+						outStochTimeFile.open((treefile+".bgstochnumber.tre").c_str(),ios::app );
+						for(int j=0;j<intrees[i]->getNodeCount();j++){
+							if(intrees[i]->getNode(j) != intrees[i]->getRoot()){
+#ifdef BIGTREE
+								vector<mpfr_class> rsm = bgt.reverse_stochmap(*intrees[i]->getNode(j));
+#else
+								vector<double> rsm = bgt.calculate_reverse_stochmap(*intrees[i]->getNode(j),false);
+#endif
+								//cout << calculate_vector_double_sum(rsm) / totlike << endl;
+								VectorNodeObject<double> stres(1);
+								stres[0] = calculate_vector_double_sum(rsm) / totlike;
+								intrees[i]->getNode(j)->assocObject("stoch", stres);
+							}
+						}
+						//need to output object "stoch"
+						outStochTimeFile << intrees[i]->getRoot()->getNewickOBL("stoch") <<
+								tt.get_string_from_dist_int((*rm.get_dists_int_map())[stochastic_number_from_tos[k][0]],areanamemaprev,&rm)<< "->"
+								<< tt.get_string_from_dist_int((*rm.get_dists_int_map())[stochastic_number_from_tos[k][1]],areanamemaprev,&rm) << ";"<< endl;
+						outStochTimeFile.close();
+						for(int j=0;j<intrees[i]->getNodeCount();j++){
+							if (intrees[i]->getNode(j)->getObject("stoch")!= NULL)
+								delete intrees[i]->getNode(j)->getObject("stoch");
+						}
+					}
+				}
+				/*
+				 * end stochastic mapping
+				 */
 			}
-
-
 		}
 		
 		for(unsigned int i=0;i<intrees.size();i++){

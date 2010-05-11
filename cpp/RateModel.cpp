@@ -740,33 +740,38 @@ void RateModel::get_eigenvec_eigenval_from_Q(mat * eigval, mat * eigvec, int per
 			(*eigvec)(i,j) = real(eigve(i,j));
 		}
 	}
-
+	//cout << eigva << endl;
 	//cout << tQ - ((*eigvec) * (*eigval) * inv(*eigvec)) <<endl;
 }
 
-void RateModel::get_eigenvec_eigenval_from_Q_octave(Matrix * eigval, Matrix * eigvec, int period){
+//trying not to use octave at the moment
+bool RateModel::get_eigenvec_eigenval_from_Q_octave(ComplexMatrix * eigval, ComplexMatrix * eigvec, int period){
 	ComplexMatrix tQ = ComplexMatrix(int(Q[period].size()),int(Q[period].size()));
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
 			tQ(i,j) = Q[period][i][j];
-			//cout << Q[0][i][j] << " ";
+	//		cout << Q[0][i][j] << " ";
 		}
-		//cout << endl;
+	//	cout << endl;
 	}
 	//cout << endl;
 	EIG eig = EIG(tQ);
+	bool isImag = false;
 	for(unsigned int i=0;i<Q[period].size();i++){
 		for(unsigned int j=0;j<Q[period].size();j++){
-			if(i==j)
-				(*eigval)(i,j) = real(eig.eigenvalues()(i));
-			else
+			if(i==j){
+				(*eigval)(i,j) = eig.eigenvalues()(i);
+			}else{
 				(*eigval)(i,j) = 0;
-			(*eigvec)(i,j) = real(eig.eigenvectors()(i,j));
+			}
+			(*eigvec)(i,j) = eig.eigenvectors()(i,j);
+			if(imag((*eigvec)(i,j)) > 0 || imag((*eigval)(i,j)))
+				isImag = true;
 		}
 	}
-//	cout << t2 - ((*eigvec) * (*eigval) * inv(*eigvec)) <<endl;
+	return isImag;
+	//cout <<(eig.eigenvalues() * eig.eigenvectors()) << endl;
 }
-
 
 /**/
 

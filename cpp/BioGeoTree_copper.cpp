@@ -8,7 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <ctime>
-#include <cmath>
+//#include <cmath>
 #include <functional>
 #include <numeric>
 #include <iostream>
@@ -628,8 +628,8 @@ void BioGeoTree_copper::reverse(Node & node){
 			for(unsigned int j=0;j<dists->size();j++){revconds->at(j) = 0;}
 			RateModel * rm = tsegs->at(ts).getModel();
 			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
-			mat * EN = NULL;
-			mat * ER = NULL;
+			Matrix * EN = NULL;
+			Matrix * ER = NULL;
 			if(stochastic == true){
 				for(unsigned int j=0;j<dists->size();j++){revconds_exp_time->at(j) = 0;}
 				for(unsigned int j=0;j<dists->size();j++){revconds_exp_number->at(j) = 0;}
@@ -655,7 +655,6 @@ void BioGeoTree_copper::reverse(Node & node){
 				for(unsigned int j=0;j<dists->size();j++){tempmoveAen[j] = revconds_exp_number->at(j);}
 			}
 		}
-
 		node.assocObject(revB,*revconds);
 		delete revconds;
 		if(stochastic == true){
@@ -774,40 +773,49 @@ void BioGeoTree_copper::prepare_stochmap_reverse_all_nodes(int from , int to){
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) tree->getNode(k)->getObject(seg));
 		for (unsigned int l = 0;l<tsegs->size();l++){
 			int per = (*tsegs)[l].getPeriod();
-			double dur = (*tsegs)[l].getDuration();
-			mat eigvec(ndists,ndists);eigvec.fill(0);
-			mat eigval(ndists,ndists);eigval.fill(0);
-			rootratemodel->get_eigenvec_eigenval_from_Q(&eigval, &eigvec,per);
-			mat Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[per][from][to];
-			mat W(ndists,ndists);W.fill(0);W(from,from) = 1;
-			mat summed(ndists,ndists);summed.fill(0);
-			mat summedR(ndists,ndists);summedR.fill(0);
+			double dur =  (*tsegs)[l].getDuration();
+			ComplexMatrix eigvec(ndists,ndists);eigvec.fill(0);
+			ComplexMatrix eigval(ndists,ndists);eigval.fill(0);
+			bool isImag = rootratemodel->get_eigenvec_eigenval_from_Q_octave(&eigval, &eigvec,per);
+			Matrix Ql(ndists,ndists);Ql.fill(0);Ql(from,to) = rootratemodel->get_Q()[per][from][to];
+			Matrix W(ndists,ndists);W.fill(0);W(from,from) = 1;
+			ComplexMatrix summed(ndists,ndists);summed.fill(0);
+			ComplexMatrix summedR(ndists,ndists);summedR.fill(0);
 			for(int i=0;i<ndists;i++){
-				mat Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
-				mat Si(ndists,ndists);
-				Si = eigvec * Ei * inv(eigvec);
+				Matrix Ei(ndists,ndists);Ei.fill(0);Ei(i,i)=1;
+				ComplexMatrix Si(ndists,ndists);
+				Si = eigvec * Ei * eigvec.inverse();
 				for(int j=0;j<ndists;j++){
-					double dij = (eigval(i,i)-eigval(j,j)) * dur;
-					mat Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
-					mat Sj(ndists,ndists);
-					Sj = eigvec * Ej * inv(eigvec);
-					double Iijt = 0;
+					Complex dij = (eigval(i,i)-eigval(j,j)) * dur;
+					Matrix Ej(ndists,ndists);Ej.fill(0);Ej(j,j)=1;
+					ComplexMatrix Sj(ndists,ndists);
+					Sj = eigvec * Ej * eigvec.inverse();
+					Complex Iijt = 0;
 					if (abs(dij) > 10){
 						Iijt = (exp(eigval(i,i)*dur)-exp(eigval(j,j)*dur))/(eigval(i,i)-eigval(j,j));
 					}else if(abs(dij) < 10e-20){
-						Iijt = dur*exp(eigval(j,j)*dur)*(1+dij/2+pow(dij,2)/6+pow(dij,3)/24);
+						Iijt = dur*exp(eigval(j,j)*dur)*(1.+dij/2.+pow(dij,2.)/6.+pow(dij,3.)/24.);
 					}else{
 						if(eigval(i,i) == eigval(j,j)){
-							Iijt = dur*exp(eigval(j,j)*dur)*expm1(dij)/dij;
-						}else
-							Iijt = -dur*exp(eigval(i,i)*dur)*expm1(-dij)/dij;
+							//WAS Iijt = dur*exp(eigval(j,j)*dur)*expm1(dij)/dij;
+							if (isImag)
+								Iijt = dur*exp(eigval(j,j)*dur)*(exp(dij)-1.)/dij;
+							else
+								Iijt = dur*exp(eigval(j,j)*dur)*(expm1(real(dij)))/dij;
+						}else{
+							//WAS Iijt = -dur*exp(eigval(i,i)*dur)*expm1(-dij)/dij;
+							if (isImag)
+								Iijt = -dur*exp(eigval(i,i)*dur)*(exp(-dij)-1.)/dij;
+							else
+								Iijt = -dur*exp(eigval(i,i)*dur)*(expm1(real(-dij)))/dij;
+						}
 					}
 					summed += (Si  * Ql * Sj * Iijt);
 					summedR += (Si * W * Sj * Iijt);
 				}
 			}
-			stored_EN_matrices[per][dur] = (summed);
-			stored_ER_matrices[per][dur] = (summedR);
+			stored_EN_matrices[per][dur] = (real(summed));
+			stored_ER_matrices[per][dur] = (real(summedR));
 		}
 	}
 }
@@ -815,9 +823,13 @@ void BioGeoTree_copper::prepare_stochmap_reverse_all_nodes(int from , int to){
 /*
  * called directly after reverse_stochastic
  */
-vector<double> BioGeoTree_copper::calculate_reverse_stochmap(Node & node){
+vector<double> BioGeoTree_copper::calculate_reverse_stochmap(Node & node,bool time){
 	if (node.isExternal()==false){//is not a tip
-		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
+		VectorNodeObject<double> * Bs ;
+		if (time)
+			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
+		else
+			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		vector<int> leftdists;
 		vector<int> rightdists;
@@ -848,11 +860,14 @@ vector<double> BioGeoTree_copper::calculate_reverse_stochmap(Node & node){
 		}
 		return LHOODS;
 	}else{
-		VectorNodeObject<double> * Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
+		VectorNodeObject<double> * Bs ;
+		if (time)
+			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
+		else
+			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
 		vector<vector<int> > * dists = rootratemodel->getDists();
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
 		VectorNodeObject<double> LHOODS (dists->size(),0);
-		cout << node.getName() << ": ";
 		for (unsigned int i = 0; i < dists->size(); i++) {
 			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
 				VectorNodeObject<vector<int> >* exdist =
@@ -863,7 +878,6 @@ vector<double> BioGeoTree_copper::calculate_reverse_stochmap(Node & node){
 				}
 			}
 		}
-		cout << endl;
 		return LHOODS;
 	}
 }

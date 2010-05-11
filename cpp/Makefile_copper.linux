@@ -75,6 +75,7 @@ PYTHON_LIB = -I/usr/include/python2.6/
 # >>> distutils.sysconfig.get_config_var('LINKFORSHARED')
 PYTHON_REQ = -Xlinker -export-dynamic -Wl,-O1 -Wl,-Bsymbolic-functions
 
+#if using octave
 #INCLUDES = -I/usr/include/octave-3.0.5/octave/
 INCLUDES = -I/usr/include/octave-3.2.4/
 
@@ -135,7 +136,7 @@ LINK_LIB_DIRS = -L/usr/lib/ -L/usr/local/lib/ -L./gmpfrxx/
 # Tool invocations
 lagrange_cpp: $(OBJS) $(FORT_OBJS)
 	@echo 'Building target: $@'
-	g++ --link-stand-alone $(LINK_LIB_DIRS) $(PYTHON_REQ) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
+	g++ $(LINK_LIB_DIRS) $(PYTHON_REQ) -o "$(TARGET_NAME)" $(FORT_OBJS) $(OBJS) $(LIBS)
 	@echo 'Finished building target: $(TARGET_NAME)'
 	@echo ' '
 

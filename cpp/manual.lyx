@@ -203,12 +203,6 @@ sudo apt-get build-dep armadillo
 
 \end_deeper
 \begin_layout Enumerate
-install the octave development libraries with the command 
-\family typewriter
-sudo apt-get install octave3.2-headers
-\end_layout
-
-\begin_layout Enumerate
 install the gsl development libraries with the command 
 \family typewriter
 sudo apt-get install libgsl0-dev
@@ -274,7 +268,7 @@ make
 \begin_layout Enumerate
 make lagrange with the command 
 \family typewriter
-make -f Makefile_copper.linux oct
+make -f Makefile_copper.linux
 \end_layout
 
 \begin_layout Section
