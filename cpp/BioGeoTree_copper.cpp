@@ -59,7 +59,7 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 	en = "excluded_dists";
 	andc = "anc_dist_conditionals";
 	/*
-     * reverse bit
+	 * reverse bit
 	 */
 	revB  = "revB";
 	/*
@@ -119,7 +119,6 @@ BioGeoTree_copper::BioGeoTree_copper(Tree * tr, vector<double> ps){
 							BranchSegment tseg = BranchSegment(duration,j);
 							((VectorNodeObject<BranchSegment>*) tree->getNode(i)->getObject(seg))->push_back(tseg);
 						}
-						//t += pers[j];
 						t += duration; // TODO: make sure that this is all working
 					}
 					if (t > anc || pers[j] > t){
@@ -651,7 +650,7 @@ void BioGeoTree_copper::reverse(Node & node){
 			}
 			for(unsigned int j=0;j<dists->size();j++){tempmoveA[j] = revconds->at(j);}
 			if(stochastic == true){
-				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] = revconds_exp_time->at(j);}
+				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] += revconds_exp_time->at(j);}
 				for(unsigned int j=0;j<dists->size();j++){tempmoveAen[j] = revconds_exp_number->at(j);}
 			}
 		}

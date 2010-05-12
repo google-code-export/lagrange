@@ -1,7 +1,7 @@
 treefile = aesculus.tre
 datafile = aesculus.data
 #ratematrix = aesculus.single.rm
-#periods = 10 100
+periods = 10 100
 #mrca = hankensii Aesculus_pavia Aesculus_glabra
 #mrca = ROOT Aesculus_pavia Aesculus_wilsonii
 areanames = EA ENA WNA EU
@@ -16,9 +16,10 @@ ancstate = _all_
 #ancstate = ROOT
 #splits
 states
-stochastic_time = 1000 0100 0010 0001 1100 1010 0110 0011 0101 1110 0111 1111
-stochastic_number = 0001 1001
-stochastic_number = 1001 1000
+stochastic_time = 1000
+#stochastic_time = 1000 0100 0010 0001 1100 1010 0110 0011 0101 1110 0111 1111
+#stochastic_number = 0001 1001
+#stochastic_number = 1001 1000
 #sparse
 #numthreads=2
-estimate_dispersal_mask
+#estimate_dispersal_mask
