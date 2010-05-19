@@ -650,7 +650,7 @@ void BioGeoTree_copper::reverse(Node & node){
 			}
 			for(unsigned int j=0;j<dists->size();j++){tempmoveA[j] = revconds->at(j);}
 			if(stochastic == true){
-				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] += revconds_exp_time->at(j);}
+				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] = revconds_exp_time->at(j);}
 				for(unsigned int j=0;j<dists->size();j++){tempmoveAen[j] = revconds_exp_number->at(j);}
 			}
 		}
