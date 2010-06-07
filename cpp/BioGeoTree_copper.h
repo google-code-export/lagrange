@@ -115,6 +115,7 @@ public:
  */
 	void prepare_stochmap_reverse_all_nodes(int, int);
 	vector<double> calculate_reverse_stochmap(Node &, bool);
+	vector<double> calculate_reverse_stochmap_TEST(Node & node,bool time);
 
 
 /*

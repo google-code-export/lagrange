@@ -22,4 +22,4 @@ stochastic_time = 1000
 #stochastic_number = 1001 1000
 #sparse
 #numthreads=2
-#estimate_dispersal_mask
+estimate_dispersal_mask

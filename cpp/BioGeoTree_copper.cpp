@@ -359,6 +359,9 @@ VectorNodeObject<double> BioGeoTree_copper::conditionals(Node & node, bool margi
 		for(unsigned int j=0;j<distconds.size();j++){
 			distconds[j] = v->at(j);
 		}
+		if(store_p_matrices == true){
+			tsegs->at(i).seg_sp_alphas = distconds;
+		}
 		delete v;
 	}
 	/*
@@ -546,29 +549,13 @@ void BioGeoTree_copper::reverse(Node & node){
 	VectorNodeObject<mpfr_class> * revconds = new VectorNodeObject<mpfr_class> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
 #else
 	VectorNodeObject<double> * revconds = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
-	VectorNodeObject<double> * revconds_exp_time;
-	VectorNodeObject<double> * revconds_exp_number;
-	if(stochastic == true){
-		revconds_exp_time = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
-		revconds_exp_number = new VectorNodeObject<double> (rootratemodel->getDists()->size(), 0);//need to delete this at some point
-	}
 #endif
 	if (&node == tree->getRoot()) {
 		for(unsigned int i=0;i<rootratemodel->getDists()->size();i++){
 			revconds->at(i) = 1.0;//prior
-			if(stochastic == true){
-				revconds_exp_time->at(i) = 0.0;
-				revconds_exp_number->at(i) = 0.0;
-			}
 		}
 		node.assocObject(revB,*revconds);
 		delete revconds;
-		if(stochastic == true){
-			node.assocObject(rev_exp_time, *revconds_exp_time);
-			node.assocObject(rev_exp_number, *revconds_exp_number);
-			delete revconds_exp_time;
-			delete revconds_exp_number;
-		}
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
@@ -620,8 +607,6 @@ void BioGeoTree_copper::reverse(Node & node){
 		//now calculate node B
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
 		vector<double> tempmoveA(tempA);
-		vector<double> tempmoveAer(tempA);
-		vector<double> tempmoveAen(tempA);
 		//for(unsigned int ts=0;ts<tsegs->size();ts++){
 		for(int ts = tsegs->size()-1;ts != -1;ts--){
 			for(unsigned int j=0;j<dists->size();j++){revconds->at(j) = 0;}
@@ -629,9 +614,12 @@ void BioGeoTree_copper::reverse(Node & node){
 			vector<vector<double > > * p = &rm->stored_p_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
 			Matrix * EN = NULL;
 			Matrix * ER = NULL;
+			VectorNodeObject<double> tempmoveAer(tempA);
+			VectorNodeObject<double> tempmoveAen(tempA);
 			if(stochastic == true){
-				for(unsigned int j=0;j<dists->size();j++){revconds_exp_time->at(j) = 0;}
-				for(unsigned int j=0;j<dists->size();j++){revconds_exp_number->at(j) = 0;}
+				//initialize the segment B's
+				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] = 0;}
+				for(unsigned int j=0;j<dists->size();j++){tempmoveAen[j] = 0;}
 				EN = &stored_EN_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
 				ER = &stored_ER_matrices[tsegs->at(ts).getPeriod()][tsegs->at(ts).getDuration()];
 			}
@@ -641,8 +629,8 @@ void BioGeoTree_copper::reverse(Node & node){
 						if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
 							revconds->at(j) += tempmoveA[i]*((*p)[i][j]);//tempA needs to change each time
 							if(stochastic == true){
-								revconds_exp_time->at(j) += tempmoveAer[i]*(((*ER)(i,j)));
-								revconds_exp_number->at(j) += tempmoveAen[i]*((*EN)(i,j));
+								tempmoveAer[j] += tempmoveA[i]*(((*ER)(i,j)));
+								tempmoveAen[j] += tempmoveA[i]*(((*EN)(i,j)));
 							}
 						}
 					}
@@ -650,18 +638,12 @@ void BioGeoTree_copper::reverse(Node & node){
 			}
 			for(unsigned int j=0;j<dists->size();j++){tempmoveA[j] = revconds->at(j);}
 			if(stochastic == true){
-				for(unsigned int j=0;j<dists->size();j++){tempmoveAer[j] = revconds_exp_time->at(j);}
-				for(unsigned int j=0;j<dists->size();j++){tempmoveAen[j] = revconds_exp_number->at(j);}
+				tsegs->at(ts).seg_sp_stoch_map_revB_time = tempmoveAer;
+				tsegs->at(ts).seg_sp_stoch_map_revB_number = tempmoveAen;
 			}
 		}
 		node.assocObject(revB,*revconds);
 		delete revconds;
-		if(stochastic == true){
-			node.assocObject(rev_exp_time, *revconds_exp_time);
-			node.assocObject(rev_exp_number, *revconds_exp_number);
-			delete revconds_exp_time;
-			delete revconds_exp_number;
-		}
 		for(int i = 0;i<node.getChildCount();i++){
 			reverse(node.getChild(i));
 		}
@@ -822,66 +804,125 @@ void BioGeoTree_copper::prepare_stochmap_reverse_all_nodes(int from , int to){
 /*
  * called directly after reverse_stochastic
  */
+
 vector<double> BioGeoTree_copper::calculate_reverse_stochmap(Node & node,bool time){
 	if (node.isExternal()==false){//is not a tip
-		VectorNodeObject<double> * Bs ;
-		if (time)
-			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
-		else
-			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
-		vector<vector<int> > * dists = rootratemodel->getDists();
-		vector<int> leftdists;
-		vector<int> rightdists;
-		double weight;
-		Node * c1 = &node.getChild(0);
-		Node * c2 = &node.getChild(1);
-		VectorNodeObject<BranchSegment>* tsegs1 = ((VectorNodeObject<BranchSegment>*) c1->getObject(seg));
-		VectorNodeObject<BranchSegment>* tsegs2 = ((VectorNodeObject<BranchSegment>*) c2->getObject(seg));
-		VectorNodeObject<double> v1  =tsegs1->at(0).alphas;
-		VectorNodeObject<double> v2 = tsegs2->at(0).alphas;
-		VectorNodeObject<double> LHOODS (dists->size(),0);
-		for (unsigned int i = 0; i < dists->size(); i++) {
-			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
-				VectorNodeObject<vector<int> >* exdist =
-				((VectorNodeObject<vector<int> >*) node.getObject(en));
-				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
-				if (cou == 0) {
-					iter_ancsplits_just_int(rootratemodel, dists->at(i),
-											leftdists, rightdists, weight);
-					for (unsigned int j=0;j<leftdists.size();j++){
-						int ind1 = leftdists[j];
-						int ind2 = rightdists[j];
-						LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
-					}
-					LHOODS[i] *= Bs->at(i);
-				}
-			}
-		}
-		return LHOODS;
-	}else{
-		VectorNodeObject<double> * Bs ;
-		if (time)
-			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_time);
-		else
-			Bs = (VectorNodeObject<double> *) node.getObject(rev_exp_number);
-		vector<vector<int> > * dists = rootratemodel->getDists();
 		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
-		VectorNodeObject<double> LHOODS (dists->size(),0);
-		for (unsigned int i = 0; i < dists->size(); i++) {
-			if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
-				VectorNodeObject<vector<int> >* exdist =
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		vector<double> totalExp (dists->size(),0);
+		for(int t = 0;t<tsegs->size();t++){
+			if (t == 0){
+				vector<double> Bs;
+				if(time)
+					Bs = tsegs->at(t).seg_sp_stoch_map_revB_time;
+				else
+					Bs =  tsegs->at(t).seg_sp_stoch_map_revB_number;
+				vector<int> leftdists;
+				vector<int> rightdists;
+				double weight;
+				Node * c1 = &node.getChild(0);
+				Node * c2 = &node.getChild(1);
+				VectorNodeObject<BranchSegment>* tsegs1 = ((VectorNodeObject<BranchSegment>*) c1->getObject(seg));
+				VectorNodeObject<BranchSegment>* tsegs2 = ((VectorNodeObject<BranchSegment>*) c2->getObject(seg));
+				VectorNodeObject<double> v1  =tsegs1->at(0).alphas;
+				VectorNodeObject<double> v2 = tsegs2->at(0).alphas;
+				VectorNodeObject<double> LHOODS (dists->size(),0);
+				for (unsigned int i = 0; i < dists->size(); i++) {
+					if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+						VectorNodeObject<vector<int> >* exdist =
 						((VectorNodeObject<vector<int> >*) node.getObject(en));
-				int cou = count(exdist->begin(), exdist->end(), dists->at(i));
-				if (cou == 0) {
-					LHOODS[i] = Bs->at(i) * (tsegs->at(0).distconds->at(i) );
+						int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+						if (cou == 0) {
+							iter_ancsplits_just_int(rootratemodel, dists->at(i),
+													leftdists, rightdists, weight);
+							for (unsigned int j=0;j<leftdists.size();j++){
+								int ind1 = leftdists[j];
+								int ind2 = rightdists[j];
+								LHOODS[i] += (v1.at(ind1)*v2.at(ind2)*weight);
+							}
+							LHOODS[i] *= Bs.at(i);
+						}
+					}
+				}
+				for(int i=0;i<dists->size();i++){
+					totalExp[i] = LHOODS[i];
+				}
+			}else{
+				vector<double> alphs = tsegs->at(t-1).seg_sp_alphas;
+				vector<double> Bs;
+				if(time)
+					Bs = tsegs->at(t).seg_sp_stoch_map_revB_time;
+				else
+					Bs =  tsegs->at(t).seg_sp_stoch_map_revB_number;
+				VectorNodeObject<double> LHOODS (dists->size(),0);
+				for (unsigned int i = 0; i < dists->size(); i++) {
+					if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+						VectorNodeObject<vector<int> >* exdist =
+								((VectorNodeObject<vector<int> >*) node.getObject(en));
+						int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+						if (cou == 0) {
+							LHOODS[i] = Bs.at(i) * (alphs[i] );//do i do this or do i do from i to j
+						}
+					}
+				}
+				for(int i=0;i<dists->size();i++){
+					totalExp[i] += LHOODS[i];
 				}
 			}
 		}
-		return LHOODS;
+
+		return totalExp;
+	}else{
+		VectorNodeObject<BranchSegment>* tsegs = ((VectorNodeObject<BranchSegment>*) node.getObject(seg));
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		vector<double> totalExp (dists->size(),0);
+		for(int t = 0;t<tsegs->size();t++){
+			if(t == 0){
+				vector<double> Bs;
+				if(time)
+					Bs = tsegs->at(t).seg_sp_stoch_map_revB_time;
+				else
+					Bs =  tsegs->at(t).seg_sp_stoch_map_revB_number;
+				VectorNodeObject<double> LHOODS (dists->size(),0);
+				for (unsigned int i = 0; i < dists->size(); i++) {
+					if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+						VectorNodeObject<vector<int> >* exdist =
+								((VectorNodeObject<vector<int> >*) node.getObject(en));
+						int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+						if (cou == 0) {
+							LHOODS[i] = Bs.at(i) * (tsegs->at(0).distconds->at(i) );
+						}
+					}
+				}
+				for(int i=0;i<dists->size();i++){
+					totalExp[i] = LHOODS[i];
+				}
+			}else{
+				vector<double> alphs = tsegs->at(t-1).seg_sp_alphas;
+				vector<double> Bs;
+				if(time)
+					Bs = tsegs->at(t).seg_sp_stoch_map_revB_time;
+				else
+					Bs =  tsegs->at(t).seg_sp_stoch_map_revB_number;
+				VectorNodeObject<double> LHOODS (dists->size(),0);
+				for (unsigned int i = 0; i < dists->size(); i++) {
+					if (accumulate(dists->at(i).begin(), dists->at(i).end(), 0) > 0) {
+						VectorNodeObject<vector<int> >* exdist =
+								((VectorNodeObject<vector<int> >*) node.getObject(en));
+						int cou = count(exdist->begin(), exdist->end(), dists->at(i));
+						if (cou == 0) {
+							LHOODS[i] = Bs.at(i) * (alphs[i]);
+						}
+					}
+				}
+				for(int i=0;i<dists->size();i++){
+					totalExp[i] += LHOODS[i];
+				}
+			}
+		}
+		return totalExp;
 	}
 }
-
-
 
 /**********************************************************
  * trash collection
