@@ -503,8 +503,8 @@ int main(int argc, char* argv[]){
 			/*
 			 * testing BAYESIAN
 			 */
-			//BayesianBioGeo bayes(&bgt,&rm,marginal,10000);
-			//bayes.run_global_dispersal_extinction();
+			BayesianBioGeo bayes(&bgt,&rm,marginal,100000);
+			bayes.run_global_dispersal_extinction();
 
 			/*
 			 * ancestral splits calculation
