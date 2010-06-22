@@ -31,6 +31,7 @@ using namespace std;
 #include "InputReader_copper.h"
 #include "Utils.h"
 #include "BayesianBioGeo.h"
+#include "BayesianBioGeoAllDispersal.h"
 #include "vector_node_object.h"
 
 #ifdef BIGTREE
@@ -503,7 +504,9 @@ int main(int argc, char* argv[]){
 			/*
 			 * testing BAYESIAN
 			 */
-			BayesianBioGeo bayes(&bgt,&rm,marginal,100000);
+			//BayesianBioGeo bayes(&bgt,&rm,marginal,100000);
+			//bayes.run_global_dispersal_extinction();
+			BayesianBioGeoAllDispersal bayes(&bgt,&rm,marginal,100000);
 			bayes.run_global_dispersal_extinction();
 
 			/*
