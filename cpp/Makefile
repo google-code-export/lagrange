@@ -88,7 +88,7 @@ LIBS := -llapack -lblas -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lu
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
-BIG = no 
+BIG = yes 
 BIGTREE =
 ifeq  ($(strip $(BIG)),yes)
 	BIGTREE += -DBIGTREE
