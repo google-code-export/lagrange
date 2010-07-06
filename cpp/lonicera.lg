@@ -6,7 +6,8 @@ areanames = WNA ENA EU EA
 logfile = logfile
 ancstate = _all_
 states
-#stochastic_time = 1000 0100 0010 0001
+stochastic_time = 1000 0100 0010 0001
 #stochastic_number = 1000 1001
+#stochastic_number = 1000 1100
 #sparse
 #estimate_dispersal_mask
