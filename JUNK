@@ -1,0 +1,329 @@
+#BioGeoTree.h
+
+/*
+ * OLD DONT USE
+ * ancestral split stuff
+ */
+
+	int curancstatenodeid;
+	double eval_likelihood_ancstate(bool marginal,bpp::Node & startnode);
+	void ancstate_ancdist_conditional_lh(bpp::Node * fromnode,bpp::Node * node, bool marginal);
+	map<vector<int>,vector<AncSplit> > ancstate_calculation_all_dists(bpp::Node & node, bool marginal);
+	
+	
+#BioGeoTree.cpp
+
+
+/******************************************************
+ * OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD OLD
+ *
+ * This is the old ancestral split stuff
+ */
+
+//old conditionals
+Vector<double> BioGeoTree::conditionals(Node & node, bool marginal,
+						bool curancstate, bool calcancstate,
+						bool sparse){
+	Vector<double> distconds;
+	bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node.getNodeProperty(seg));
+	if(calcancstate == false){
+		distconds = *tsegs->at(0).distconds;
+	}else{
+		if (curancstate == false){
+			distconds = *tsegs->at(0).distconds;
+		}else{//calc == true and cur == true
+			distconds = *tsegs->at(0).ancdistconds;
+		}
+	}
+	for(unsigned int i=0;i<tsegs->size();i++){
+		if(calcancstate == false){
+			for(unsigned int j=0;j<distconds.size();j++){
+				tsegs->at(i).distconds->at(j) = distconds.at(j);
+			}
+		}else{
+			for(unsigned int j=0;j<distconds.size();j++){
+				tsegs->at(i).ancdistconds->at(j) = distconds.at(j);
+			}
+		}
+		RateModel * rm = tsegs->at(i).getModel();
+		Vector<double> * v = new Vector<double> (rootratemodel->getDists()->size(), 0);
+		vector<int> distrange;
+		if(tsegs->at(i).get_start_dist_int() != -666){
+			int ind1 = tsegs->at(i).get_start_dist_int();
+			distrange.push_back(ind1);
+		}else if(tsegs->at(i).getFossilAreas().size()>0){
+			for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
+				distrange.push_back(j);
+			}
+			for(unsigned int k=0;k<distrange.size();k++){
+				bool flag = true;
+				for(unsigned int x = 0;x<tsegs->at(i).getFossilAreas().size();x++){
+					if (tsegs->at(i).getFossilAreas()[x] == 1 && distrange.at(x) == 0){
+						flag = false;
+					}
+				}
+				if(flag == true){
+                    distrange.erase(distrange.begin()+k);
+				}
+			}
+		}else{
+			for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
+				distrange.push_back(j);
+			}
+		}
+		/*
+		 * marginal
+		 */
+		if(marginal == true){
+			if(sparse == false){
+				vector<vector<double > > p;
+				if(use_stored_matrices == false){
+					p= rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),
+																 store_p_matrices);
+				}else{
+					p = rm->stored_p_matrices[tsegs->at(i).getPeriod()][tsegs->at(i).getDuration()];
+				}
+				for(unsigned int j=0;j<distrange.size();j++){
+					for(unsigned int k=0;k<distconds.size();k++){
+						v->at(distrange[j]) += (distconds.at(k)*p[distrange[j]][k]);
+					}
+				}
+			}else{//sparse
+				/*
+				 testing pthread version
+				 */
+				if(rm->get_nthreads() > 0){
+					vector<vector<double > > p = rm->setup_pthread_sparse_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),*whichcolumns);
+					for(unsigned int j=0;j<distrange.size();j++){
+						for(unsigned int k=0;k<distconds.size();k++){
+							v->at(distrange[j]) += (distconds.at(k)*p[distrange[j]][k]);
+						}
+					}
+				}else{
+					for(unsigned int j=0;j<distrange.size();j++){
+						bool inthere = false;
+						if(columns->at(distrange[j]) == 1)
+							inthere = true;
+						vector<double > p;
+						if(inthere == true){
+							p = rm->setup_sparse_single_column_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),distrange[j]);
+						}else{
+							p = vector<double>(distconds.size(),0);
+						}
+						for(unsigned int k=0;k<distconds.size();k++){
+							v->at(distrange[j]) += (distconds.at(k)*p[k]);
+						}
+					}
+				}
+			}
+		}
+		/*
+		 * joint reconstruction
+		 * NOT FINISHED YET -- DONT USE
+		 */
+		else{
+			if(sparse == false){
+				vector<vector<double > > p = rm->setup_fortran_P(tsegs->at(i).getPeriod(),tsegs->at(i).getDuration(),store_p_matrices);
+				for(unsigned int j=0;j<distrange.size();j++){
+					double maxnum = 0;
+					for(unsigned int k=0;k<distconds.size();k++){
+						maxnum = MAX((distconds.at(k)*p[distrange[j]][k]),maxnum);
+					}
+					v->at(distrange[j]) = maxnum;
+				}
+			}else{//sparse
+
+			}
+		}
+		for(unsigned int j=0;j<distconds.size();j++){
+			distconds[j] = v->at(j);
+		}
+		delete v;
+	}
+	/*
+	 * if store is true we want to store the conditionals for each node
+	 * for possible use in ancestral state reconstruction
+	 */
+	if(store_p_matrices == true){
+		tsegs->at(0).alphas = distconds;
+	}
+	return distconds;
+}
+
+/*
+/*
+ * all ancestral state calculations
+ */
+double BioGeoTree::eval_likelihood_ancstate(bool marginal,bpp::Node &startnode){
+	if( rootratemodel->sparse == true){
+		columns = new vector<int>(rootratemodel->getDists()->size());
+		whichcolumns = new vector<int>();
+	}
+	ancstate_ancdist_conditional_lh(NULL,&startnode,marginal);
+	if( rootratemodel->sparse == true){
+		delete columns;
+		delete whichcolumns;
+	}
+	return calculate_vector_double_sum(*
+			(bpp::Vector<double>*) tree->getRootNode()->getNodeProperty(dc));
+}
+
+/*
+    This calculates the conditionals for internal nodes when calculating ancestral states.
+    The major difference between this and typical conditional calculation is that it calculates
+    down the backbone and therefore requires the node calling this procedure.
+
+ */
+void BioGeoTree::ancstate_ancdist_conditional_lh(Node * fromnode, Node * node, bool marginal){
+	Vector<double> distconds(rootratemodel->getDists()->size(), 0);
+	if (node->isLeaf()==false){//is not a tip
+		Node * c1 = node->getSon(0);
+		Node * c2 = node->getSon(1);
+		RateModel * model;
+		if(node->hasFather()==true){
+			bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node->getNodeProperty(seg));
+			model = tsegs->at(0).getModel();
+		}else{
+			model = rootratemodel;
+		}
+		bool sparse = rootratemodel->sparse;
+		Vector<double> v1;
+		Vector<double> v2;
+		if(sparse == true){
+			bpp::Vector<BranchSegment>* c1tsegs = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
+			bpp::Vector<BranchSegment>* c2tsegs = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
+			vector<int> lcols = get_columns_for_sparse(*c1tsegs->at(0).distconds,rootratemodel);
+			vector<int> rcols = get_columns_for_sparse(*c2tsegs->at(0).distconds,rootratemodel);
+			whichcolumns->clear();
+			for(unsigned int i=0;i<lcols.size();i++){
+				if(lcols[i]==1 || rcols[i] ==1){
+					columns->at(i)=1;
+					if(i!=0 && count(whichcolumns->begin(),whichcolumns->end(),i) == 0)
+						whichcolumns->push_back(i);
+				}else{
+					columns->at(i)=0;
+				}
+			}
+			if(calculate_vector_int_sum(columns)==0){
+				for(unsigned int i=0;i<lcols.size();i++){
+					columns->at(i)=1;
+				}
+			}
+			columns->at(0) = 0;
+		}
+		if(node->getId() == curancstatenodeid){
+			v1 =conditionals(*c1,marginal,false,true,sparse);
+			v2 =conditionals(*c2,marginal,false,true,sparse);
+		}else{
+			if(c1 == fromnode){
+				v1 =conditionals(*c1,marginal,true,true,sparse);
+				v2 =conditionals(*c2,marginal,false,true,sparse);
+			}else if(c2 == fromnode){
+				v1 = conditionals(*c1,marginal,false,true,sparse);
+				v2 = conditionals(*c2,marginal,true,true,sparse);
+			}
+		}
+
+		vector<vector<int> > * dists = rootratemodel->getDists();
+		//cl1 = clock();
+		vector<int> leftdists;
+		vector<int> rightdists;
+		double weight;
+		for (unsigned int i=0;i<dists->size();i++){
+			if(accumulate(dists->at(i).begin(),dists->at(i).end(),0) > 0){
+				double lh = 0.0;
+				bpp::Vector<vector<int> >* exdist = ((bpp::Vector<vector<int> >*) node->getNodeProperty(en));
+				int cou = count(exdist->begin(),exdist->end(),dists->at(i));
+				if(cou == 0){
+					iter_ancsplits_just_int(rootratemodel,dists->at(i),leftdists,rightdists,weight);
+					for (unsigned int j=0;j<leftdists.size();j++){
+						int ind1 = leftdists[j];
+						int ind2 = rightdists[j];
+						double lh_part = v1.at(ind1)*v2.at(ind2);
+						lh += (lh_part * weight);
+					}
+				}
+				distconds.at(i)= lh;
+			}
+		}
+		//cl2 = clock();
+		//ti += cl2-cl1;
+		//cout << ti/CLOCKS_PER_SEC << endl;
+	}else{
+		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node->getNodeProperty(seg));
+		distconds = *tsegs->at(0).distconds;
+	}
+	if(node->hasFather() == true){
+		bpp::Vector<BranchSegment>* tsegs = ((bpp::Vector<BranchSegment>*) node->getNodeProperty(seg));
+		for(unsigned int i=0;i<distconds.size();i++){
+			tsegs->at(0).ancdistconds->at(i) = distconds.at(i);
+		}
+	}else{
+		for(unsigned int i=0;i<distconds.size();i++){
+			((Vector<double>*)node->getNodeProperty(dc))->at(i) = distconds.at(i);
+		}
+	}
+	if(node->hasFather()){
+		ancstate_ancdist_conditional_lh(node,node->getFather(),marginal);
+	}
+}
+
+
+
+map<vector<int>,vector<AncSplit> >  BioGeoTree::ancstate_calculation_all_dists(bpp::Node & node, bool marginal){
+	curancstatenodeid = node.getId();
+	map<vector<int>,vector<AncSplit> > ret;
+	for(unsigned int j=0;j<rootratemodel->getDists()->size();j++){
+		vector<int> dist = rootratemodel->getDists()->at(j);
+		vector<AncSplit> ans = iter_ancsplits(rootratemodel,dist);
+		if (node.isLeaf()==false){//is not a tip
+			Node * c1 = node.getSon(0);
+			Node * c2 = node.getSon(1);
+			bpp::Vector<BranchSegment>* tsegs1 = ((bpp::Vector<BranchSegment>*) c1->getNodeProperty(seg));
+			bpp::Vector<BranchSegment>* tsegs2 = ((bpp::Vector<BranchSegment>*) c2->getNodeProperty(seg));
+			for (unsigned int i=0;i<ans.size();i++){
+				tsegs1->at(tsegs1->size()-1).set_start_dist_int(ans[i].ldescdistint);
+				tsegs2->at(tsegs2->size()-1).set_start_dist_int(ans[i].rdescdistint);
+				double lh = eval_likelihood_ancstate(marginal,node);
+				ans[i].setLikelihood(lh);
+				//cout << lh << endl;
+			}
+			tsegs1->at(tsegs1->size()-1).clearStartDist();
+			tsegs2->at(tsegs2->size()-1).clearStartDist();
+		}
+		ret[dist] = ans;
+	}
+	curancstatenodeid = NULL;
+	return ret;
+}
+
+#main.cpp
+/*OLD OLD OLD*/
+				if(ancstates[0] == "_all_" || ancstates[0] == "_ALL_"){
+					for(unsigned int j=0;j<intrees[i]->getNumberOfNodes();j++){
+						if(intrees[i]->getNode(j)->isLeaf()==false){
+							cout << "Ancestral states for:\t" << intrees[i]->getNode(j)->getId() <<endl;
+							map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(j),marginal);
+							tt.summarizeSplits(intrees[i]->getNode(j),ras,areanamemaprev,&rm);
+							cout << endl;
+						}
+					}
+					/*
+					 * key file output
+					 */
+					outTreeKeyFile.open((treefile+".bgkey.tre").c_str(),ios::app );
+					TreeTemplateTools ttt;
+					outTreeKeyFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),true) << ";"<< endl;
+					outTreeKeyFile.close();
+				}else{
+					for(unsigned int j=0;j<ancstates.size();j++){
+						cout << "Ancestral states for: " << ancstates[j] <<endl;
+						//map<vector<int>,vector<AncSplit> > ras = bgt.ancstate_calculation_all_dists(*intrees[i]->getNode(mrcanodeint[ancstates[j]]),marginal);
+						//tt.summarizeSplits(intrees[i]->getNode(mrcanodeint[ancstates[j]]),ras,areanamemaprev,&rm);
+					}
+				}
+				outTreeFile.open((treefile+".bgout.tre").c_str(),ios::app );
+				TreeTemplateTools ttt;
+				outTreeFile << ttt.nodeToParenthesis(*intrees[i]->getRootNode(),false,"split") << ";"<< endl;
+				outTreeFile.close();
+			}
