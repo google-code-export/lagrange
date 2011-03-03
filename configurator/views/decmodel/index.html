@@ -1,0 +1,289 @@
+{{extend 'configurator_layout.html'}}
+
+<div style="font-style:italic;border-style:solid;border-color:red;padding:0.5em">
+This is an experimental interface to Lagrange, and a work in progress.  Please check back for updates and send comments to Rick Ree (rree at fieldmuseum dot org).
+</div>
+
+<table style="padding-bottom:0.25em;">
+<tr>
+<td>
+<h3>
+<a href="{{=URL(r=request,f='create_empty_model',vars=dict(f=request.function))}}"
+   title="Click here to configure a new analysis, starting with a taxon-range matrix, or a species phylogeny">
+[Configure a new analysis]
+</a>
+</h3>
+{{if session.models:}}
+<td>
+<h3>
+&nbsp;
+<a href="{{=URL(r=request,f='delete_all_models')}}"
+   title="Delete all analyses currently being configured">
+[Delete all]
+</a>
+</h3>
+</td>
+{{pass}}
+</tr>
+<tr>
+<td>
+{{if not session.models:}}
+<h3>Recreate from configuration file:</h3>
+{{pass}}
+{{=model_selector}}
+</td>
+</tr>
+</table>
+
+<div style="-moz-border-radius:1em;border-style:solid;border-color:lightgray;display:inline-block;padding:0em;">
+
+{{if model:}}
+<div style="-moz-border-radius:0.75em 0.75em 0 0;background-color:lightgray;border-style:solid;border-color:lightgray;">
+<table>
+<tr>
+<th style="vertical-align:middle;">Analysis name:</th>
+<th style="vertical-align:middle;">
+{{=model.render_name(request, session)}}
+</th>
+</tr>
+<tr>
+<td>
+<a href="{{=URL(r=request,f='delete_current_model',vars=dict(f=request.function))}}" title="Delete this model">[Delete]</a>
+{{if model.datamatrix.labels:}}
+&nbsp;
+<a href="{{=URL(r=request,f='download')}}"
+   title="Download the current configuration as a text file to your computer.
+          Can be uploaded later for futher editing">
+[Save configuration]
+</a>
+&nbsp;
+<a href="{{=URL(r=request,f='create_script')}}"
+   title="Download the current configuration as a python script that can be executed directly">
+[Create script]
+</a>
+{{pass}}
+</td>
+</tr>
+</table>
+</div>
+
+<div id="datamatrix" style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray;">
+Taxon range data
+{{if model.datamatrix.labels:}}
+({{=len(model.datamatrix.data)}} taxa,
+{{=len(model.datamatrix.labels)}} areas)
+{{pass}}
+</th>
+</tr>
+{{if model.datamatrix.labels:}}
+<tr>
+<td>
+{{f="datamatrix_toggle_visible"}}
+<a onclick="ajaxdirect('{{=URL(r=request,f=f)}}','','datamatrix_cell');" style="cursor:pointer;">[Hide/Show]</a>
+&nbsp;
+<a href={{=URL(r=request,f='delete_datamatrix?f=%s' %
+	      request.function)}}>[Delete]</a>
+&nbsp;
+{{f="datamatrix_toggle_view"}}
+<a onclick="ajaxdirect('{{=URL(r=request,f=f)}}','','datamatrix_cell');" style="cursor:pointer;">
+[Toggle html/text]
+</a>
+</td>
+</tr>
+{{pass}}
+<tr id="datamatrix_row">
+<td id="datamatrix_cell">
+{{=model.datamatrix.render(request, session)}}
+</td>
+</tr>
+</table>
+</div>
+
+
+<div id="adjacencymatrix" style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray;">
+Area adjacency (range contiguity)
+</th>
+</tr>
+
+{{if model.adjacencymatrix.labels:}}
+<tr>
+<td>
+{{f="adjacencymatrix_toggle_visible"}}
+<a onclick="ajaxdirect('{{=URL(r=request,f=f)}}','','adjacencymatrix_cell');" style="cursor:pointer;">[Hide/Show]</a>
+&nbsp;
+<a href={{=URL(r=request,f='delete_adjacencymatrix?f=%s' %
+	      request.function)}}>[Delete]</a>
+&nbsp;
+{{f="adjacencymatrix_toggle_view"}}
+<a onclick="ajaxdirect('{{=URL(r=request,f=f)}}','','adjacencymatrix_cell');" style="cursor:pointer;">
+[Toggle html/text]
+</a>
+</td>
+</tr>
+{{pass}}
+<tr id="adjacencymatrix_row">
+<td id="adjacencymatrix_cell">
+{{if (not model.adjacencymatrix.labels) and model.datamatrix.labels:}}
+<a href="{{=URL(r=request,f='adjacencymatrix_default',vars=dict(f=request.function))}}">
+[Create default matrix]
+</a>
+{{else:}}
+{{=model.adjacencymatrix.render(request, session)}}
+{{pass}}
+</td>
+</tr>
+</table>
+</div>
+
+
+
+{{if model.datamatrix.labels:}}
+<div style="margin-left:1em;">
+<table>
+<tr style="background-color:lightgray;color:black">
+<th>
+Maximum range size:
+&nbsp;
+<span id="model:max_range_size">
+{{=model.render_max_range_size(request, session)}}
+</span>
+</th>
+{{if model.adjacencymatrix.data:}}
+<th>
+{{f="create_range_list"}}
+<form action="{{=URL(r=request,f=f,vars=dict(f=request.function))}}">
+<input type="submit" value="Calculate ranges" />
+</form>
+</th>
+{{pass}}
+</tr>
+</table>
+</div>
+{{pass}}
+
+
+<div style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray;">
+Ranges possible in model: {{=len(model.rangelist.ranges)}}
+</th>
+</tr>
+<tr>
+<td>
+{{f="rangelist_toggle_visible"}}
+<a onclick="ajaxdirect('{{=URL(r=request,f=f)}}','','rangelist_cell');" style="cursor:pointer;">[Hide/Show]</a>
+</td>
+</tr>
+<tr>
+<td>
+<div id="rangelist_cell">
+{{=model.rangelist.render(request, session)}}
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+
+<div id="dm" style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray;">
+Area dispersal: rate scaling parameters
+</th>
+</tr>
+{{if model.dm.labels and model.dm.data:}}
+<tr>
+<td>
+{{f="dm_toggle_visible"}}
+<a onclick="ajaxdirect('{{=URL(r=request,f=f)}}','','dm_cell');" style="cursor:pointer;">[Hide/Show]</a>
+&nbsp;
+<a href={{=URL(r=request,f='delete_dm_all?f=%s'%request.function)}}>[Delete]</a>
+&nbsp;
+[Symmetric data entry: {{=model.dm.render_symmetric(request, session)}}]
+</td>
+</tr>
+{{pass}}
+<tr id="dm_row">
+<td>
+<div id="dm_cell" style="margin-left:1em;">
+{{if (not model.dm.data) and model.datamatrix.labels:}}
+<a href="{{=URL(r=request,f='dm_default',vars=dict(f=request.function))}}">
+[Create default matrix]
+</a>
+{{else:}}
+{{=model.dm.render(request, session)}}
+{{pass}}
+</div>
+</td>
+</tr>
+</table>
+</div>
+
+
+{{if 0:}}
+{{if model.datamatrix.labels:}}
+<div style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray;padding:0.5em;">
+<input type="button"
+       onclick="{{=URL(r=request,f='calc_ranges',vars=dict(f=request.function))}}" value="Calculate ranges" />
+</th>
+</tr>
+<tr><td id="model:calculatedranges"></td></tr>
+</table>
+</div>
+{{pass}}
+{{pass}}
+
+
+<div id="treelist" style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray;">
+Trees
+</th>
+</tr>
+<tr>
+<td>
+<a onclick="ajaxdirect('{{=URL(r=request,f='treelist_toggle_visible')}}','','treelist_cell');" style="cursor:pointer;">[Hide/Show]</a>
+{{if model.treelist.trees:}}
+&nbsp;
+<a href="{{=URL(r=request,f='delete_treelist?f=%s'%request.function)}}">
+[Delete all]
+</a>
+{{pass}}
+</td>
+</tr>
+<tr id="treelist_row">
+<td id="treelist_cell">
+{{=model.treelist.render(request, session)}}
+</td>
+</tr>
+</table>
+</div>
+{{pass}}
+
+</div>
+
+{{if 0:}}
+<p>
+<div style="margin-left:1em;">
+Example Psychotria tree:
+<br />
+<textarea rows="6" cols="70">
+((((((((P_hawaiiensis_WaikamoiL1:0.010853,P_mauiensis_Eke:0.010853):0.007964,(P_fauriei2:0.013826,P_hathewayi_1:0.013826):0.004991):0.001986,(P_kaduana_PuuKukuiAS:0.020803,P_mauiensis_PepeAS:0.020803):1e-05):0.003762,P_kaduana_HawaiiLoa:0.024565):0.003398,(P_greenwelliae07:0.01271500,P_greenwelliae907:0.01271500):0.01524800):0.018984,((((P_mariniana_MauiNui:0.02241,P_hawaiiensis_Makaopuhi:0.02241):0.008236,P_mariniana_Oahu:0.030646):0.002893,P_mariniana_Kokee2:0.033539):0.005171,P_wawraeDL7428:0.03871):0.008237):0.008255,(P_grandiflora_Kal2:0.027864,P_hobdyi_Kuia:0.027864):0.027338):0.003229,((P_hexandra_K1:0.026568,P_hexandra_M:0.026568):0.005204,P_hexandra_Oahu:0.031771):0.026659);
+</textarea>
+</div>
+</p>
+{{pass}}
+<!-- <br> -->
+<!-- {{=BEAUTIFY(session)}} -->

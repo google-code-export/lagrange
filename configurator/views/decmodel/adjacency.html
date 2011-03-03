@@ -1,0 +1,52 @@
+{{extend 'layout.html'}}
+
+<div style="padding:2px;background-color:lightgray;color:black">
+<span style="font-weight:bold;">
+Model name:
+</span>&nbsp;
+<span id="model:name">
+{{=model.render_name(request, session)}}
+</span>
+</div>
+
+<div id="adjacencymatrix" style="margin-left:1em;">
+<table>
+<tr>
+<th style="background-color:lightgray; color:black">
+Area adjacency
+</th>
+</tr>
+
+{{if model.adjacencymatrix.labels:}}
+<tr>
+<td style="text-align:right;">
+<a onclick="collapse('adjacencymatrix_row');">[Hide/Show]</a>
+&nbsp;
+<a href={{=URL(r=request,f='delete_adjacencymatrix?f=%s' %
+	      request.function)}}>[Delete]</a>
+&nbsp;
+<a onclick="ajaxdirect('{{=URL(r=request,f='adjacencymatrix_toggle_view')}}','','adjacencymatrix_cell');">
+[Toggle html/text]
+</a>
+</td>
+</tr>
+{{pass}}
+
+<tr id="adjacencymatrix_row">
+<td id="adjacencymatrix_cell">
+{{if (not model.adjacencymatrix.labels) and model.datamatrix.labels:}}
+<a onclick="ajaxdirect('{{=URL(r=request,f='adjacencymatrix_default')}}','','adjacencymatrix_cell');">
+[Create default matrix]
+</a>
+{{else:}}
+{{=model.adjacencymatrix.render(request, session)}}
+{{pass}}
+</td>
+</tr>
+
+</table>
+</div>
+
+
+<!-- <br> -->
+<!-- {{=BEAUTIFY(session)}} -->
