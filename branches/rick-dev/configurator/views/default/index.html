@@ -1,0 +1,105 @@
+{{extend 'layout.html'}}
+
+{{d = "20090316"}}
+{{fn = "Lagrange-%s" % d}}
+{{snap = "%s/static/%s" % (request.application, fn)}}
+
+<div style="font-style:italic;border-style:solid;border-color:red;padding:0.5em">
+This is an experimental interface to Lagrange, and a work in progress.  Please check back for updates and send comments to Rick Ree (rree at fieldmuseum dot org).
+</div>
+
+<ol>
+
+<h2>
+<li>
+Install required system software
+</li>
+</h2>
+<ul style="margin-left:2em;">
+<h3>
+<li>
+Install <a href="http://www.python.org">Python</a> (recommended
+version: 2.5)
+</li>
+</h3>
+<h3>
+<li>
+Install <a href="http://www.scipy.org">scipy</a>
+and <a href="http://numpy.scipy.org">numpy</a>
+(note: must match version of Python)
+</li>
+</h3>
+</ul>
+
+<h2>
+<li>
+Download and unpack Lagrange (snapshot version <span style="font-family:monospace;color:darkgreen;">{{=d}}</span>)
+</li>
+</h2>
+<ul style="margin-left:2em;">
+<h3>
+<li>
+Linux, Mac: <a href="{{=snap}}.tar.gz">[tar archive]</a>
+</li>
+</h3>
+<h3>
+<li>
+Windows: <a href="{{=snap}}.zip">[zip archive]</a>
+</li>
+</h3>
+<h3>
+<li>
+This will create a folder called <span style="font-family:monospace;color:darkgreen;padding:0.25em;">Lagrange-{{=d}}</span>
+</li>
+</h3>
+</ul>
+
+<h2>
+<li>
+<a href={{=URL(r=request,c='decmodel')}} target="_blank">
+Configure
+</a>
+an analysis file (data, model, and tree)
+</li>
+</h2>
+<ul style="margin-left:2em;">
+<h3>
+<li>
+<a href={{=URL(r=request,c='decmodel')}} target="_blank">
+[Click here to start the configurator]
+</a>
+</li>
+</h3>
+<h3>
+<li>
+Save it as: <span style="font-family:monospace;color:darkgreen;padding:0.25em;">{name}.decmodel.py</span>
+</li>
+</h3>
+</ul>
+
+<h2>
+<li>
+Run the analysis
+</li>
+</h2>
+<ul style="margin-left:2em;">
+<h3>
+<li>
+Place <span style="font-family:monospace;color:darkgreen;padding:0.25em;">{name}.decmodel.py</span> in the <span style="font-family:monospace;color:darkgreen;padding:0.25em;">Lagrange-{{=d}}</span> folder
+</li>
+</h3>
+<h3>
+<li>
+Run: <span style="font-family:monospace;color:darkgreen;padding:0.25em;">python {name}.decmodel.py</span> (Or in IDLE, choose Run:Run Module)
+</li>
+</h3>
+<h3>
+<li>
+Results are stored in: <span style="font-family:monospace;color:darkgreen;padding:0.25em;">{name}.results.txt</span>
+</li>
+</h3>
+</ul>
+
+</ol>
+
+<!-- {{=BEAUTIFY(session)}} -->
