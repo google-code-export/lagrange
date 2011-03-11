@@ -1,563 +1,349 @@
-# Mavric -- a module for manipulating and visualizing phylogenies
+#import sets
+import tree
+PREORDER = 0; POSTORDER = 1
+BRANCHLENGTH = 0; INTERNODES = 1
 
-# Copyright (C) 2000 Rick Ree
-# Email : rree@post.harvard.edu
-# 	   
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2 
-# of the License, or (at your option) any later version.
-#   
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details. 
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+class Node:
+    def __init__(self):
+        self.data = {}
+        self.isroot = False
+        self.istip = False
+        self.label = None
+        self.length = None
+        self.parent = None
+        self.children = []
+        self.nchildren = 0
+        self.excluded_dists = []
 
-import ascii
+    def assign_fossil(self, age, area_indices):
+        t = self.age
+        for seg in self.segments:
+            t += seg.duration
+            if t - age < 0.0001:
+                # age is at beginning of existing segment
+                seg.fossils = area_indices
+                return
+        t = self.age
+        for i, seg in enumerate(self.segments):
+            t0 = t + seg.duration
+            if t < age < t0:
+                # split this segment
+                break
+            t = t0
+        d1 = age - t
+        d2 = t0 - age
+        seg1 = tree.BranchSegment(d1, seg.period, seg.model)
+        seg2 = tree.BranchSegment(d2, seg.period, seg.startdist)
+        self.segments = self.segments[:i] + [seg1, seg2] + self.segments[i+1:]
 
-PREORDER = 0
-POSTORDER = 1
-
-class Fnode:
-    """
-
-    Each internal 'node' in a tree is represented as a linked list of
-    Fnodes (the prefix F is in acknowledgement of Joe Felsenstein,
-    author of the PHYLIP package, from which I got the idea.)  The
-    Fnodes form a circular linked list, i.e., each Fnode points to the
-    next Fnode via its 'next' attribute.  Each Fnode is connected to a
-    branch (descendant or parent node) via its 'back' attribute.
-    E.g., consider a node X that has parent node P and descendant
-    nodes A and B.  Because X connects 3 nodes, it will consist of 3
-    Fnodes: X1, X2, and X3.  Node X is constructed as follows: X1.next
-    == X2, X2.next == X3, and X3.next == X1.  X1.back == (some Fnode
-    of P), X2.back == (some Fnode of A), and X3.back == (some Fnode of
-    B).  In this case, because P is the ancestor to X, X1 is the
-    'root' Fnode of node X.
-
-    Note that all Fnodes in a node can (and do) point to a common
-    'data' member, which in this case is a dictionary.
-
-    Leaf nodes only consist of a single Fnode, which does not have the
-    'next' attribute; all it has is the 'back' attribute, which points
-    back to the ancestral Fnode.  E.g., if node A is a leaf (with
-    single Fnode A1), then X2.back == A1; A1.back == X2; and, thus,
-    X2.back.back == X2.  The same goes for the root node of a tree.
-
-    The advantage of this kind of tree structure is that rerooting
-    nodes (and trees) becomes trivial: in the example above, you could
-    call node B the root, and P and A become descendants of X (and X3
-    becomes the 'root' Fnode of X).  Also, it becomes possible to
-    traverse the entire tree non-recursively, just by following
-    'fnode.next.back', or just 'fnode.back' in the case of leaf nodes.
-
-    """
-    
-    render_ascii = ascii.tree2ascii
-
-    def __init__(self, next=None, back=None, data=None,
-                 isroot=0, istip=0, label=None, length=None):
-        self.next = next
-        self.back = back
-        if not (data == None): self.data = data
-        else: self.data = {}
-        self.isroot = isroot
-        self.istip = istip
-        self.length = length
-        self.label = label
-        self.excluded_dists = set()
-
-    def __setitem__(self, item, value):
-        self.data[item] = value
-
-    def __delitem__(self, item):
-        del self.data[item]
-
-    def __getitem__(self, item):
-        try:
-            return self.data[item]
-        except KeyError:
-            raise KeyError, 'item: %s not in %s' % \
-                  (item, self.data.keys())
-
-    def get(self, item):
-        return self.data.get(item)
-
-    def unlink(self):
-        """Remove references to next, back, and data, to let refcounts
-        go to zero"""
-        del self.next; del self.back; del self.data
-        #self.next = None; self.back = None; del self.data
-
-    def fnodes(self):
-        """Returns a list of the Fnodes linked to self, including self"""
-        nodes = []
-        n = self
-        while 1:
-            nodes.append(n)
-            if n.next == self: break
-            else: n = n.next
-        return nodes
-
-    def iterchildren(self):
-        """Returns the immediate descendants of this node"""
+    def labelset_nodemap(self, d=None):
+        if d is None:
+            d = {}
         if not self.istip:
-            n = self.next
-            while 1:
-                yield n.back
-                if n.next == self: break
-                else: n = n.next
-                
-    def children(self):
-        """Returns the immediate descendants of this node"""
-        return list(self.iterchildren())
-##         if self.istip: return None
-##         children = []
-##         n = self.next
-##         while 1:
-##             children.append(n.back)
-##             if n.next == self: break
-##             else: n = n.next
-##         return children
+            s = set()
+            for child in self.children:
+                if child.istip:
+                    s.add(child.label)
+                else:
+                    child.labelset_nodemap(d)
+                    s = s | d[child]
+            d[self] = s
+            d[frozenset(s)] = self
+        return d
 
-    def iterdescendants(self, order=PREORDER):
-        """Returns a list of all descendants of this node."""
+    def mrca(self, labels):
+        s = set(labels)
+        tipsets = self.labelset_nodemap()
+        for n in [ x for x in self.iternodes(POSTORDER) if not x.istip ]:
+            if s.issubset(tipsets[n]):
+                return n
+
+    def order_subtrees_by_size(self, n2s=None, recurse=False, reverse=False):
+        if n2s is None:
+            n2s = node2size(self)
+        if not self.istip:
+            v = [ (n2s[c], c.label, c) for c in self.children ]
+            v.sort()
+            if reverse:
+                v.reverse()
+            self.children = [ x[-1] for x in v ]
+            if recurse:
+                for c in self.children:
+                    c.order_subtrees_by_size(n2s, recurse=True, reverse=reverse)
+
+    def add_child(self, child):
+        assert child not in self.children
+        self.children.append(child)
+        child.parent = self
+        self.nchildren += 1
+
+    def remove_child(self, child):
+        assert child in self.children
+        self.children.remove(child)
+        child.parent = None
+        self.nchildren -= 1
+
+##     def leaves(self, v=None):
+##         if v is None:
+##             v = []
+##         if not self.children:
+##             v.append(self)
+##         else:
+##             for child in self.children:
+##                 child.leaves(v)
+##         return v
+
+    def leaves(self):
+        return [ n for n in self.iternodes() if n.istip ]
+
+    def iternodes(self, order=PREORDER, v=None):
+        """
+        returns a list of nodes descendant from self - including self
+        """
         if order == PREORDER:
             yield self
-        for child in self.children():
-            for d in child.descendants(order):
+        for child in self.children:
+            for d in child.iternodes(order):
                 yield d
         if order == POSTORDER:
             yield self
 
-    def descendants(self, order=PREORDER):
-        """Returns a list of all descendants of this node."""
-        return list(self.iterdescendants(order))
-##         d = []
-##         if not self.istip:
-##             d.append(self)
-##             for child in self.children():
-##                 if child.istip: d.append(child)
-##                 else: d.extend(child.descendants())
-##         return d
-                
-    def iterleaves(self):
-        """Returns a list of leaf nodes that are descendant from this
-        node."""
-        for child in self.children():
-            if child.istip:
-                yield child
+    def descendants(self, order=PREORDER, v=None):
+        """
+        returns a list of nodes descendant from self - not including self!
+        """
+        if v is None:
+            v = []
+        assert order in (PREORDER, POSTORDER)
+        for child in self.children:
+            if order == PREORDER:
+                v.append(child)
             else:
-                for leaf in child.leaves():
-                    yield leaf
+                v.insert(0, child)
+            if child.children:
+                child.descendants(order, v)
+        return v
 
-    def leaves(self):
-        """Returns a list of leaf nodes that are descendant from this
-        node."""
-        return list(self.iterleaves())
-##         lvs = []
-##         if not self.istip:
-##             for child in self.children():
-##                 if child.istip: lvs.append(child)
-##                 else: lvs.extend(child.leaves())
-##         return lvs
-
-    def insert_fnode(self, node):
-        """Add node to self's linked list of fnodes"""
-        assert self.next
-        old_next = self.next
-        self.next = node
-        node.next = old_next
-        node.data = self.data
-
-    def add_child(self, node):
-        """Adds node to self's children"""
-        assert self.next
-
-        if self.next.back:
-            self.insert_fnode(Fnode(data=self.data))
-
-        self.next.back = node
-        node.back = self.next
+    def find_descendant(self, label):
+        if label == self.label:
+            return self
+        else:
+            for child in self.children:
+                n = child.find_descendant(label)
+                if n:
+                    return n
+        return None
 
     def prune(self):
-        """Remove self from its linked list of fnodes"""
-        last = self; next = self.next
-        while last.next != self:
-            last = last.next
+        p = self.parent
+        if p:
+            p.remove_child(self)
+        return p
 
-        last.next = next
-        self.next = None
-        del self.data; self.data = {}
+    def excise(self):
+        p = self.prune()
+        if p.parent and len(p.children) == 1:
+            c = p.children[0]
+            if p.length:
+                c.length += p.length
+            c.prune()
+            p.prune().add_child(c)
+            return True
+        return False
 
-        return last, next
+    def graft(self, node):
+        parent = self.parent
+        parent.remove_child(self)
+        n = Node()
+        n.add_child(self)
+        n.add_child(node)
+        parent.add_child(n)
 
-    def bisect(self):
-        """Bisect the branch between self and self.back with a new
-        internal node"""
-        assert self.back
-        back = self.back
-        n = InternalNode()
-
-        # join the new internal node to self and self.back
-        n.back = back; back.back = n
-        self.back = n.next; n.next.back = self
-
-        length = self.length
-        if length:
-            half = length*0.5
-            self.length = half; n.length = half
-
-        return n
-
-    def make_polytomy(self):
-        if self.istip: return
-        for c in self.children():
-            d = c.descendants()
-            for n in d:
-                if not n.istip:
-                    n.collapse()
-
-    def make_pectinate(self):
+    def leaf_distances(self, store=None, measure=BRANCHLENGTH):
         """
-        Order descendant branches according to their size, so largest
-        subtrees are first, etc.
+        for each internal node, calculate the distance to each leaf,
+        measured in branch length or internodes
         """
-        children = self.children()
-        first = children[0]
-        def sort_func(n1, n2):
-            if n1.istip and n2.istip:
-                lab1 = n1.label; lab2 = n2.label
-                if lab1 < lab2: return -1
-                if lab1 == lab2: return 0
-                if lab1 > lab2: return 1
+        if store is None:
+            store = {}
+        leaf2len = {}
+        if self.children:
+            for child in self.children:
+                if measure == BRANCHLENGTH:
+                    assert child.length is not None
+                    dist = child.length
+                elif measure == INTERNODES:
+                    dist = 1
+                else:
+                    raise "InvalidMeasure"
+                child.leaf_distances(store, measure)
+                if child.istip:
+                    leaf2len[child.label] = dist
+                else:
+                    for k, v in store[child].items():
+                        leaf2len[k] = v + dist
+        else:
+            leaf2len[self] = {self.label: 0}
+        store[self] = leaf2len
+        return store
+
+    def rootpath(self):
+        n = self
+        while 1:
+            yield n
+            if n.parent:
+                n = n.parent
             else:
-                n1lvs = len(n1.leaves()); n2lvs = len(n2.leaves())
-                if n1lvs > n2lvs:  return -1
-                if n1lvs == n2lvs:
-                    lab1 = [x.label for x in n1.leaves()]; lab1.sort()
-                    lab2 = [x.label for x in n2.leaves()]; lab2.sort()
-                    if lab1 < lab2: return -1
-                    if lab1 == lab2: return 0
-                    if lab1 > lab2: return 1
-                if n1lvs < n2lvs:  return 1
-        for child in children:
-            if not child.istip:
-                child.make_pectinate()
-        children.sort(sort_func)
-        nptr = self.next
-        for child in children:
-            nptr.back = child
-            child.back = nptr
-            nptr = nptr.next
+                break
+            
+    def subtree_mapping(self, labels, clean=False):
+        """
+        find the set of nodes in 'labels', and create a new tree
+        representing the subtree connecting them.  nodes are assumed to be
+        non-nested.
 
-    def rotate(self):
-        """shifts the position of node's children by one"""
-        if self.istip: return
-        children = self.children()
-        nptr = children[-1]
-        del children[-1]
-        children.insert(0,nptr)
-        nptr = self.next
-        for child in children:
-            nptr.back = child
-            child.back = nptr
-            nptr = nptr.next
+        return value is a mapping of old nodes to new nodes and vice versa.
+        """
+        d = {}
+        oldtips = [ x for x in self.leaves() if x.label in labels ]
+        for tip in oldtips:
+            path = list(tip.rootpath())
+            for node in path:
+                if node not in d:
+                    newnode = Node()
+                    newnode.istip = node.istip
+                    newnode.length = node.length
+                    newnode.label = node.label
+                    d[node] = newnode
+                    d[newnode] = node
+                else:
+                    newnode = d[node]
 
-    def swivel_180_degrees(self):
-        """reverses the order of the node's children"""
-        if self.istip: return
-        children = self.children()
-        children.reverse()
-        nptr = self.next
-        for child in children:
-            nptr.back = child
-            child.back = nptr
-            nptr = nptr.next
+                for child in node.children:
+                    if child in d:
+                        newchild = d[child]
+                        if newchild not in newnode.children:
+                            newnode.add_child(newchild)
+        d["oldroot"] = self
+        d["newroot"] = d[self]
+        if clean:
+            n = d["newroot"]
+            while 1:
+                if n.nchildren == 1:
+                    oldnode = d[n]
+                    del d[oldnode]; del d[n]
+                    child = n.children[0]
+                    child.parent = None
+                    child.isroot = True
+                    d["newroot"] = child
+                    d["oldroot"] = d[child]
+                    n = child
+                else:
+                    break
+                    
+            for tip in oldtips:
+                newnode = d[tip]
+                while 1:
+                    newnode = newnode.parent
+                    oldnode = d[newnode]
+                    if newnode.nchildren == 1:
+                        child = newnode.children[0]
+                        if newnode.length:
+                            child.length += newnode.length
+                        newnode.remove_child(child)
+                        if newnode.parent:
+                            parent = newnode.parent
+                            parent.remove_child(newnode)
+                            parent.add_child(child)
+                        del d[oldnode]; del d[newnode]
+                    if not newnode.parent:
+                        break
+            
+        return d
 
-    def swivel_180_recursive(self):
-        if self.istip: return
-        self.swivel_180_degrees()
-        for child in self.children():
-            child.swivel_180_recursive()
+    def ultrametricize_dumbly(self):
+        assert not self.istip
+        d = self.leaf_distances()
+        maxdist = max(d.values())
+        for lf in self.leaves():
+            x = d[lf.label]
+            lf.length += maxdist - x
 
-    def collapse(self):
-        """collapse node"""
-        assert (not self.istip)
-        back = self.back
-        children = self.children()
-        back.back = children.pop(0)
-        back.back.back = back
-        for child in children:
-            back.add_child(child)
-        for node in self.fnodes():
-            node.unlink()
-
-    def has_descendant(self, node):
-        """check of node is descendant of self"""
-        if self.istip: return 0
-        flag = 0
-        for child in self.children():
-            if child.data == node.data:
-                return 1
-            else:
-                if child.has_descendant(node):
-                    flag = 1
-        return flag
-
-    def print_leaves(self):
-        for leaf in self.leaves():
-            print leaf.label,
-        print
-
-    def collapse_descendants(self, threshold):
-        """collapses descendant branches if length < threshold"""
-        if not self.istip:
-            for child in self.children():
-                child.collapse_descendants(threshold)
-            if (not self.istip) and (self.length < threshold):
-                self.collapse()
-
-def InternalNode(isroot=0):
-    """return an internal node"""
-    node = Fnode(isroot=isroot)
-    node.next = Fnode(data=node.data)
-    node.next.next = node
-    return node
-
-def connect(node1, node2):
-    node1.back = node2
-    node2.back = node1
-    if node1.length is not None and node2.length is None:
-        node2.length = node1.length
-    if node2.length is not None and node1.length is None:
-        node1.length = node2.length
-
-def polarize(node, parent=None):
-    node.parent = parent
+def node2size(node, d=None):
+    "map node and descendants to number of descendant tips"
+    if d is None:
+        d = {}
+    size = int(node.istip)
     if not node.istip:
-        for child in node.children():
-            polarize(child, node)
-
-def depolarize(node):
-    for n in node.descendants():
-        n.parent = None
-
-def nodes_to_tips(node, vect=None, n=0):
-    """return a list of how many internodes are between node and its
-    leaves """
-
-    if vect == None: vect = []
-    
-    if node.istip:
-        vect.append(n)
-    else:
-        for child in node.children():
-            nodes_to_tips(child, vect, n+1)
-    return vect
-
-def length_to_tips(node, vect=None, length=0.0):
-    """return a list of total lengths between node and its leaves"""
-    if vect == None:
-        vect = []
-        node_length = 0.0
-    else:
-        node_length = node.length or 1.0
-
-    if node.istip:
-        vect.append(length+node_length)
-    else:
-        for child in node.children():
-            length_to_tips(child, vect, length+node_length)
-    return vect
+        for child in node.children:
+            node2size(child, d)
+            size += d[child]
+    d[node] = size
+    return d
 
 def reroot(oldroot, newroot):
-    ofn = oldroot.fnodes()
-    rooted = 1
-    if oldroot.back != None:
-        rooted = 0
-
-    #if len(ofn) == 3:
-    if rooted:
-        oldroot.prune()
-        if len(ofn) == 3:
-            connect(ofn[1].back, ofn[2].back)
-        for n in ofn:
-            n.unlink()
-    #else:
-    #    ofn[-1].next = ofn[1]
-
-    if newroot.istip:
-        newroot = newroot.back
-    else:
-        nfn = newroot.fnodes()
-        if rooted:
-            nr = Fnode(isroot=1)
-            nfn[-1].insert_fnode(nr)
-            newroot = nr
-        else:
-            newroot.isroot = 1
-
-    oldroot.isroot = 0
-    #oldroot.unlink()
-
-    print newroot.length
-
+    oldroot.isroot = False
+    newroot.isroot = True
+    v = []
+    n = newroot
+    while 1:
+        v.append(n)
+        if not n.parent: break
+        n = n.parent
+    #print [ x.label for x in v ]
+    v.reverse()
+    for i, cp in enumerate(v[:-1]):
+        node = v[i+1]
+        # node is current node; cp is current parent
+        #print node.label, cp.label
+        cp.remove_child(node)
+        node.add_child(cp)
+        cp.length = node.length
     return newroot
 
-def split(node, numchildren=2):
-    """split a node into multiple nodes"""
-    if node.istip:
-        node.istip = 0
-        node.next = Fnode(data=node.data)
-        node.next.next = node
-    for c in range(numchildren):
-        child = Fnode(istip=1)
-        node.add_child(child)
-
-def balanced_tree(depth):
-    """tree will have 2**depth taxa!!"""
-    root = InternalNode(isroot=1)
-
-    nodes = [root]
-    for i in range(depth):
-        for n in nodes:
-            split(n, 2)
-        nodes = root.leaves()
-    
+def bifid_tree(N):
+    root = Node()
+    root.isroot = True
+    node = root
+    for i in range(N):
+        node.add_child(Node())
+        node.add_child(Node())
+        if i < (N-1):
+            node.children[0].add_child(Node())
+            node.children[0].add_child(Node())
+        node = node.children[-1]
+    i = 1
+    for n in root.descendants():
+        if not n.children:
+            n.istip = True
+            n.label = "SP%s" % i
+        else:
+            n.label = "IN%s" % i
+        i += 1
     return root
-            
-def pectinate_tree(numtaxa):
-    assert numtaxa >= 2
-    leaves = []
-    for i in range(numtaxa):
-        leaves.append(Fnode(istip=1))
-    node = InternalNode()
-    node.add_child(leaves.pop())
-    node.add_child(leaves.pop())
-    while leaves:
-        leaf = leaves.pop()
-        intnode = InternalNode()
-        intnode.add_child(leaf)
-        intnode.add_child(node)
-        node = intnode
-    node.isroot = 1
-    return node
 
-def __determine_ancstatus(n, descendant_list):
-    """private recursive function called by most_recent_common_ancestor"""
-    if n.istip:
-        n['labels'] = [n.label,]
-        n['is_anc'] = 0
-    else:
-        labels = []
-        children = n.children()
-        for c in children:
-            mrca = __determine_ancstatus(c, descendant_list)
-            if mrca != None:
-                return mrca
-            labels.extend(c['labels'])
-        
-        n['labels'] = labels
-        #n['is_anc'] = (label1 in labels and label2 in labels)
-        n['is_anc'] = 1
-        for d in descendant_list:
-            if not d in labels:
-                n['is_anc'] = 0;
-                break
-
-        if n['is_anc'] and not \
-               filter(lambda x: x['is_anc'], children):
-            #print n['is_anc'], map(lambda x: x['is_anc'], children)
-            return n
-    return None
-
-def clades(n, label2index=None, _d=None):
-    """
-    return a mapping of taxon label tuples to nodes in a tree
-    n: root node of tree
-    label2index: optional mapping of labels to index (of an array)
-    _d: dummy variable, do not pass in
-    """
-    return_d_flag = (_d is None)
-    if return_d_flag: _d = {}
-    labels = []
-    if n.istip:
-        if label2index:
-            labels.append(label2index[n.label])
-        else:
-            labels.append(n.label)
-    else:
-        children = n.children()
-        for c in children:
-            labels.extend(clades(c, label2index, _d))
-        labels.sort()
-        _d[tuple(labels)] = n
-    if return_d_flag: return _d
-    else: return labels
-
-def most_recent_common_ancestor(node, descendant_list):
-    """find most recent common ancestor of two taxa
-       parameters:
-         node: root of tree to search
-         descendant_list: list of descendants"""
-    def clean(n):
-        try:
-            del n['labels']
-            del n['is_anc']
-        except KeyError:
-            pass
-
-    mrca = __determine_ancstatus(node, descendant_list)
-    map(clean, [node,]+node.descendants())
-    return mrca
-    
-def mrca(node, descendant_list):
-    return most_recent_common_ancestor(node, descendant_list)
-
-def random_tree(labels):
-    """
-    Given a list of labels, create a list of leaf nodes, and then one
-    by one pop them off, randomly grafting them on to the growing tree.
-
-    Return the root node.
-    """
-    assert len(labels) > 2
-    import RandomArray; RandomArray.seed()
-    leaves = []
-    for label in labels:
-        leaves.append(Fnode(istip=1, label=label))
-
-    leaf_indices = list(RandomArray.permutation(len(leaves)))
-
-    joined = [leaves[leaf_indices.pop()]]
-    remaining = leaf_indices
-    while remaining:
-        i = RandomArray.randint(0, len(joined)-1)
-        c1 = joined[i]
-        if c1.back:
-            n = c1.bisect()
-        else:
-            n = InternalNode()
-            n.add_child(c1)
-        c = leaves[remaining.pop()]
-        n.add_child(c)
-        joined.append(c)
-        joined.append(n)
-
-    for node in joined:
-        if not node.back:
-            node.isroot = 1
-            return node
-
+def ultrametricize(node):
+    import layout
+    n2c = layout.calc_node_positions(node, 1.0, 1.0, scaled=False)
+    for n in node.descendants():
+        c = n2c[n]
+        n.length = c.x - n2c[n.parent].x
 
 if __name__ == "__main__":
-    import newick
-    tree = newick.parse("(a,(b,(c,(d,e))));")
-    for i, n in enumerate(tree.descendants(order=PREORDER)):
-        print i, n.label or n
-    #print tree.draw_ascii
+    import newick, ascii, os
+    ## from numpy import array
+    ## #tree = newick.parse("(a,(b,(c,(d,e))));")
+    ## f = os.path.expanduser("~/Projects/pedic-sympatry/matrices/")
+    ## tree = eval(file(f+"garli-ml.tree").read())
+    ## treespp = tree["species"]
+    ## root = newick.parse(tree["newick"])
+    ## spp = ['alaschanica', 'cheilanthifolia', 'dichotoma', 'kansuensis',
+    ##        'oederi', 'plicata', 'przewalskii', 'remotiloba',
+    ##        'rhinanthoides', 'roylei', 'rupicola', 'scolopax']
+    ## print root.subtree_mapping(spp, clean=1)
+    root = bifid_tree(5)
+    ultrametricize(root)
+    print newick.tostring(root)
+    print ascii.render(root)
+    #print node2tipsets(root)
+    print root.mrca(("SP6","SP10", "SP18")).label

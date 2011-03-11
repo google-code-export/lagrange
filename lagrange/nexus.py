@@ -14,11 +14,11 @@ Maddison, Swofford, Maddison. 1997. Syst. Biol. 46(4):590-621
 """
 
 import os,sys, math, random, copy
-import sets
+#import sets
 
-## from Bio.Alphabet import IUPAC
-## from Bio.Data import IUPACData
-## from Bio.Seq import Seq
+#from Bio.Alphabet import IUPAC
+#from Bio.Data import IUPACData
+#from Bio.Seq import Seq
 
 import newick
 
@@ -221,7 +221,7 @@ def safename(name,mrbayes=False):
         safe=''.join([c for c in safe if c in MRBAYESSAFE])
     else:
         safe=name.replace("'","''")
-        if sets.Set(safe).intersection(sets.Set(WHITESPACE+PUNCTUATION)):
+        if set(safe).intersection(set(WHITESPACE+PUNCTUATION)):
             safe="'"+safe+"'"
     return safe
 
@@ -255,7 +255,7 @@ def _sort_keys_by_values(p):
     
 def _make_unique(l):
     """Check that all values in list are unique and return a pruned and sorted list."""
-    l=list(sets.Set(l))
+    l=list(set(l))
     l.sort()
     return l
 
@@ -270,7 +270,7 @@ def _compact4nexus(orig_list):
     
     if not orig_list:
         return ''
-    orig_list=list(sets.Set(orig_list))
+    orig_list=list(set(orig_list))
     orig_list.sort()
     shortlist=[]
     clist=orig_list[:]
@@ -309,7 +309,7 @@ def combine(matrices):
         return None
     name=matrices[0][0]
     combined=copy.deepcopy(matrices[0][1]) # initiate with copy of first matrix
-    mixed_datatypes=(len(sets.Set([n[1].datatype for n in matrices]))>1)
+    mixed_datatypes=(len(set([n[1].datatype for n in matrices]))>1)
     if mixed_datatypes:
         combined.datatype='None'    # dealing with mixed matrices is application specific. You take care of that yourself!
     #    raise NexusError, 'Matrices must be of same datatype' 
@@ -516,6 +516,12 @@ class Nexus(object):
         self.symbols=None               # set of symbols
         self.equate=None                # set of symbol synonyms
         self.matchchar=None             # matching char for matrix representation
+        self.alphabet=IUPAC.ambiguous_dna
+        self.ambiguous_values=IUPACData.ambiguous_dna_values
+        self.unambiguous_letters=IUPACData.unambiguous_dna_letters
+        self.rev_ambiguous_values = {}
+        self.valid_characters=''.join(self.ambiguous_values.keys())+self.unambiguous_letters
+
         self.labels=None                # left, right, no
         self.transpose=False            # whether matrix is transposed
         self.interleave=False           # whether matrix is interleaved
@@ -535,6 +541,7 @@ class Nexus(object):
    
         # some defaults
         self.options['gapmode']='missing'
+        self.gap = "-"
         
         if input:
             self.read(input)
@@ -661,7 +668,7 @@ class Nexus(object):
                 self.symbols=self.symbols[1:-1].replace(' ','')
             if not self.respectcase:
                 self.symbols=self.symbols.lower()+self.symbols.upper()
-                self.symbols=list(sets.Set(self.symbols))
+                self.symbols=list(set(self.symbols))
         if options.has_key('datatype'):
             self.datatype=options['datatype'].lower()
             if self.datatype=='dna' or self.datatype=='nucleotide':
@@ -678,7 +685,7 @@ class Nexus(object):
                 self.unambiguous_letters=IUPACData.protein_letters+'*' # stop-codon
             elif self.datatype=='standard':
                 raise NexusError('Datatype standard is not yet supported.')
-                #self.alphabet=None
+                self.alphabet=None
                 #self.ambiguous_values={}
                 #if not self.symbols:
                 #    self.symbols='01' # if nothing else defined, then 0 and 1 are the default states
@@ -849,8 +856,9 @@ class Nexus(object):
             #check for invalid characters
             for i,c in enumerate(iupac_seq.tostring()):
                 if c not in self.valid_characters and c!=self.gap and c!=self.missing:
-                    raise NexusError, 'Taxon %s: Illegal character %s in line: %s (check dimensions / interleaving)'\
-                            % (id,c,l[i-10:i+10])
+                    pass
+##                     raise NexusError, 'Taxon %s: Illegal character %s in line: %s (check dimensions / interleaving)'\
+##                             % (id,c,l[i-10:i+10])
             #add sequence to matrix
             if block_interleave==0:
                 while self.matrix.has_key(id):
@@ -1090,7 +1098,8 @@ class Nexus(object):
                 elif self.charsets and identifier in self.charsets:
                     return self.charsets[identifier]
                 else:
-                    raise NexusError, 'Unknown character identifier: %s' % identifier
+                    #raise NexusError, 'Unknown character identifier: %s' % identifier
+                    pass
             else:
                 if n<=self.nchar:
                     return n-1
@@ -1182,7 +1191,7 @@ class Nexus(object):
         if not filename:
             filename=self.filename
         if [t for t in delete if not self._check_taxlabels(t)]:
-            raise NexusError, 'Unknwon taxa: %s' % ', '.join(sets.Set(delete).difference(sets.Set(self.taxlabels)))
+            raise NexusError, 'Unknwon taxa: %s' % ', '.join(set(delete).difference(set(self.taxlabels)))
         if interleave_by_partition:
             if not interleave_by_partition in self.charpartitions:
                 raise NexusError, 'Unknown partition: '+interleave_by_partition
@@ -1371,7 +1380,7 @@ class Nexus(object):
                     # subset of an ambig or only missing in previous -> take subset
                     newconstant.append((site[0],self.ambiguous_values.get(seqsite,seqsite)))
                 elif seqsite in self.ambiguous_values:  # is it an ambig: check the intersection with prev. values
-                    intersect=sets.Set(self.ambiguous_values[seqsite]).intersection(sets.Set(site[1]))
+                    intersect=set(self.ambiguous_values[seqsite]).intersection(set(site[1]))
                     if intersect:
                         newconstant.append((site[0],''.join(intersect)))
                     #    print 'ok'
@@ -1425,7 +1434,7 @@ class Nexus(object):
         if not matrix:
             matrix=self.matrix
         if [t for t in delete if not self._check_taxlabels(t)]:
-            raise NexusError, 'Unknwon taxa: %s' % ', '.join(sets.Set(delete).difference(self.taxlabels))
+            raise NexusError, 'Unknwon taxa: %s' % ', '.join(set(delete).difference(self.taxlabels))
         if exclude!=[]:
             undelete=[t for t in self.taxlabels if t in matrix and t not in delete]
             if not undelete:
@@ -1564,11 +1573,11 @@ class Nexus(object):
 
     def gaponly(self,include_missing=False):
         """Return gap-only sites."""
-        gap=sets.Set(self.gap)
+        gap=set(self.gap)
         if include_missing:
             gap.add(self.missing)
         sitesm=zip(*[self.matrix[t].tostring() for t in self.taxlabels])
-        gaponly=[i for i,site in enumerate(sitesm) if sets.Set(site).issubset(gap)]
+        gaponly=[i for i,site in enumerate(sitesm) if set(site).issubset(gap)]
         return gaponly 
         
     def terminal_gap_to_missing(self,missing=None,skip_n=True):

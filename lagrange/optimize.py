@@ -3,8 +3,9 @@ import sys, math
 from pprint import pprint
 import scipy
 from scipy import optimize
+import phylo
 
-LARGE = 10e5
+LARGE = 10e10
 PMAX = 100.0
 
 def likelihood_de(params, model, tree):
@@ -22,6 +23,10 @@ def likelihood_de(params, model, tree):
     for p in (d, e):
         if (p < 0) or (p > PMAX):
             return LARGE
+
+    for p in params:
+        if type(p) is complex:
+            return LARGE
     model.setup_D(d)
     model.setup_E(e)
     model.setup_Q()
@@ -31,18 +36,66 @@ def likelihood_de(params, model, tree):
     except:
         return LARGE
 
+def likelihood_mp(params, model, tree):
+    """
+    """
+    e = params[0]
+    d = params[1]
+        
+    for p in params:
+        if (p < 0) or (p > PMAX):
+            return LARGE
+        if type(p) is complex:
+            return LARGE
+
+    # The idea is that model.dp_array is the same shape as model.D,
+    # and contains values that index free dispersal parameters, which
+    # begin at index 2 in params (base extinction and dispersal are in
+    # positions 0 and 1, respectively).
+    if len(params) > 2:
+        #v = scipy.array([1.0] + list(params[2:])) * d
+        model.D = model.dp_array.choose(params[1:])
+    else:
+        model.setup_D(d)
+
+    model.setup_E(e)
+    model.setup_Q()
+    try:
+        lh = tree.eval_likelihood()
+        #print params, -scipy.log(lh)
+        return -(scipy.log(lh))
+    except:
+        return LARGE
+
 def optimize_de(tree, model):
     """
     optimize dispersal and extinction rates
-
+    model is an instance of RateModel
     """
     v = optimize.fmin_powell(
         likelihood_de, [0.01, 0.01], args=(model, tree),
+        full_output=True, disp=1, callback=None
+        )
+    params, negloglikelihood = v[:2]
+    if negloglikelihood == LARGE:
+        raise Exception("ConvergenceError")
+    dispersal, extinction = params
+    return dispersal, extinction, negloglikelihood
+
+def optimize_mp(tree, model):
+    """
+    optimize dispersal and extinction rates, multiparameter version
+    model is an instance of DECModel
+    """
+    v = optimize.fmin_powell(
+        likelihood_mp, model.params[:],
+        args=(model, tree),
         full_output=True, disp=0
         )
     params, negloglikelihood = v[:2]
     if negloglikelihood == LARGE:
         raise Exception("ConvergenceError")
+
     return params, negloglikelihood
 
 def ancsplit_likelihood_de(node, ancsplit, model, d, e):
@@ -51,7 +104,8 @@ def ancsplit_likelihood_de(node, ancsplit, model, d, e):
     extinction rates d, e
 
     """
-    c1, c2 = node.children()
+    #c1, c2 = node.children()
+    c1, c2 = node.children
     seg1 = c1.segments[-1]; seg2 = c2.segments[-1]
     seg1.startdist = ancsplit.descdists[0]
     seg2.startdist = ancsplit.descdists[1]
@@ -68,9 +122,38 @@ def ancdist_likelihood_de(node, dist, model, d, e):
     calculate likelihoods of ancsplits of dist at node with dispersal and
     extinction rates d, e (weighted average of split likelihoods)
     """
-    c1, c2 = node.children()
+    #c1, c2 = node.children()
+    c1, c2 = node.children
     seg1 = c1.segments[-1]; seg2 = c2.segments[-1]
     model.setup_D(d)
+    model.setup_E(e)
+    model.setup_Q()
+    v = []
+    for ancsplit in model.iter_ancsplits(dist):
+        seg1.startdist = ancsplit.descdists[0]
+        seg2.startdist = ancsplit.descdists[1]
+        lh = node.tree.eval_likelihood()
+        #v.append(lh * ancsplit.weight)
+        ancsplit.likelihood = lh
+        v.append(ancsplit)
+    seg1.startdist = None
+    seg2.startdist = None
+    return v
+
+def ancdist_likelihood_mp(node, dist, model, params):
+    """
+    calculate likelihoods of ancsplits of dist at node with model params
+    """
+    #c1, c2 = node.children()
+    c1, c2 = node.children
+    seg1 = c1.segments[-1]; seg2 = c2.segments[-1]
+
+    e = params[0]; d = params[1]
+    if len(params) > 2:
+        #v = scipy.array([1.0] + list(params[2:])) * d
+        model.D = model.dp_array.choose(params[1:])
+    else:
+        model.setup_D(d)
     model.setup_E(e)
     model.setup_Q()
     v = []
@@ -89,7 +172,8 @@ def ancsplit_optimize_de(node, ancsplit, model):
     """
     optimize likelihood of ancsplit at node
     """
-    c1, c2 = node.children()
+    #c1, c2 = node.children()
+    c1, c2 = node.children
     seg1 = c1.segments[-1]; seg2 = c2.segments[-1]
     seg1.startdist = ancsplit.descdists[0]
     seg2.startdist = ancsplit.descdists[1]
@@ -129,7 +213,8 @@ def calculate_local_for_all_nodes(node, model):
     """
     tree = node.tree
     if not node.istip:
-        c1, c2 = node.children()
+        #c1, c2 = node.children()
+        c1, c2 = node.children
         calculate_local_for_all_nodes(c1, model)
         calculate_local_for_all_nodes(c2, model)
         print "Node %s --> nodes %s, %s" % (node.label, c1.label, c2.label)
@@ -167,7 +252,8 @@ def calculate_local_for_all_nodes(node, model):
 
 def calculate_global_for_all_nodes(node, model, d, e, skip=[], _rv={}):
     if (not node.istip) and (not node.label in skip):
-        c1, c2 = node.children()
+        #c1, c2 = node.children()
+        c1, c2 = node.children
         calculate_global_for_all_nodes(c1, model, d, e)
         calculate_global_for_all_nodes(c2, model, d, e)
         print ", ".join([node.label, c1.label, c2.label])
@@ -205,3 +291,19 @@ def calculate_global_for_all_nodes(node, model, d, e, skip=[], _rv={}):
         _rv[node.label] = v
 
     return _rv
+
+
+def ancsplits_mp(tree, model, params, nodelabels=None):
+    node2splits = {}
+    for node in [ x for x in tree.root.iternodes(phylo.PREORDER) \
+                  if (not x.istip) ]:
+        label = node.label
+        if (nodelabels and (label in nodelabels)) or (not nodelabels):
+            v = []
+            for dist in [ d for d in model.dists[1:] \
+                          if d not in node.excluded_dists ]:
+                x = ancdist_likelihood_mp(node, dist, model, params)
+                v.extend(x)
+            v.sort(); v.reverse()
+            node2splits[node] = v
+    return node2splits

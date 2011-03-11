@@ -17,7 +17,7 @@ linalg = scipy.linalg
 rand = random.Random()
 uniform = rand.random
 
-def Q2P(Q, t):
+def Q2P_old(Q, t):
     """
     Q: a square rank-2 Numeric array representing the instantaneous rate
         matrix
@@ -54,6 +54,9 @@ def Q2P(Q, t):
     Psum = scipy.sum(P,1) # sum across rows, and
     P = P/Psum # divide by sum so that all elements are between 0 and 1
     return P
+
+def Q2P(Q, t):
+    return linalg.expm(Q*t)
 
 def binP(pi0, t):
     pi1 = 1.0 - pi0
@@ -161,8 +164,13 @@ def sample_ancstates(nodes, preorder, states, fractionals, Qmap):
     return ancstates
 
 if __name__ == "__main__":
-    Q = Q2(0.1)
-    print Q2P(Q, 1.0)
+    Q = Q2(0.5)
+    ## print Q2P(Q, 0.5)
+    ## print
+    print Q2P(Q2(3.16060279e-01), 0.5)
+    print
+    print q2p_test(Q2(3.16060279e-01), 0.5)
+    #print Q2P(Q, 1.0)
 ##     from pprint import pprint
 
 ##     t = newick.parse("(A:0.1, (B:0.1, C:0.1):0.1);")

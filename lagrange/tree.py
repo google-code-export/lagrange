@@ -1,8 +1,14 @@
 import sys
-import phylo, newick, ratemodel
+import phylo, newick, ascii
 import scipy
+from scipy import linalg
+expm = linalg.expm
 
 SHORT = 1e-4
+
+class Error(Exception):
+    """Exception raised for errors in specifying a phylogeny."""
+    pass
 
 class Tree:
     def __init__(self, newickstr, periods=None, root_age=None):
@@ -12,14 +18,17 @@ class Tree:
         root_age: age of root node for branch length scaling
         """
         self.root = newick.parse(newickstr)
-        phylo.polarize(self.root)
+        self.newick = newickstr
+        #phylo.polarize(self.root)
         self.periods = periods
 
         # initialize nodes (label interiors, etc)
         # and collect leaves and postorder sequence
         self.postorder_nodes = []
         self.leaves = []
-        for i, node in enumerate(self.root.descendants(phylo.POSTORDER)):
+        #for i, node in enumerate(self.root.descendants(phylo.POSTORDER)):
+        polytomies = []
+        for i, node in enumerate(self.root.iternodes(phylo.POSTORDER)):
             node.tree = self
             node.number = i
             node.segments = []
@@ -30,10 +39,23 @@ class Tree:
                 #node.age = 0.0
                 self.leaves.append(node)
             else:
-                nc = len(node.children())
-                assert nc == 2, \
-                       "%s-way polytomy at node %s" % (nc, node.label)
+                #nc = len(node.children())
+                nc = node.nchildren
+                if nc > 2:
+                    polytomies.append((nc, node.label))
+                ## if nc > 2:
+                ##     print ascii.tree2ascii(self.root)
+                ## assert nc == 2, \
+                ##        "%s-way polytomy at node %s" % (nc, node.label)
             self.postorder_nodes.append(node)
+        if polytomies:
+            msg = []
+            msg.append(", ".join([ "%s-way polytomy at node %s" % (nc, label) \
+                                   for nc, label in polytomies ]))
+            msg.append("Tree is:")
+            msg.append(ascii.tree2ascii(self.root))
+            #print "\n".join(msg)
+            raise Error, "\n".join(msg)
 
         self.root_age = root_age
         if root_age:
@@ -65,16 +87,19 @@ class Tree:
                        % (node.parent.label, anc, node.label, des,
                           self.root.render_ascii(scaled=1, minwidth=80))
                 t = des
-                for i, p in enumerate(periods):
-                    s = sum(periods[:i+1])
-                    if t < s:
-                        duration = min((s - t, anc - t))
-                        if duration > 0:
-                            seg = BranchSegment(duration, i)
-                            node.segments.append(seg)
-                        t += p
-                    if t > anc:
-                        break
+                if periods:
+                    for i, p in enumerate(periods):
+                        s = sum(periods[:i+1])
+                        if t < s:
+                            duration = min((s - t, anc - t))
+                            if duration > 0:
+                                seg = BranchSegment(duration, i)
+                                node.segments.append(seg)
+                            t += p
+                        if t > anc:
+                            break
+                else:
+                    node.segments = [BranchSegment(node.length, 0)]
                 #print node.label, anc, des, node.length, [ s.duration for s in node.segments ]
 
     def length2root(self, node):
@@ -93,12 +118,14 @@ class Tree:
                 node.age = maxlen - self.length2root(node)
             else:
                 node.age = maxlen
+            #print node.label, node.age, node.length
 
     def set_default_model(self, model):
         "assigns the same model to all segments of all branches"
         for node in self.postorder_nodes:
             for seg in node.segments:
                 seg.model = model
+                seg.update_Qt()
             if not node.parent:
                 node.model = model
 
@@ -113,12 +140,13 @@ class Tree:
 
     def calibrate(self, depth):
         "scale an ultrametric tree to given root-to-tip depth"
-        len2tip = 0.0
-        node = self.leaves[0]
-        while 1:
-            len2tip += (node.length or 0.0)
-            node = node.parent
-            if not node: break
+        len2tip = max([ self.length2root(lf) for lf in self.leaves ])
+        # len2tip = 0.0
+        # node = self.leaves[0]
+        # while 1:
+        #     len2tip += (node.length or 0.0)
+        #     node = node.parent
+        #     if not node: break
 
         scale = depth/len2tip
 
@@ -134,6 +162,7 @@ class Tree:
         evaluate fractional likelihoods at root node
         """
         ancdist_conditional_lh(self.root)
+        #print scipy.sum(self.root.dist_conditionals)
         return scipy.sum(self.root.dist_conditionals)
 
     def print_dist_conds(self):
@@ -144,7 +173,7 @@ class Tree:
             x = self.root.dist_conditionals[i]
             if x:
                 try:
-                    print s, math.log(x)
+                    print s, scipy.log(x)
                 except:
                     print s, "Undefined"
             else:
@@ -155,7 +184,8 @@ class Tree:
         if node is None:
             node = self.root
         if not node.istip:
-            c1, c2 = node.children()
+            #c1, c2 = node.children()
+            c1, c2 = node.children
             self.clear_startdist(c1)
             self.clear_startdist(c2)
             c1.segments[-1].startdist = []
@@ -167,6 +197,11 @@ class BranchSegment:
         self.period = period
         self.model = model
         self.startdist = startdist
+        self.distrange = []
+        self.fossils = []
+
+    def update_Qt(self):
+        self.Qt = self.model.Q[self.period]*self.duration
 
 def conditionals(node):
     """
@@ -177,19 +212,59 @@ def conditionals(node):
     # conditional likelihoods of dists at the end of the branch: for
     # tips, this is a zeroed vector with 1.0 at the observed range
     distconds = node.segments[0].dist_conditionals
-    #print node.label, node.segments, node.length
+    #print node.label
+    #if node.label == "L_acalycina":
+    #    for seg in node.segments:
+    #        print seg.duration, seg.period, seg.fossils
     #for model, time, startdist in node.segments:
+
+    # In this loop, iterate backward in time over the segments making
+    # up the branch subtending this node.  For each segment, calculate
+    # distrange, the tuple of ranges possible for the lineage, given
+    # fossil and other constraints.  seg.fossils is a list of
+    # area_indices in which the lineage is observed at the starting
+    # time (lower bound) of the segment
     for seg in node.segments:
         seg.dist_conditionals = distconds
         model = seg.model
+        #if not seg.distrange:
+        if seg.startdist:
+            seg.distrange = (model.dist2i[seg.startdist],)
+        elif seg.fossils:
+            # seg.fossils is a list of area indices
+            #print "fossils at node %s: %s" % (node.label, seg.fossils)
+            distrange = list(model.distrange)
+            excluded = []
+            # filter out ranges inconsistent with fossil area(s)
+            for i, dist in model.enumerate_dists():
+                flag = True
+                for x in seg.fossils:
+                    if x not in dist:
+                        flag = False
+                # flag is True if dist does not include all areas in
+                # seg.fossils
+                if flag:
+                    distrange.remove(i)
+                    excluded.append(i)
+            seg.distrange = distrange
+            #print "ranges excluded: %s" % excluded
+            #sys.exit()
+        else:
+            seg.distrange = list(model.distrange)
+
+    ## for seg in node.segments:
+    ##     seg.dist_conditionals = distconds
+    ##     model = seg.model
+    ##     P = model.P(seg.period, seg.duration)
+    ##     v = scipy.zeros((model.ndists,))
+    ##     if seg.startdist:
+    ##         distrange = (model.dist2i[seg.startdist],)
+    ##     else:
+    ##         distrange = model.distrange
+
         P = model.P(seg.period, seg.duration)
         v = scipy.zeros((model.ndists,))
-        if seg.startdist:
-            distrange = (model.dist2i[seg.startdist],)
-        else:
-            distrange = model.distrange
-
-        for i in distrange:
+        for i in seg.distrange:
             # P[i] is the vector of probabilities of going from dist i
             # to all other dists
             v[i] = sum(distconds * P[i])
@@ -202,7 +277,8 @@ def ancdist_conditional_lh(node):
     internal nodes in a tree
     """
     if not node.istip:
-        c1, c2 = node.children()
+        #c1, c2 = node.children()
+        c1, c2 = node.children
         if node.parent:
             model = node.segments[0].model
         else:
@@ -219,6 +295,7 @@ def ancdist_conditional_lh(node):
         ancsplits = []
         for distidx, dist in model.enumerate_dists():
             lh = 0.0
+            ## pi = model.dist_priors[distidx]
             if dist not in node.excluded_dists:
                 for ancsplit in model.iter_ancsplits(dist):
                     d1, d2 = ancsplit.descdists
@@ -227,6 +304,9 @@ def ancdist_conditional_lh(node):
                     ancsplit.likelihood = lh_part
                     ancsplits.append(ancsplit)
             distconds[distidx] = lh
+            # should apply priors only at the root of the tree, I
+            # think, reading Felsenstein 1983
+            #distconds[distidx] = lh * pi
         node.ancsplits = ancsplits
 
     else:
