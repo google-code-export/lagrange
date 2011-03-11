@@ -1,25 +1,6 @@
-# Mavric -- a module for manipulating and visualizing phylogenies
-
-# Copyright (C) 2000 Rick Ree
-# Email : rree@post.harvard.edu
-# 	   
-# This program is free software; you can redistribute it and/or
-# modify it under the terms of the GNU General Public License
-# as published by the Free Software Foundation; either version 2 
-# of the License, or (at your option) any later version.
-#   
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details. 
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-
 import string, sys
 from shlex import shlex
-import phylo
+from phylo import Node
 from types import StringType
 from cStringIO import StringIO
 
@@ -72,34 +53,19 @@ def parse(input, ttable=None):
         # internal node
         elif token == '(':
             lp = lp+1
-            newnode = phylo.InternalNode()
+            newnode = Node()
+            newnode.istip = False
             if node:
-                if node.istip:
-                    if not node.back:
-                        node.back = newnode
-                        newnode.back = node
-                    else:
-                        node.back.add_child(newnode)
-                else:
-                    node.add_child(newnode)
+                node.add_child(newnode)
             node = newnode
 
         elif token == ')':
             rp = rp+1
-            node = traverse(node)
+            node = node.parent
             
         elif token == ',':
-            if lp == rp:
-                if node.back == None:
-                    pass
-                else:
-                    rooted = 0
-                    if node.next:
-                        node.insert_fnode(phylo.Fnode())
-                    node.next.isroot = 1
-                    root = node.next
-            else:
-                node = traverse(node)
+##             if lp == rp:
+            node = node.parent
             
         # branch length
         elif token == ':':
@@ -115,95 +81,65 @@ def parse(input, ttable=None):
                 raise 'NewickError', \
                       'unexpected end-of-file (expecting branch length)'
 
-            if node.istip: node.length = brlen
-            else: node.next.length = brlen
-
+            node.length = brlen
         # comment
         elif token == '[':
             tokens.parse_comment()
 
-        # leaf node or label
+        # leaf node or internal node label
         else:
-            if prev_tok != ')':
-                if ttable is not None:
-                    token = ttable[token]
-                newnode = phylo.Fnode(label=token, istip=1)
-                if node:
-                    if node.istip:
-                        if not node.back:
-                            intnode = phylo.InternalNode()
-                            intnode.back = node
-                            node.back = intnode
-                        node.back.add_child(newnode)
-                        newnode = node.back
-                    else: node.add_child(newnode)
+            if prev_tok != ')': # leaf node
+                if ttable:
+                    ttoken = ttable.get(token) or ttable.get(int(token))
+                    if ttoken:
+                        token = ttoken
+                newnode = Node()
+                newnode.label = token
+                newnode.istip = True
+                node.add_child(newnode)
                 node = newnode
-            else:
-                node.next.label = token
-                #print "label %s for %s" % (token, node.next)
+            else: # label
+                # translation table for internal nodes labels?
+                node.label = token
 
         prev_tok = token
-        #print node
+        #print token, node
 
     input.seek(start_pos)
 
-    if rooted:
-        root = phylo.Fnode(isroot=1)
-        root.label = node.next.label; node.next.label = None
-        root.length = node.next.length; node.next.length = None
-        node.insert_fnode(root)
-        
+##     if rooted:
+##         root = Fnode(isroot=1)
+##         root.label = node.next.label; node.next.label = None
+##         root.length = node.next.length; node.next.length = None
+##         node.insert_fnode(root)
 
-    for fn in root.fnodes()[1:]:
-        if not fn.back:
-            fn.prune()
-
-    return root
+    #return root
+    return node
 
 def traverse(node):
     if node.istip: return node.back
     else: return node.next.back
         
-def to_string(node, lengths = 1, length_fmt=":%s"):
+def to_string(node, length_fmt=":%s"):
     if not node.istip:
         node_str = "(%s)%s" % \
-                   (",".join([to_string(child, lengths, length_fmt) \
-                              for child in node.children()]),
-                    node.label or "")
+                   (",".join([ to_string(child, length_fmt) \
+                               for child in node.children ]),
+                    node.label or ""
+                    )
     else:
         node_str = "%s" % node.label
 
-    length_str = ""
-    if lengths:
-        if node.length is not None:
-            length_str = length_fmt % node.length
-        else:
-            length_str = ""
+    if node.length is not None:
+        length_str = length_fmt % node.length
+    else:
+        length_str = ""
 
     s = "%s%s" % (node_str, length_str)
     return s
-        
+
 tostring = to_string
-
-## def to_string(node, lengths = 1):
-##     nstr = ''
-##     if node.isroot and node.back:
-##         nstr = to_string(node.back)+','
-
-##     if not node.istip:
-##         nstr = nstr+'('
-##         children = node.children()
-##         for child in children:
-##             nstr = nstr+to_string(child, lengths)
-##             if child != children[-1]: nstr = nstr+','
-##         nstr = nstr+')'
-##     else:
-##         label = node.label
-##         nstr = nstr+label
-##     if (node.length is not None) and lengths:
-##         nstr = nstr+':'+'%f' % node.length
-##     return nstr
-
+        
 def parse_from_file(filename):
     if filename == '-':
         file = sys.stdin
@@ -216,10 +152,12 @@ def parse_from_file(filename):
     return tree
 
 if __name__ == "__main__":
-    import ascii
-    s = "(a,(b,c)int)root;"
+    #import ascii
+    s = "(a:3,(b:1e-05,c:1.3)int:5)root;"
+    s = "(a,b,c,d,e,f,g);"
     n = parse(s)
     print
-    print ascii.render(n)
+    #print ascii.render(n)
+    print s
     print to_string(n)
-    print n.next.back.label
+    #print n.next.back.label

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import sys
+import sys, scipy
 
 def comb(m, n):
     """m, n -> number of combinations of m items, n at a time.
@@ -115,7 +115,17 @@ def dists_by_maxsize(nareas, maxsize):
             yield tuple(x)
         n += 1
 
-## for x in dists_by_maxsize(7, 2):
+def dists_by_maxsize_idx(nareas, maxsize):
+    yield tuple()
+    for i in range(nareas):
+        yield (i,)
+    n = 2
+    while n <= maxsize:
+        for indices in iterate(nareas, n):
+            yield indices
+        n += 1
+
+## for x in dists_by_maxsize_idx(7, 2):
 ##     print x
 ## sys.exit()
 
@@ -141,22 +151,36 @@ def iterate_all_bv2(m):
     for x in it:
         yield idx2bitvect(x, m)
 
+def iterate_all_idx(m):
+    yield tuple()
+    for x in iterate_all(m):
+        yield x
+
 def main():
-    m, n = 4, 2
-##     print "%d choose %d:" % (m, n),
+    m, n = 4, 3
+    
+    #print "%d choose %d:" % (m, n),
 
-##     ncombs = comb(m, n)
-##     print "%s combinations" % ncombs
+    ## ncombs = comb(m, n)
+    ## print "%s combinations" % ncombs
 
-    for i, x in enumerate(iterate_all_bv2(m)):
-        print i+1, x
+    ## for i, x in enumerate(iterate_all_bv2(m)):
+    ##     print i+1, x
 
-##     for i, x in enumerate(iterate(m, n)):
-##         print i+1, x
+    for i, x in enumerate(iterate_all_idx(m)):
+        print i, x
     
 ##     for i in range(ncombs):
 ##         cmb = comb_at_index(m, n, i)
 ##         print cmb
 
+def subsets(s, size):
+    m = len(s)
+    for i in range(comb(m, size)):
+        indices = comb_at_index(m, size, i)
+        yield [ s[j] for j in indices ]
+
 if __name__ == "__main__":
-    main()
+    ## s = "abcdef"
+    ## print list(subsets(s, 2))
+    print len(list(dists_by_maxsize_idx(12,4)))

@@ -37,16 +37,19 @@ def depth_length_preorder_traversal(node):
         node.depth = p.depth + 1
         node.length_to_root = p.length_to_root + (node.length or 0.0)
 
-    for ch in node.children():
+    #for ch in node.children():
+    for ch in node.children:
         depth_length_preorder_traversal(ch)
 
 def smooth_cpos(node):
-    for ch in node.children():
+    #for ch in node.children():
+    for ch in node.children:
         smooth_cpos(ch)
         
     if node.parent and not node.istip:
         px = node.parent.c
-        cx = min([ ch.c for ch in node.children() ])
+        #cx = min([ ch.c for ch in node.children() ])
+        cx = min([ ch.c for ch in node.children ])
         dxp = node.c - px
         cxp = cx - node.c
         node.c = int(px + (cx - px)*0.5)
@@ -57,16 +60,18 @@ def scale_cpos(node, scalef, root_offset):
     else:
         node.c = root_offset
 
-    for ch in node.children():
+    #for ch in node.children():
+    for ch in node.children:
         scale_cpos(ch, scalef, root_offset)
 
 def tree2ascii(tree, unitlen=3, minwidth=None, maxwidth=None, scaled=False,
                show_internal_labels=True, data=None):
-    phylo.polarize(tree)
+    #phylo.polarize(tree)
     depth_length_preorder_traversal(tree)
 
     leaves = tree.leaves(); nleaves = len(leaves)
-    node2label = dict([ (n, n.label) for n in tree.descendants() ])
+    #node2label = dict([ (n, n.label) for n in tree.descendants() ])
+    node2label = dict([ (n, n.label) for n in tree.iternodes() ])
     if data:
         for k, v in node2label.items():
             if v in data:
@@ -98,9 +103,11 @@ def tree2ascii(tree, unitlen=3, minwidth=None, maxwidth=None, scaled=False,
         lf.c = width - max_labelwidth - 2
         lf.r = i*2
 
-    for node in tree.descendants(phylo.POSTORDER):
+    #for node in tree.descendants(phylo.POSTORDER):
+    for node in tree.iternodes(phylo.POSTORDER):
         if not node.istip:
-            children = node.children()
+            #children = node.children()
+            children = node.children
             rmin = children[0].r; rmax = children[-1].r
             node.r = int(rmin + (rmax-rmin)/2.0)
             node.c = min([ ch.c for ch in children ]) - unitlen
@@ -113,7 +120,8 @@ def tree2ascii(tree, unitlen=3, minwidth=None, maxwidth=None, scaled=False,
         scalef = (leaves[0].c + 1 - root_offset)/maxlen
         scale_cpos(tree, scalef, root_offset)
 
-    for node in tree.descendants(phylo.POSTORDER):
+    #for node in tree.descendants(phylo.POSTORDER):
+    for node in tree.iternodes(phylo.POSTORDER):
 
         if node.parent:
             for r in range(min([node.r, node.parent.r]),
@@ -149,7 +157,7 @@ if __name__ == "__main__":
 ##     print t.fnodes()
 #    sys.exit()
     i = 1
-    for n in t.descendants():
+    for n in t.iternodes():
         #n.length = rand.random()
         if not n.istip:
             n.label = "n%s" % i
