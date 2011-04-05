@@ -1,5 +1,5 @@
 from gluon.sqlhtml import *
-from gluon.html import URL
+from gluon.html import *
 from gluon.sql import *
 from gluon.storage import Storage
 import cPickle, pprint, treeview, string, newick

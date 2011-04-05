@@ -1,0 +1,264 @@
+import string, cPickle, sys, pprint
+#sys.path.append("/home/rree/src/lagrange/branches/rick-dev")
+#import applications.lagrange.modules.lagrange as lagrange
+import applications.lagrange.modules.bridge as bridge
+import lagrange
+from gluon.storage import Storage
+from gluon.sqlhtml import form_factory
+from cStringIO import StringIO
+
+reload(lagrange)
+reload(bridge)
+
+DECModel = bridge.DECModel
+
+def upload_pickle():
+    f = request.vars.pickle
+    m = cPickle.loads(f.file.read())
+    session.models.append(m)
+    redirect(URL(r=request, f="index"))
+
+def download():
+    m = current_model()
+    response.headers["Content-Type"] = "text/plain"
+    s = "attachment; filename=%s.pickle" % m.name
+    response.headers["Content-Disposition"] = s
+    return cPickle.dumps(m)
+
+def delete_current_model():
+    m = current_model()
+    session.models.remove(m)
+    u = URL(r=request, f=request.vars.f)
+    redirect(u)
+
+def adjacencymatrix_default():
+    m = current_model()
+    m.adjacencymatrix.labels = m.datamatrix.labels
+    m.adjacencymatrix.default()
+    u = URL(r=request, f=request.vars.f)
+    redirect(u)
+    #return m.adjacencymatrix.render(request, session)
+    
+def datamatrix_toggle_view():
+    m = current_model()
+    d = m.datamatrix
+    if d.view == "html":
+        d.view = "textarea"
+    else:
+        d.view = "html"
+    return d.render(request, session)
+
+def datamatrix_toggle_visible():
+    m = current_model()
+    d = m.datamatrix
+    d.visible = not d.visible
+    return d.render(request, session)
+
+def adjacencymatrix_toggle_visible():
+    m = current_model()
+    d = m.adjacencymatrix
+    d.visible = not d.visible
+    return d.render(request, session)
+
+def adjacencymatrix_toggle_view():
+    m = current_model()
+    d = m.adjacencymatrix
+    if d.view == "html":
+        d.view = "textarea"
+    else:
+        d.view = "html"
+    return d.render(request, session)
+
+def update_modelname():
+    m = current_model()
+    m.name = "_".join(request.vars.s.split())
+    return m.render_name(request, session)
+
+def update_maxareas():
+    m = current_model()
+    m.maxareas = int(request.vars.s)
+    return m.render_maxareas(request, session)
+
+def delete_datamatrix():
+    m = current_model()
+    m.datamatrix = bridge.DataMatrix(m)
+    u = URL(r=request, f=request.vars.f)
+    redirect(u)
+
+def delete_adjacencymatrix():
+    m = current_model()
+    m.adjacencymatrix = bridge.AdjacencyMatrix(m)
+    u = URL(r=request, f=request.vars.f)
+    redirect(u)
+
+def datamatrix_click():
+    i, j = map(int, request.vars.cell.split(":"))
+    mod = current_model()
+    dm = mod.datamatrix
+    v = dm.toggle(request, session, i,j)
+    return dm.render_cell(request, session, i, j)
+
+def adjacencymatrix_click():
+    i, j = map(int, request.vars.cell.split(":"))
+    mod = current_model()
+    dm = mod.adjacencymatrix
+    v = dm.toggle(request, session, i,j)
+    #return dm.render_cell(request, session, i, j)
+    return dm.render(request, session)
+
+## def pickle_upload_form():
+##     f = FORM(
+##         DIV("Load model from file:"),
+##         DIV(INPUT(_name="pickle", _type="file", requires=IS_NOT_EMPTY())),
+##         DIV(INPUT(_type="button", _value="Upload model",
+##                   _onclick="this.form.submit()")),
+##         _action=URL(r=request, f="upload_pickle")
+##         )
+##     return f
+
+def edit():
+    if request.args:
+        n = int(request.args[0])
+        m = session.models[n]
+        if isinstance(m.labels, str):
+            m.labels = list(m.labels)
+        e = [SQLField("nareas", "integer", default=m.nareas,
+                      label="Number of areas",
+                      requires=IS_INT_IN_RANGE(2,10))]
+        for i, x in enumerate(m.labels):
+            f = SQLField("area_%s" % i, default=x, label=i,
+                         requires=IS_NOT_EMPTY())
+            e.append(f)
+        form = form_factory(*e)
+        if form.accepts(request.vars, session):
+            for i in range(m.nareas):
+                v = form.vars["area_%s" % i]
+                #print i, v
+                m.labels[i] = v
+                e[i+1].default = v
+            form = form_factory(*e)
+    else:
+        form=None
+
+    return dict(form=form)
+
+def pickle_upload_form():
+    f = form_factory(
+        SQLField("pickle", "upload", requires=IS_NOT_EMPTY(),
+                 label="Upload pickle"),
+        _action="upload_pickle"
+        )
+    return f
+
+def model_selector():
+    cb = URL(r=request, f="select_mi")
+    ajax = "selection('%s', 'model:selector:input', 'model:selector')"\
+           % cb
+    session.mi = min(session.mi or 0, len(session.models))
+    opts = []
+    for i, m in enumerate(session.models):
+        opts.append(OPTION(m.name, _value=i))
+    if opts:
+        return SELECT(_name="mi", value=session.mi,
+                      _id="model:selector:input",
+                      _onchange=ajax, *opts)
+    else:
+        return pickle_upload_form()
+
+def index():
+    #session.models = []
+    return dict(
+        model = current_model(),
+        model_selector = model_selector(),
+        pickle_upload_form=pickle_upload_form()
+        )
+
+def create_empty_model():
+    session.models.append(DECModel(session))
+    u = URL(r=request, f=request.vars.f)
+    redirect(u)
+
+def current_model():
+    ## if not session.models:
+    ##     session.models = [DECModel(session)]
+    ##     session.mi = 0
+    if session.models:
+        m = session.models[session.mi]
+        if not m.datamatrix:
+            m.datamatrix = bridge.DataMatrix(m)
+        session.model = m
+    else:
+        m = None
+    return m
+
+def upload_datamatrix():
+    f = request.vars.datamatrix
+    m = current_model()
+    if hasattr(f, "file"):
+        labels, data = lagrange.input.parse_matrix2(f.file)
+        mod = current_model()
+        mod.datamatrix.labels = labels
+        mod.datamatrix.data = data
+    redirect(URL(r=request, f="index"))
+
+## def upload_pickle():
+##     f = request.vars.pickle
+##     m = pickle.loads(f.file.read())
+##     session.models.append(m)
+##     redirect(URL(r=request, f="index"))
+
+## def pickle_upload():
+##     if not session.models:
+##         session.models = []
+##     form = form_factory(
+##         SQLField("pickle", "upload", label="Upload saved model")
+##         )
+##     if form.accepts(request.vars, session):
+##         f = form.vars.pickle
+##         m = pickle.loads(f.value)
+##         assert isinstance(m, lagrange.decmodel_mp.DECModel)
+##         session.models.append(m)
+
+##     return dict(form=form)
+    
+def create():
+    if not session.model:
+        session.model = Storage()
+    inputs = Storage(
+        name = INPUT(_type="text",
+                     _name="name",
+                     requires=IS_NOT_EMPTY()),
+        ## nareas = INPUT(_type="text",
+        ##                _name="nareas",
+        ##                requires=IS_INT_IN_RANGE(2,10),
+        ##                _title="integer between 2 and 10"),
+        nareas = SELECT(range(2,11), _name="nareas"),
+        submit = INPUT(_type="submit",_value="next>>")
+        )
+        
+    f = FORM(TABLE(
+        TR("Name:", inputs.name),
+        TR("Number of areas:", inputs.nareas),
+        TR("", inputs.submit)
+        ))
+
+    if f.accepts(request.vars, session):
+        session.model = Storage(
+            name = request.vars.name,
+            nareas = request.vars.nareas
+            )
+        redirect("create2")
+        pass
+    return dict(f=f)
+    
+def create2():
+    return dict(x=session.model.name)
+
+def new_by_numareas():
+    nareas = int(request.vars.nareas or 0) or 2
+    e = []
+    for i in range(nareas):
+        e.append(DIV(INPUT(_type="text", _name="area%s_label" % i,
+                           value=string.letters[i])))
+    f = FORM(*e)
+    return dict(areas=f)
