@@ -1,9 +1,9 @@
 import string, cPickle, sys, pprint, string
-lagrange = local_import("lagrange", reload=True)
+#lagrange = local_import("lagrange", reload=True)
+import lagrange
 models = local_import("models", reload=True)
 treeview = local_import("treeview", reload=True)
 newick = local_import("newick", reload=True)
-lagrange = local_import("lagrange", reload=True)
 from gluon.storage import Storage
 from gluon.sqlhtml import form_factory
 from cStringIO import StringIO
