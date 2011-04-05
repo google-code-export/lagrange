@@ -1,4 +1,5 @@
 from gluon.sqlhtml import *
+from gluon.html import *
 from gluon.sql import *
 from gluon.storage import Storage
 import applications.lagrange.modules.layout as layout
