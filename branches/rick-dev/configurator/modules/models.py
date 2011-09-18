@@ -1,6 +1,6 @@
-from gluon.sqlhtml import *
-from gluon.html import *
-from gluon.sql import *
+#from gluon.sqlhtml import *
+from gluon import *
+#from gluon.sql import *
 from gluon.storage import Storage
 import cPickle, pprint, treeview, string, newick
 import lagrange, scipy
@@ -120,7 +120,7 @@ while 1:
         outfname = "%s.results-"+str(i)+".txt"
     if not os.path.exists(outfname): break
     i += 1
-outfile = file(outfname, "w")
+outfile = open(outfname, "w")
 lagrange.output.log(lagrange.msg, outfile, tee=True)
 model, tree, data, nodelabels, base_rates = lagrange.input.eval_decmodel(data)
 lagrange.output.ascii_tree(outfile, tree, model, data, tee=True)
@@ -716,7 +716,7 @@ class TreeList:
                        _href=URL(r=request,f="delete_tree?t=%s"%i),
                        _title="Delete this tree")
             d = TR(
-                TD("Root age: %g" % (t.root_age or t.calibrate())),
+                TD("Root age: %g" % (t.root_age or t.calibrate() or 1)),
                 TD(delete, _style="text-align:right;")
                 #TD(delete)
                 )

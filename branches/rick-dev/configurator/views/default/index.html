@@ -1,105 +1,349 @@
-{{extend 'layout.html'}}
-
-{{d = "20090316"}}
-{{fn = "Lagrange-%s" % d}}
-{{snap = "%s/static/%s" % (request.application, fn)}}
-
-<div style="font-style:italic;border-style:solid;border-color:red;padding:0.5em">
-This is an experimental interface to Lagrange, and a work in progress.  Please check back for updates and send comments to Rick Ree (rree at fieldmuseum dot org).
+{{extend "configurator_layout.html"}}
+{{snapversion = "20110117"}}
+{{import datetime}}
+{{update = datetime.date(int(snapversion[:4]),int(snapversion[4:6]),int(snapversion[6:8])).strftime("%d %B %Y")}}
+{{snapfilebase = "Lagrange-%s" % snapversion}}
+{{snaplinkbase = "/%s/static/%s" % (request.application, snapfilebase)}}
+<div class="configurator_toplevel">
+<div class="configurator_header">
+<h1 class="header_content">Lagrange configurator <sub style="font-family:sans-serif;color:#006666;">(beta)</sub></h1>
 </div>
 
-<ol>
-
-<h2>
-<li>
-Install required system software
-</li>
-</h2>
-<ul style="margin-left:2em;">
-<h3>
-<li>
-Install <a href="http://www.python.org">Python</a> (recommended
-version: 2.5)
-</li>
-</h3>
-<h3>
-<li>
-Install <a href="http://www.scipy.org">scipy</a>
-and <a href="http://numpy.scipy.org">numpy</a>
-(note: must match version of Python)
-</li>
-</h3>
-</ul>
-
-<h2>
-<li>
-Download and unpack Lagrange (snapshot version <span style="font-family:monospace;color:darkgreen;">{{=d}}</span>)
-</li>
-</h2>
-<ul style="margin-left:2em;">
-<h3>
-<li>
-Linux, Mac: <a href="{{=snap}}.tar.gz">[tar archive]</a>
-</li>
-</h3>
-<h3>
-<li>
-Windows: <a href="{{=snap}}.zip">[zip archive]</a>
-</li>
-</h3>
-<h3>
-<li>
-This will create a folder called <span style="font-family:monospace;color:darkgreen;padding:0.25em;">Lagrange-{{=d}}</span>
-</li>
-</h3>
-</ul>
-
-<h2>
-<li>
-<a href={{=URL(r=request,c='decmodel')}} target="_blank">
-Configure
+{{if model:}}
+<div class="configurator_toolbar" style="background-color:lightgray;">
+<table style="padding:0.5em;">
+<tr>
+<td>Analysis name:</td>
+<td style="padding-left:0.5em;">{{=model.render_name(request, session)}}</td>
+<td style="padding-left:1em;">
+<a href="{{=URL(r=request,f='delete_all_models')}}"
+   title="Click here to delete this analysis and start again">
+[Delete/Start over]
 </a>
-an analysis file (data, model, and tree)
-</li>
-</h2>
-<ul style="margin-left:2em;">
-<h3>
-<li>
-<a href={{=URL(r=request,c='decmodel')}} target="_blank">
-[Click here to start the configurator]
+</td>
+</tr>
+</table>
+</div>
+<div class="configurator_toolbar">
+{{=toolbar}}
+</div>
+{{pass}}
+
+{{if response.flash:}}
+<div class="flash">{{=response.flash}}</div>
+{{pass}}
+
+{{if not model:}}
+<div class="configurator_content">
+<div class="instructions">
+This web application allows you to configure analyses that reconstruct
+geographic range evolution (ancestral areas, rates of disersal/range
+expansion and local extinction/range contraction) on phylogenetic
+trees using the program <a
+href="http://lagrange.googlecode.com">Lagrange</a>.
+</div>
+
+<div style="padding:0.5em;">
+Begin a new analysis by uploading
+{{u=URL(r=request,f="create_new_model",vars=dict(f=request.function,ti=0))}}
+<a href="{{=u}}">species range data</a> or a
+{{u=URL(r=request,f="create_new_model",vars=dict(f=request.function,ti=1))}}
+<a href="{{=u}}">phylogenetic tree</a>.
+</div>
+
+<div style="padding:0.5em;">
+<div style="padding-bottom:0.5em;width:40em;">
+Or upload a previously configured analysis, saved as a python script
+<code><i>name</i>.lagrange.py</code>.  <b>Note:</b> scripts created
+using earlier versions of this web site, or subsequently edited, may
+not upload correctly:
+</div>
+{{=analysis_upload_form}}
+</div>
+</div>
+{{pass}}
+
+{{if model:}}
+<div class="configurator_content" id="model_render">
+
+<!-- datamatrix -->
+{{if session.ti==0:}}
+<div id="datamatrix" style="margin-left:0em;">
+{{if not model.datamatrix.data:}}
+<div class="instructions">
+<b>Instructions:</b> prepare a text file in which lines consist of
+<i>tab- or space-separated values</i>. The first line contains area
+names (preferably single-letter codes) as column headers.  Each
+subsequent line contains a species name and a series of <code>1</code>
+and <code>0</code> characters indicating its presence or absence in
+those areas.  Area names and species names should contain only letters
+and numbers (no spaces).
+<br style="margin-bottom:0.5em;" />
+{{u=URL(r=request,c="static",f="psychotria.matrix.txt")}}
+{{pop="javascript:popup_winsize('%s', 400, 500);" % u}}
+Example: {{=A("psychotria.matrix.txt", _onclick=pop, _style="cursor:pointer;")}}
+<br style="margin-bottom:0.5em;" />
+<a href="{{=URL(r=request,f='upload_datamatrix',vars=dict(datamatrix='psychotria'))}}">
+Click here to use the example matrix
 </a>
-</li>
-</h3>
-<h3>
+</div>
+{{pass}}
+{{=model.datamatrix.render(request, session)}}
+</div>
+{{pass}}
+
+<!-- treelist -->
+{{if session.ti==1:}}
+<div id="treelist" style="margin-left:0em;">
+{{if model.treelist.trees:}}
+{{pass}}
+
+{{if not model.treelist.trees:}}
+<div class="instructions">
+<b>Instructions:</b> Input a phylogenetic tree of species in <a
+href="http://en.wikipedia.org/wiki/Newick_format" target="_top">Newick
+format</a>.  The tree should be ultrametric, i.e., have branch lengths
+proportionate to time, and contemporanous "leaf nodes" (species) lined
+up at the present.  Species names on the tree should match those in
+the range data matrix.
+<br style="margin-bottom:0.5em;" />
+{{s="((((((((P_hawaiiensis_WaikamoiL1:0.010853,P_mauiensis_Eke:0.010853):0.007964,(P_fauriei2:0.013826,P_hathewayi_1:0.013826):0.004991):0.001986,(P_kaduana_PuuKukuiAS:0.020803,P_mauiensis_PepeAS:0.020803):1e-05):0.003762,P_kaduana_HawaiiLoa:0.024565):0.003398,(P_greenwelliae07:0.01271500,P_greenwelliae907:0.01271500):0.01524800):0.018984,((((P_mariniana_MauiNui:0.02241,P_hawaiiensis_Makaopuhi:0.02241):0.008236,P_mariniana_Oahu:0.030646):0.002893,P_mariniana_Kokee2:0.033539):0.005171,P_wawraeDL7428:0.03871):0.008237):0.008255,(P_grandiflora_Kal2:0.027864,P_hobdyi_Kuia:0.027864):0.027338):0.003229,((P_hexandra_K1:0.026568,P_hexandra_M:0.026568):0.005204,P_hexandra_Oahu:0.031771):0.026659);"}}
+<a onclick="javascript:newick_demo('{{=s}}', '5.2');" style="cursor:pointer;">
+Click here to input the example tree
+</a>
+</div>
+{{pass}}
+{{if model.treelist.trees:}}
+<div class="widgetwrapper">
+  <div class="widgetheader">
+  {{=model.treelist.toolbar(request, session)}}
+  </div>
+  <div class="widgetcontent">
+    <div id="treelist_cell">{{=model.treelist.render(request, session)}}</div>
+  </div>
+</div>
+{{else:}}
+{{=model.treelist.render(request, session)}}
+{{pass}}
+</div>
+{{pass}}
+<!-- end of treelist -->
+
+<!-- rangeconstraints -->
+{{if session.ti==2:}}
+<div class="instructions">
+<b>Instructions:</b> Configure which geographic ranges make biological
+sense in your analysis.  In the "adjacency matrix" below, for each
+pair of areas ask whether a single species could plausibly inhabit
+those two areas and no others.  In "maximum range size" set the
+maximum number of areas permitted by ancestors.  Then, click
+"Recalculate possible ranges" to generate a list of valid states in
+the model. This list can be further customized by excluding particular
+ranges.
+
+<br style="margin-bottom:0.5em;" />
+
+Why reduce the set of allowed ranges?  First, some ranges may not make
+emprirical sense, based on biology and the spatial configuration of
+areas.  Second, it makes the analysis run faster.  <b>If your analysis
+includes >400 or so possible ranges, expect to wait days or weeks for
+it to finish!</b>
+
+<br style="margin-bottom:0.5em;" />
+
+<b>Caution:</b> reducing the list of allowed ranges by these three
+means (adjacency, maximum size, and manual selection) may result in
+some ranges becoming "disconnected" and unreachable from any other
+range in the model by discrete events of disperal and local
+extinction.  This is often manifested in Lagrange runs as convergence
+errors.
+</div>
+<div class="widgetwrapper">
+<div class="widgetheader">
+{{=model.rangeconstraints_toolbar(request, session)}}
+</div>
+<div class="widgetcontent">
+<div id="adjacencymatrix_cell" style="margin-bottom:0.25em;">
+{{=model.rangeconstraints_render(request, session)}}
+</div>
+{{if (session.rci or 0) in (0,1):}}
+{{if model.datamatrix.data:}}
+<form action="{{=URL(r=request,f='create_range_list')}}">
+<input type="submit" value="Recalculate possible ranges" />
+</form>
+{{else:}}
+No species ranges have been entered
+{{pass}}
+{{pass}}
+</div>
+</div>
+{{pass}}
+<!-- end rangeconstraints -->
+
+<!-- dispersal constraints -->
+{{if session.ti==3:}}
+<div class="instructions">
+<b>Instructions:</b> Configure one or more matrices that scale the
+dispersal rate between areas by fixed values.  In each matrix, "From"
+areas are rows, and "To" areas are columns.  While "Symmetric data
+entry" is checked, edits will be reflected across the matrix diagonal.
+<br style="margin-bottom:0.5em;" />
+To prohibit dispersal entirely between two areas, set their value to zero.  
+<br style="margin-bottom:0.5em;" />
+Each matrix corresponds to one time period.  "Age" sets the lower
+(earlier) bound of this period.  The earliest period in the analysis
+must have an age that predates the root node of the tree.
+</div>
+<div id="dm">
+{{if model.dm.labels:}}
+{{if 0:}}
+<a href={{=URL(r=request,f='delete_dm_all?f=%s'%request.function)}}>[Delete]</a>
+{{pass}}
+<div class="widgetcontent">
+Symmetric data entry: {{=model.dm.render_symmetric(request, session)}}
+</div>
+{{pass}}
+<div id="dm_cell">
+{{=model.dm.render(request, session)}}
+</div>
+</div>
+<!-- end of dispersal constraints -->
+{{pass}}
+
+<!-- rate params -->
+{{if session.ti==4:}}
+<div class="instructions">
+Using Lagrange it is possible to estimate multiple free parameters,
+e.g., dispersal rates in different directions.  In the future, it will
+be possible to configure such analyses here, but for now, you can
+specify whether you want to estimate the baseline rates of dispersal
+and for local extinction, or fix them to particular values.
+
+<br style="margin-bottom:0.5em;" />
+
+<b>Note:</b> if you fix the parameters, be sure to select at least one
+node on the tree, otherwise no analysis will be performed.
+
+</div>
+
+<div id="base_rates">
+{{=model.render_base_rates(request, session)}}
+</div>
+
+<!-- end rate params -->
+{{pass}}
+
+<!-- save/download -->
+{{if session.ti==5:}}
+<div class="instructions">
+
+<b>Instructions:</b> The link below saves your configured analysis as
+a <a href="http://www.python.org">Python</a> script, named
+<code><i>name</i>.lagrange.py</code>, where <code><i>name</i></code>
+is the analysis name (above).  This script contains your data, tree,
+and model configuration.
+
+<br style="margin-bottom:0.5em;" />
+
+Running the script requires that Python is already installed on your
+computer.  It also requires two Python libraries: <a
+href="http://www.scipy.org">scipy</a> and <a
+href="http://numpy.scipy.org">numpy</a>.  <b>On Windows,</b> install
+packages that match your version of Python (recommended: Python 2.5).
+
+<br style="margin-bottom:0.5em;" />
+
+<b>Note:</b> you can check whether scipy is installed correctly by
+opening a Python shell (on Windows, try launching IDLE from the
+Programs menu).  You will see a <code>>>></code> prompt.  Type:
+<pre><code>>>> import scipy</code></pre> and hit return.  If no error
+messages appear, scipy is installed correctly.
+
+<br style="margin-bottom:0.5em;" />
+
+<b>Once you have installed Python, scipy, and numpy:</b>
+
+<ol style="margin-left:2em;">
+
 <li>
-Save it as: <span style="font-family:monospace;color:darkgreen;padding:0.25em;">{name}.decmodel.py</span>
+Download latest snapshot archive of Lagrange:
+<ul style="margin-left:1em;">
+<li><a
+href="{{=snaplinkbase}}.tar.gz">{{=snapfilebase}}.tar.gz</a> (for
+Linux/Mac) or</li>
+<li><a
+href="{{=snaplinkbase}}.zip">{{=snapfilebase}}.zip</a> (for Windows).
 </li>
-</h3>
 </ul>
 
-<h2>
-<li>
-Run the analysis
-</li>
-</h2>
-<ul style="margin-left:2em;">
-<h3>
-<li>
-Place <span style="font-family:monospace;color:darkgreen;padding:0.25em;">{name}.decmodel.py</span> in the <span style="font-family:monospace;color:darkgreen;padding:0.25em;">Lagrange-{{=d}}</span> folder
-</li>
-</h3>
-<h3>
-<li>
-Run: <span style="font-family:monospace;color:darkgreen;padding:0.25em;">python {name}.decmodel.py</span> (Or in IDLE, choose Run:Run Module)
-</li>
-</h3>
-<h3>
-<li>
-Results are stored in: <span style="font-family:monospace;color:darkgreen;padding:0.25em;">{name}.results.txt</span>
-</li>
-</h3>
-</ul>
+<b>Please check</b> that you are using the latest snapshot version,
+released on {{=update}}.  The script <b>will not work</b> with earlier
+versions of Lagrange (e.g. 2.0.1).
 
+</li>
+
+<li>
+Unpack the Lagrange archive.  This will create a folder,
+<code>{{=snapfilebase}}</code>.
+</li>
+<li>
+Place your script in this folder (<b>not</b> in the
+<code>lagrange</code> subfolder).
+</li>
+<li>
+Run the script.
+<ul style="margin-left:1em;">
+<li>
+At a command prompt, type: <code>python
+<i>name</i>.lagrange.py</code>, or
+</li>
+<li>
+on Windows, launch IDLE from the Programs menu, open the script, and
+choose Run:Run Module (shortcut key F5).
+</li>
+</ul>
+</li>
+<li>
+Results of the analysis are logged to a text file,
+<code><i>name</i>.results.txt</code>.
+</li>
 </ol>
 
-<!-- {{=BEAUTIFY(session)}} -->
+</div>
+<div class="widgetcontent">
+Download:
+<a href="{{=URL(r=request,f='create_script')}}"
+   title="Download the current analyis">
+{{=model.name}}.lagrange.py
+</a>
+</div>
+
+{{errors = model.errors()}}
+{{if errors:}}
+<div class="widgetwrapper">
+<div style="padding:0.5em;width:40em;border-color:#ffff00;background-color:#ffff00;">
+<b>Warning:</b> the script can be saved, and uploaded later for additional
+configuration, but will not run.
+</div>
+<div class="widgetcontent">
+<ul style="margin-left:1em;">
+{{for e in errors:}}
+<li>{{=e}}</li>
+{{pass}}
+</ul>
+</div>
+</div>
+{{pass}}
+<!-- end of save/download -->
+{{pass}}
+
+<!-- end of "if model" -->
+</div>
+{{pass}}
+
+<div class="configurator_footer">
+<span style="font-style:italic;font-size:90%;">
+Configurator version: {{=snapversion}} &nbsp; Contact: Rick Ree &lt;rree at fieldmuseum dot org&gt;
+</span>
+</div>
+</div>
