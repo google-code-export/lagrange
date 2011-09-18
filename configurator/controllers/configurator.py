@@ -200,6 +200,14 @@ def upload_newick():
             m.treelist.append(s, name=n, age=age)
             t = m.treelist.trees[-1]
             t.parse()
+            if not t.scaled:
+                for n in t.root.iternodes():
+                    if n.parent and (n.length is None):
+                        n.length = 1
+                t.calibrate()
+                t.scaled = True
+                t.newick = newick.tostring(t.root)+";"
+                session.flash = "Branches without lengths assigned a value of 1"
             if not t.is_ultrametric():
                 session.flash = "Tree is not ultrametric"
     redirect(URL(r=request, f=request.vars.f or "index"))
@@ -536,6 +544,8 @@ def select_mi():
     redirect("index")
 
 def delete_all_models():
+    uid = response.session_id+"-model"
+    cache.ram.clear(uid)
     session.ti = 0
     session.rci = 0
     session.models = []
@@ -566,20 +576,33 @@ def create_range_list():
 
 def create_new_model():
     session.ti = int(request.vars.ti or session.ti or 0)
-    session.models.append(models.DECModel(session))
-    session.mi = len(session.models)-1
+
+    ## if session.models is None:
+    ##     session.models = []
+    ## session.models.append(models.DECModel(session))
+
+    uid = response.session_id+"-model"
+    m = cache.ram(uid, lambda: models.DECModel(session), time_expire=30000)
+    ## session.models = [m]
+    session.mi = 0
+    
+    ## session.mi = len(session.models)-1
+
     u = URL(r=request, f=request.vars.f)
     redirect(u)
 
 def current_model():
-    if session.models:
-        session.mi = max(0, session.mi)
-        session.mi = min(session.mi, len(session.models)-1)
-        m = session.models[session.mi]
-        session.model = m
-    else:
-        m = None
-        session.mi = 0
+    uid = response.session_id+"-model"
+    m = cache.ram(uid, lambda: models.DECModel(session), time_expire=30000)
+    
+    ## if session.models:
+    ##     session.mi = max(0, session.mi)
+    ##     session.mi = min(session.mi, len(session.models)-1)
+    ##     m = session.models[session.mi]
+    ##     session.model = m
+    ## else:
+    ##     m = None
+    ##     session.mi = 0
     return m
 
 def upload_datamatrix():
@@ -591,7 +614,7 @@ def upload_datamatrix():
         infile = f.file
         fname = f.filename.split(".")[0]
     elif request.vars.datamatrix=="psychotria":
-        infile = file("applications/lagrange/static/psychotria.matrix.txt")
+        infile = open("applications/lagrange/static/psychotria.matrix.txt")
         fname = "psychotria_demo"
     else:
         session.flash = "No file specified"
@@ -610,9 +633,9 @@ def upload_datamatrix():
         maxobs = max([ len(x) for x in m.datamatrix.data.values() ])
         v = m.max_range_size or max(maxobs, 2)
         m.max_range_size = v
-        if nareas*v > 40:
-            session.flash = "Too many areas!"
-            redirect(URL(r=request, f="index"))
+        ## if nareas*v > 100:
+        ##     session.flash = "Too many areas!"
+        ##     redirect(URL(r=request, f="index"))
         m.calc_ranges()
         m.dm.default()
         if fname:
@@ -643,3 +666,6 @@ def base_rates_form():
         pass
     redirect(URL(r=request, f="index"))
 
+
+def instructions():
+    return dict()

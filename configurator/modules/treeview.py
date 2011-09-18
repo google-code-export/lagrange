@@ -1,11 +1,15 @@
-from gluon.sqlhtml import *
-from gluon.html import *
-from gluon.sql import *
+## from gluon.sqlhtml import *
+## from gluon.sql import *
+from gluon import *
 from gluon.storage import Storage
-import applications.lagrange.modules.layout as layout
-import applications.lagrange.modules.phylo as phylo
-import applications.lagrange.modules.newick as newick
-import applications.lagrange.modules.ascii as ascii
+import layout
+import phylo
+import newick
+import ascii
+## import applications.lagrange.modules.layout as layout
+## import applications.lagrange.modules.phylo as phylo
+## import applications.lagrange.modules.newick as newick
+## import applications.lagrange.modules.ascii as ascii
 
 class Tree:
     def __init__(self, model, name=None):
@@ -103,6 +107,10 @@ class Tree:
             n.age = None
             if n.parent and (n.length is None):
                 scaled = False
+        if scaled:
+            for i, n in enumerate(self.root.iternodes(phylo.POSTORDER)):
+                if n.length == 0:
+                    n.length = 1e-05
         self.newick = newick.tostring(self.root)+";"
         self.scaled = scaled
 
