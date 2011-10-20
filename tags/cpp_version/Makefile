@@ -81,14 +81,14 @@ INCLUDES = -I/usr/include/octave-3.2.4/
 
 # requires fortran, gsl, and pthread -- and -ldl -lutil -lpython2.6 are for python
 # if llapack lblas fail, try larmadillo
-LIBS := -llapack -lblas -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6
+LIBS := -llapack -lblas -lgfortran -lgsl -lgslcblas -lm -lpthread -lgmp -ldl -lutil -lpython2.6 -lmpfr -lgmpfrxx -lgmpxx
 
 ###########
 # change to yes for bigtrees -- loses about 3x speed
 # if 64 bit GSL try CPPFLAGS="-arch x86_64" LDFLAGS="-arch x86_64" ./configure
 # need to install gmp (with ./configure --enable-cxx) and mpfr and gmpfrxx
 #######
-BIG = yes 
+BIG = no 
 BIGTREE =
 ifeq  ($(strip $(BIG)),yes)
 	BIGTREE += -DBIGTREE

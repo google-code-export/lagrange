@@ -232,18 +232,22 @@ def upload_analysis():
     v = []
     flag = False
     try:
-        for line in [ x for x in request.vars.d.file.readlines()
-                      if "import" not in x ]:
+        s = request.vars.d.file.read()
+        lines = s.replace('\r\n', '\n').replace('\r', '\n').splitlines()
+        ## for line in [ x for x in request.vars.d.file.readlines()
+        for line in [ x for x in lines if "import" not in x ]:
             if line.startswith("### begin data"):
                 flag = True
                 continue
             if line.startswith("### end data"):
                 break
             if flag:
-                v.append(line)
-        s = "".join(v)
+                v.append(line.rstrip())
+        s = "\n".join(v)
+        print s
         d = dict(eval(s, {}, {}))
-    except:
+    except Exception as e:
+        print e
         session.flash = "Cannot parse data"
         redirect(URL(r=request, f=request.vars.f or "index"))
     version = d["lagrange_version"]
@@ -595,17 +599,17 @@ def create_new_model():
     redirect(u)
 
 def current_model():
-    uid = response.session_id+"-model"
-    m = cache.ram(uid, lambda: models.DECModel(session), time_expire=30000)
+    ## uid = response.session_id+"-model"
+    ## m = cache.ram(uid, lambda: models.DECModel(session), time_expire=30000)
     
-    ## if session.models:
-    ##     session.mi = max(0, session.mi)
-    ##     session.mi = min(session.mi, len(session.models)-1)
-    ##     m = session.models[session.mi]
-    ##     session.model = m
-    ## else:
-    ##     m = None
-    ##     session.mi = 0
+    if session.models:
+        session.mi = max(0, session.mi)
+        session.mi = min(session.mi, len(session.models)-1)
+        m = session.models[session.mi]
+        session.model = m
+    else:
+        m = None
+        session.mi = 0
     return m
 
 def upload_datamatrix():
