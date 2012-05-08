@@ -17,7 +17,7 @@ def eval_decmodel(s):
     labels = d["area_labels"]
     nareas = len(labels)
     data = d["taxon_range_data"]
-    maxareas = d.get("max_range_size") or len(nlabels)
+    maxareas = d.get("max_range_size") or len(labels)
     dists = d["ranges"]
     excluded = d["excluded_ranges"]
     dm = d["area_dispersal"]

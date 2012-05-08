@@ -52,8 +52,8 @@ class Tree:
             msg = []
             msg.append(", ".join([ "%s-way polytomy at node %s" % (nc, label) \
                                    for nc, label in polytomies ]))
-            msg.append("Tree is:")
-            msg.append(ascii.tree2ascii(self.root))
+            ## msg.append("Tree is:")
+            ## msg.append(ascii.tree2ascii(self.root))
             #print "\n".join(msg)
             raise Error, "\n".join(msg)
 
